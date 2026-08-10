@@ -1,31 +1,15 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  FiCalendar,
-  FiChevronLeft,
-  FiChevronRight,
-  FiGrid,
-  FiMenu,
-  FiUsers,
-} from "react-icons/fi";
-
-const navigation = [
-  { key: "/dashboard", icon: <FiGrid />, label: "Dashboard" },
-  { key: "/appointments", icon: <FiCalendar />, label: "Latest appointments" },
-  { key: "/clients", icon: <FiUsers />, label: "Clients" },
-];
+import { usePathname } from "next/navigation";
+import { FiMenu } from "react-icons/fi";
+import Sidebar from "@/components/Sidebar";
+import { CgProfile } from "react-icons/cg";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const current =
-    navigation.find((item) => pathname.startsWith(item.key))?.key ??
-    "/dashboard";
 
   useEffect(() => {
     const update = () => setMobile(window.innerWidth < 768);
@@ -34,51 +18,32 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   return (
-    <div className="app-layout">
-      <aside
-        className={`app-sider ${collapsed ? "is-collapsed" : ""} ${mobile && !mobileOpen ? "is-hidden" : ""}`}
-      >
-        <div className="brand">
-          <span className="brand-mark">+</span>
-          <span className="brand-name">Careflow</span>
-        </div>
-        <nav className="side-nav">
-          {navigation.map((item) => (
-            <Link
-              onClick={() => mobile && setMobileOpen(false)}
-              className={current === item.key ? "active" : ""}
-              href={item.key}
-              key={item.key}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-label">{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-        <button
-          className="collapse-button"
-          onClick={() =>
-            mobile ? setMobileOpen(false) : setCollapsed(!collapsed)
-          }
-          aria-label="Toggle sidebar"
-        >
-          {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
-        </button>
-      </aside>
+    <div className="flex h-dvh overflow-hidden bg-[#faf9f6]">
+      <Sidebar
+        mobile={mobile}
+        mobileOpen={mobileOpen}
+        onNavigate={() => mobile && setMobileOpen(false)}
+      />
+
       {mobile && mobileOpen && (
         <button
-          className="sidebar-backdrop"
+          className="fixed inset-0 z-1000 bg-black/40"
           onClick={() => setMobileOpen(false)}
           aria-label="Close navigation"
         />
       )}
-      <div className="app-main">
-        <header className="app-header">
-          <div className="header-left">
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-21 shrink-0 items-center justify-between border-b border-[#c1c9c0] bg-white px-4 md:px-8">
+          <div className="flex min-w-0 items-center gap-3.5">
             {mobile && (
               <button
-                className="mobile-menu-button"
+                className="inline-flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-md bg-[#bceecb] text-[#144229]"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open navigation"
               >
@@ -86,19 +51,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </button>
             )}
             <div>
-              <span className="eyebrow">CARE MANAGEMENT</span>
-              <h2>Good morning, Dr. Morgan</h2>
+              <p className="m-0 hidden text-[20px] font-bold tracking-wide text-[#144229] md:block md:text-xl">
+                Appointment Portal
+              </p>
             </div>
           </div>
-          <button className="profile-button" aria-label="Open profile menu">
-            <span className="avatar">DM</span>
-            <span>Dr. Morgan</span>
+          <button
+            className="flex cursor-pointer items-center justify-center rounded-full border-0 bg-[#2D5A3F] font-semibold"
+            aria-label="Open profile menu"
+            type="button"
+          >
+            <CgProfile className="h-8 w-8 text-white" />
           </button>
         </header>
-        <main className="app-content">
-          <div className="breadcrumb">
-            Workspace <span>/</span>{" "}
-            <strong>
+
+        <main className="min-h-0 w-full flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-7">
+          <div className="mb-4 text-sm text-[#414942]">
+            Workspace <span className="mx-1">/</span>{" "}
+            <strong className="capitalize text-[#1a1c1a]">
               {pathname === "/dashboard"
                 ? "Dashboard"
                 : pathname.slice(1).replace("-", " ")}

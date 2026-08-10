@@ -3,8 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
+import {
+  FiEye,
+  FiEyeOff,
+  FiLock,
+  FiMail,
+  FiShield,
+  FiUser,
+} from "react-icons/fi";
 import loginImage from "@/public/login.webp";
+import { FaArrowRightLong } from "react-icons/fa6";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,29 +20,57 @@ export default function LoginPage() {
   const [role, setRole] = useState("Staff");
 
   return (
-    <main className="min-h-screen bg-[#faf9f5] md:flex md:items-center md:justify-center md:p-0">
-      <div className="flex min-h-screen w-full items-center justify-center flex-col overflow-hidden bg-[#faf9f5] shadow-2xl md:flex-row">
+    <main className="min-h-screen bg-[#faf9f6] md:flex md:items-center md:justify-center md:p-0">
+      <div className="flex min-h-screen w-full items-center justify-center flex-col overflow-hidden bg-[#faf9f6] shadow-2xl md:flex-row">
         <section
-          className="flex w-full flex-col justify-center bg-[#faf9f5] px-6  md:min-h-screen md:w-1/2 md:px-16 lg:px-24"
+          className="flex w-full flex-col justify-center bg-[#faf9f6] px-6 md:min-h-screen md:w-1/2 md:px-14 lg:px-24"
           aria-label="Login form"
         >
           <div className="mx-auto flex w-full max-w-md flex-col gap-8 sm:gap-10">
-            <header className="relative -top-3 flex flex-col items-center text-center" aria-label="Treasure Counseling Center branding">
-              <Image src="/logo.webp" alt="Treasure Counseling Center logo" width={76} height={76} className="mb-2 h-14 w-14 object-contain sm:h-[68px] sm:w-[68px]" priority />
-              <h1 className="bg-linear-to-b from-[#f1d28b] via-[#a86d22] to-[#6f3f12] bg-clip-text font-serif text-[2.15rem] font-semibold uppercase leading-none tracking-[0.14em] text-transparent drop-shadow-[0_1px_1px_rgba(93,53,13,0.3)] sm:text-[2.55rem]">Treasure</h1>
-              <div className="mt-3 flex w-full items-center gap-3"><span className="h-px flex-1 bg-linear-to-r from-transparent to-[#b78648]" /><span className="h-2.5 w-2.5 rotate-45 bg-[#2D5A3F]" /><span className="h-px flex-1 bg-linear-to-l from-transparent to-[#b78648]" /></div>
-              <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[#2D5A3F] sm:text-xs">For the people who need help</p>
+            <header
+              className="relative -top-3 flex flex-col items-center text-center"
+              aria-label="Treasure Counseling Center branding"
+            >
+              <Image
+                src="/logo.webp"
+                alt="Treasure Counseling Center logo"
+                width={76}
+                height={76}
+                className="mb-2 h-14 w-14 object-contain sm:h-17 sm:w-17"
+                priority
+              />
+              <h1 className="bg-linear-to-b from-[#f1d28b] via-[#a86d22] to-[#6f3f12] bg-clip-text font-serif text-[2.15rem] font-semibold uppercase leading-none tracking-[0.14em] text-transparent drop-shadow-[0_1px_1px_rgba(93,53,13,0.3)] sm:text-[2.55rem]">
+                Treasure
+              </h1>
+              <div className="mt-3 flex w-full items-center gap-3">
+                <span className="h-px flex-1 bg-linear-to-r from-transparent to-[#b78648]" />
+                <span className="h-2.5 w-2.5 rotate-45 bg-[#2D5A3F]" />
+                <span className="h-px flex-1 bg-linear-to-l from-transparent to-[#b78648]" />
+              </div>
+              <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[#2D5A3F] sm:text-xs">
+                For the people who need help
+              </p>
             </header>
             <div className="flex justify-center">
-              <div className="inline-flex gap-1 rounded-full bg-gray-100 p-1">
-                {["Staff", "Admin"].map((item) => (
+              <div className="inline-flex gap-1 rounded-md bg-gray-100 p-1 shadow-md">
+                {(
+                  [
+                    { label: "Staff", icon: FiUser },
+                    { label: "Admin", icon: FiShield },
+                  ] as const
+                ).map(({ label, icon: Icon }) => (
                   <button
-                    key={item}
+                    key={label}
                     type="button"
-                    onClick={() => setRole(item)}
-                    className={`rounded-full px-6 py-2 text-sm font-medium transition ${role === item ? "bg-[#2D5A3F] text-white shadow-sm" : "text-gray-600 hover:bg-gray-200"}`}
+                    onClick={() => setRole(label)}
+                    className={`cursor-pointer flex items-center justify-center gap-2 rounded-md px-6 py-2.5 text-sm font-bold transition ${
+                      role === label
+                        ? "bg-[#2D5A3F] text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
-                    {item}
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {label}
                   </button>
                 ))}
               </div>
@@ -91,10 +127,11 @@ export default function LoginPage() {
                 </a>
               </div>
               <button
-                className="mt-2 flex w-full justify-center  rounded-md bg-[#2D5A3F] px-4 py-4 text-lg font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#16482b] focus:outline-none focus:ring-2 focus:ring-[##2D5A3F] focus:ring-offset-2"
+                className="cursor-pointer mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-[#2D5A3F] px-4 py-4 text-lg font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#16482b] focus:outline-none focus:ring-2 focus:ring-[#2D5A3F] focus:ring-offset-2"
                 type="submit"
               >
                 Log In
+                <FaArrowRightLong className="h-4 w-4 shrink-0" />
               </button>
             </form>
           </div>

@@ -1,11 +1,19 @@
 @import "tailwindcss";
 :root {
-  --ink: #17202a;
-  --muted: #74808c;
-  --line: #e8edf1;
-  --cream: #f7f9f8;
-  --mint: #e8f5ef;
-  --green: #13795b;
+  --surface: #faf9f6;
+  --surface-dim: #dadad7;
+  --surface-low: #f4f4f0;
+  --surface-container: #eeeeea;
+  --surface-high: #e8e8e5;
+  --ink: #1a1c1a;
+  --muted: #414942;
+  --line: #c1c9c0;
+  --cream: #faf9f6;
+  --mint: #bceecb;
+  --green: #144229;
+  --green-container: #2d5a3f;
+  --gold: #775a19;
+  --gold-container: #fed488;
 }
 * {
   box-sizing: border-box;
@@ -18,8 +26,9 @@ body {
   margin: 0;
   background: var(--cream);
   color: var(--ink);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-manrope), system-ui, sans-serif;
 }
+h1, h2, h3, h4, h5, h6, .page-heading h1, .card-heading h3 { font-family: var(--font-source-serif), Georgia, serif; }
 .app-layout {
   min-height: 100vh;
   overflow-x: hidden;
