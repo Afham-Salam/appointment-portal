@@ -11,6 +11,7 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import type { IconType } from "react-icons";
+import { DataTable, Column } from "@/components/DataTable";
 
 const stats: {
   label: string;
@@ -99,7 +100,6 @@ export default function DashboardPage() {
           <Link href="/appointments">View all</Link>
         </div>
         <AppointmentTable rows={appointments} />
-        <AppointmentTable rows={appointments} />
       </section>
     </>
   );
@@ -110,32 +110,20 @@ export function AppointmentTable({
 }: {
   rows: { patient: string; type: string; time: string; status: string }[];
 }) {
-  return (
-    <div className="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Client</th>
-            <th>Appointment</th>
-            <th>Time</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.patient}>
-              <td>{row.patient}</td>
-              <td>{row.type}</td>
-              <td>{row.time}</td>
-              <td>
-                <span className={`status ${row.status.toLowerCase()}`}>
-                  {row.status}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const columns: Column<{ patient: string; type: string; time: string; status: string }>[] = [
+    { title: "Client", key: "patient" },
+    { title: "Appointment", key: "type" },
+    { title: "Time", key: "time" },
+    {
+      title: "Status",
+      key: "status",
+      render: (row) => (
+        <span className={`status ${row.status.toLowerCase()}`}>
+          {row.status}
+        </span>
+      ),
+    },
+  ];
+
+  return <DataTable columns={columns} data={rows} pageSize={5} />;
 }

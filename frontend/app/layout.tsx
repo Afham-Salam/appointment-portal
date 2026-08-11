@@ -17,13 +17,18 @@ export const metadata: Metadata = {
   description: "Manage appointments and clients with Treasure.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+import type { ReactNode } from "react";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
+
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
       className={`${manrope.variable} ${sourceSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AntdRegistry>{children}</AntdRegistry>
+      </body>
     </html>
   );
 }
