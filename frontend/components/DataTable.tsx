@@ -34,21 +34,21 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div>
-      <div className="table-scroll">
-        <table>
+      <div className="w-full overflow-x-auto px-6 py-5">
+        <table className="w-full min-w-[680px] border-collapse text-left text-[13px]">
           <thead>
-            <tr>
+            <tr className="bg-[#fafafa]">
               {columns.map((col) => (
-                <th key={col.key}>{col.title}</th>
+                <th key={col.key} className="border-b border-[#c1c9c0] px-4 py-3.5 font-semibold text-[#1a1c1a]">{col.title}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {paginatedData.length > 0 ? (
               paginatedData.map((row, rowIndex) => (
-                <tr key={row.id || rowIndex}>
+                <tr key={row.id || rowIndex} className="hover:bg-[#fafdfb]">
                   {columns.map((col) => (
-                    <td key={col.key}>
+                    <td key={col.key} className="border-b border-[#c1c9c0] px-4 py-3.5 text-[#1a1c1a]">
                       {col.render ? col.render(row) : row[col.key]}
                     </td>
                   ))}
@@ -56,7 +56,7 @@ export function DataTable<T extends Record<string, any>>({
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="text-center py-8 text-[#414942]">
+                <td colSpan={columns.length} className="py-8 text-center text-[#414942]">
                   No records found.
                 </td>
               </tr>

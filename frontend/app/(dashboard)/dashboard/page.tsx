@@ -95,9 +95,9 @@ export default function DashboardPage() {
       </div>
 
       <section className="content-card">
-        <div className="card-heading">
-          <h3>Latest appointments</h3>
-          <Link href="/appointments">View all</Link>
+        <div className="flex items-center justify-between border-b border-[#c1c9c0] px-6 py-5">
+          <h3 className="m-0 text-base font-semibold text-[#1a1c1a]">Latest appointments</h3>
+          <Link className="rounded-md px-3 py-2 text-sm font-semibold text-[#144229] transition hover:bg-[#bceecb]" href="/appointments">View all</Link>
         </div>
         <AppointmentTable rows={appointments} />
       </section>
@@ -121,6 +121,15 @@ export function AppointmentTable({
         <span className={`status ${row.status.toLowerCase()}`}>
           {row.status}
         </span>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: () => (
+        <Link className="inline-flex rounded-md bg-[#bceecb] px-3 py-2 text-xs font-semibold text-[#144229]" href="/appointments">
+          View Details
+        </Link>
       ),
     },
   ];
