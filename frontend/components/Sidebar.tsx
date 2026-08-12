@@ -4,11 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  FiBell,
   FiCalendar,
   FiGrid,
   FiLogOut,
   FiPlus,
   FiSettings,
+  FiUser,
   FiUsers,
 } from "react-icons/fi";
 
@@ -16,7 +18,9 @@ const navigation = [
   { href: "/dashboard", icon: FiGrid, label: "Dashboard" },
   { href: "/appointments", icon: FiCalendar, label: "Appointments" },
   { href: "/clients", icon: FiUsers, label: "Clients List" },
-  { href: "/settings", icon: FiSettings, label: "Settings" },
+  { href: "/notification", icon: FiBell, label: "Notifications" },
+  { href: "/profile", icon: FiUser, label: "My profile" },
+  // { href: "/settings", icon: FiSettings, label: "Settings" },
 ] as const;
 
 type SidebarProps = {

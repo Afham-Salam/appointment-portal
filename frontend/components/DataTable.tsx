@@ -6,7 +6,7 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 export interface Column<T> {
   title: string;
   key: string;
-  render?: (row: T) => React.ReactNode;
+  render?: (row: T, index: number) => React.ReactNode;
 }
 
 interface DataTableProps<T> {
@@ -35,7 +35,7 @@ export function DataTable<T extends Record<string, any>>({
   return (
     <div>
       <div className="w-full overflow-x-auto px-6 py-5">
-        <table className="w-full min-w-[680px] border-collapse text-left text-[13px]">
+        <table className="w-full min-w-170 border-collapse text-left text-[13px]">
           <thead>
             <tr className="bg-[#fafafa]">
               {columns.map((col) => (
@@ -49,7 +49,9 @@ export function DataTable<T extends Record<string, any>>({
                 <tr key={row.id || rowIndex} className="hover:bg-[#fafdfb]">
                   {columns.map((col) => (
                     <td key={col.key} className="border-b border-[#c1c9c0] px-4 py-3.5 text-[#1a1c1a]">
-                      {col.render ? col.render(row) : row[col.key]}
+                      {col.render
+                        ? col.render(row, startIndex + rowIndex)
+                        : row[col.key]}
                     </td>
                   ))}
                 </tr>

@@ -27,6 +27,7 @@ const themeConfig = {
       activeBorderColor: "#144229",
       optionSelectedBg: "#bceecb",
       optionSelectedColor: "#144229",
+      optionActiveBg: "#e8f7ee",
     },
   },
 };
@@ -84,6 +85,11 @@ export function FilterHeader({
             onChange={onStatusChange}
             className="h-10 min-w-32"
             options={statusOptions}
+            classNames={{
+              popup: {
+                root: "[&_.ant-select-item-option-active]:!bg-[#e8f7ee] [&_.ant-select-item-option-selected]:!bg-[#bceecb] [&_.ant-select-item-option-selected]:!text-[#144229] [&_.ant-select-item-option-selected]:!font-semibold",
+              },
+            }}
           />
 
           <RangePicker
