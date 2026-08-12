@@ -33,13 +33,21 @@ export function DataTable<T extends Record<string, any>>({
   const paginatedData = data.slice(startIndex, endIndex);
 
   return (
-    <div>
-      <div className="w-full overflow-x-auto px-6 py-5">
+    <div className="min-w-0">
+      <div className="w-full overflow-x-auto overscroll-x-contain px-3 py-4 [-webkit-overflow-scrolling:touch] sm:px-6 sm:py-5">
+        <p className="mb-2 text-[11px] text-[#69746d] sm:hidden">
+          Swipe sideways to see all columns
+        </p>
         <table className="w-full min-w-170 border-collapse text-left text-[13px]">
           <thead>
             <tr className="bg-[#fafafa]">
               {columns.map((col) => (
-                <th key={col.key} className="border-b border-[#c1c9c0] px-4 py-3.5 font-semibold text-[#1a1c1a]">{col.title}</th>
+                <th
+                  key={col.key}
+                  className="whitespace-nowrap border-b border-[#c1c9c0] px-3 py-3 font-semibold text-[#1a1c1a] sm:px-4 sm:py-3.5"
+                >
+                  {col.title}
+                </th>
               ))}
             </tr>
           </thead>
@@ -48,7 +56,10 @@ export function DataTable<T extends Record<string, any>>({
               paginatedData.map((row, rowIndex) => (
                 <tr key={row.id || rowIndex} className="hover:bg-[#fafdfb]">
                   {columns.map((col) => (
-                    <td key={col.key} className="border-b border-[#c1c9c0] px-4 py-3.5 text-[#1a1c1a]">
+                    <td
+                      key={col.key}
+                      className="border-b border-[#c1c9c0] px-3 py-3 text-[#1a1c1a] sm:px-4 sm:py-3.5"
+                    >
                       {col.render
                         ? col.render(row, startIndex + rowIndex)
                         : row[col.key]}
@@ -58,7 +69,10 @@ export function DataTable<T extends Record<string, any>>({
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length} className="py-8 text-center text-[#414942]">
+                <td
+                  colSpan={columns.length}
+                  className="py-8 text-center text-[#414942]"
+                >
                   No records found.
                 </td>
               </tr>
@@ -67,11 +81,9 @@ export function DataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Pagination Footer controls */}
       {totalItems > 0 && (
-        <div className="flex flex-col gap-4 border-t border-[#c1c9c0] px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Page size selector dropdown */}
+        <div className="flex flex-col gap-4 border-t border-[#c1c9c0] px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-1.5 text-xs text-[#414942]">
               <span>Show</span>
               <select
@@ -80,7 +92,7 @@ export function DataTable<T extends Record<string, any>>({
                   setSizePerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="h-8 rounded-md border border-[#c1c9c0] bg-white pl-2 pr-7 text-xs font-semibold text-[#414942] outline-none transition-colors hover:border-[#2d5a3f] focus:border-[#144229] appearance-none cursor-pointer"
+                className="h-8 cursor-pointer appearance-none rounded-md border border-[#c1c9c0] bg-white pr-7 pl-2 text-xs font-semibold text-[#414942] outline-none transition-colors hover:border-[#2d5a3f] focus:border-[#144229]"
                 style={{
                   backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23414942' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.2' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
                   backgroundPosition: "right 0.35rem center",
@@ -88,7 +100,6 @@ export function DataTable<T extends Record<string, any>>({
                   backgroundRepeat: "no-repeat",
                 }}
               >
-
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={30}>30</option>
@@ -97,12 +108,18 @@ export function DataTable<T extends Record<string, any>>({
             </div>
 
             <span className="text-xs text-[#414942]">
-              Showing <strong className="font-semibold text-[#1a1c1a]">{totalItems === 0 ? 0 : startIndex + 1}</strong> to{" "}
-              <strong className="font-semibold text-[#1a1c1a]">{endIndex}</strong> of{" "}
-              <strong className="font-semibold text-[#1a1c1a]">{totalItems}</strong> entries
+              Showing{" "}
+              <strong className="font-semibold text-[#1a1c1a]">
+                {totalItems === 0 ? 0 : startIndex + 1}
+              </strong>{" "}
+              to{" "}
+              <strong className="font-semibold text-[#1a1c1a]">{endIndex}</strong>{" "}
+              of{" "}
+              <strong className="font-semibold text-[#1a1c1a]">{totalItems}</strong>{" "}
+              entries
             </span>
           </div>
-          
+
           {totalPages > 1 && (
             <div className="flex items-center gap-1.5 self-end sm:self-auto">
               <button
@@ -114,19 +131,21 @@ export function DataTable<T extends Record<string, any>>({
                 <FiChevronLeft className="h-4 w-4" />
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
-                    activePage === page
-                      ? "bg-[#144229] text-white"
-                      : "border border-[#c1c9c0] bg-white text-[#414942] hover:bg-neutral-50"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
+                      activePage === page
+                        ? "bg-[#144229] text-white"
+                        : "border border-[#c1c9c0] bg-white text-[#414942] hover:bg-neutral-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
 
               <button
                 onClick={() => setCurrentPage(activePage + 1)}

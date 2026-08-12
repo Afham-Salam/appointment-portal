@@ -47,8 +47,8 @@ export default function NotificationMenu() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-85 overflow-hidden rounded-md border border-[#c1c9c0] bg-white shadow-[0_12px_32px_rgba(23,32,42,0.12)]">
-          <div className="flex items-center justify-between border-b border-[#e5e7eb] px-4 py-3">
+        <div className="fixed top-19 right-3 left-3 z-50 max-h-[min(28rem,calc(100dvh-6rem))] overflow-hidden rounded-md border border-[#c1c9c0] bg-white shadow-[0_12px_32px_rgba(23,32,42,0.12)] sm:absolute sm:top-auto sm:right-0 sm:left-auto sm:mt-2 sm:w-85 sm:max-h-none">
+          <div className="flex items-center justify-between gap-2 border-b border-[#e5e7eb] px-4 py-3">
             <p className="m-0 text-sm font-semibold text-[#1a1c1a]">
               Notifications
             </p>
@@ -56,16 +56,16 @@ export default function NotificationMenu() {
               <button
                 type="button"
                 onClick={markAllAsRead}
-                className="cursor-pointer rounded-md bg-[#bceecb] px-2 py-0.5 text-xs font-semibold text-[#144229] transition hover:bg-[#a8e0ba]"
+                className="shrink-0 cursor-pointer rounded-md bg-[#bceecb] px-2 py-0.5 text-xs font-semibold text-[#144229] transition hover:bg-[#a8e0ba]"
               >
                 Mark all read
               </button>
             ) : (
-              <span className="text-xs text-[#69746d]">All caught up</span>
+              <span className="shrink-0 text-xs text-[#69746d]">All caught up</span>
             )}
           </div>
 
-          <ul className="m-0 max-h-80 list-none overflow-y-auto p-0">
+          <ul className="m-0 max-h-[min(20rem,calc(100dvh-12rem))] list-none overflow-y-auto p-0 sm:max-h-80">
             {preview.map((item) => (
               <li key={item.id}>
                 <button
@@ -79,7 +79,7 @@ export default function NotificationMenu() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <span
-                      className={`text-sm ${item.unread ? "font-semibold text-[#144229]" : "font-medium text-[#1a1c1a]"}`}
+                      className={`min-w-0 text-sm ${item.unread ? "font-semibold text-[#144229]" : "font-medium text-[#1a1c1a]"}`}
                     >
                       {item.title}
                     </span>

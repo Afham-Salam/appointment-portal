@@ -169,7 +169,12 @@ export default function AddAppointmentModal({
         onOk={handleSubmit}
         okText="Create Appointment"
         cancelText="Cancel"
-        width={720}
+        width="100%"
+        style={{ maxWidth: 720, top: 16, paddingBottom: 0 }}
+        className="px-3 sm:px-0"
+        styles={{
+          body: { maxHeight: "70vh", overflowY: "auto" },
+        }}
         destroyOnHidden
         okButtonProps={{
           className:

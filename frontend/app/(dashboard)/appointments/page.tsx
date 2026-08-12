@@ -845,17 +845,25 @@ function RepeatSection({
 
 export default function AppointmentsPage() {
   const router = useRouter();
-  const [rows, setRows] = useState<Appointment[]>(() => {
-    if (typeof window === "undefined") return seed;
-    const saved = localStorage.getItem("treasure-appointments");
-    return saved ? JSON.parse(saved) : seed;
-  });
+  const [rows, setRows] = useState<Appointment[]>(seed);
   const [showAdd, setShowAdd] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [dateRange, setDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
   >(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("treasure-appointments");
+    if (saved) {
+      try {
+        setRows(JSON.parse(saved) as Appointment[]);
+      } catch {
+        setRows(seed);
+      }
+    }
+  }, []);
+
   const save = (next: Appointment[]) => {
     setRows(next);
     localStorage.setItem("treasure-appointments", JSON.stringify(next));
@@ -955,15 +963,17 @@ export default function AppointmentsPage() {
   ];
   return (
     <>
-      <div className="mb-6 mt-7 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="m-0 font-(--font-source-serif) text-[30px] tracking-[-.03em]">
+      <div className="mb-5 mt-4 flex flex-col gap-4 sm:mb-6 sm:mt-7 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="m-0 font-(--font-source-serif) text-[1.6rem] tracking-[-.03em] sm:text-[30px]">
             Latest appointments
           </h1>
-          <p>Review and manage your upcoming schedule.</p>
+          <p className="mt-1 mb-0 text-sm text-[#414942] sm:text-base">
+            Review and manage your upcoming schedule.
+          </p>
         </div>
         <button
-          className="inline-flex h-fit items-center gap-2 rounded-md  bg-[#2D5A3F] px-4 py-3 font-bold text-white transition hover:bg-[#2d5a3f]"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-md bg-[#2D5A3F] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#16482b] sm:h-fit sm:w-auto"
           onClick={() => setShowAdd(true)}
         >
           <FiPlus /> Add Appointment
@@ -1005,7 +1015,7 @@ export default function AppointmentsPage() {
         }}
       />
 
-      <section className="content-card w-full">
+      <section className="content-card w-full overflow-hidden">
         <DataTable columns={columns} data={filtered} pageSize={10} />
       </section>
     </>
