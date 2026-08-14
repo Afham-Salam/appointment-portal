@@ -12,6 +12,7 @@ import {
   Circle,
   pdf,
 } from "@react-pdf/renderer";
+import { ReportPdfPage } from "@/components/ReportPdfPages";
 
 const GREEN = "#064C2E";
 const GOLD = "#C99532";
@@ -36,6 +37,15 @@ export type ApplicationPdfData = {
   date?: string;
   signatureName?: string;
 };
+
+export type ApplicationPdfPage =
+  | "Application Form"
+  | "Student Intake Form"
+  | "Parents' Details"
+  | "Assessment Report"
+  | "Remediation & Improvement"
+  | "Mental Status Exam"
+  | "Plans";
 
 type MalayalamImages = {
   headerTop: MalayalamImage;
@@ -62,6 +72,7 @@ type ApplicationPdfProps = {
   data: ApplicationPdfData;
   logoSrc: string | null;
   ml: MalayalamImages;
+  pages?: ApplicationPdfPage[];
 };
 
 /* =========================================================
@@ -1087,6 +1098,57 @@ function SignatureField({
   );
 }
 
+/* Legacy generic page styles are kept out of the document; each report section
+   now has its own dedicated PDF component in ReportPdfPages. */
+/* function ReportPage({ title, data }: { title: string; data: ApplicationPdfData }) {
+  const rows: [string, string | undefined][] =
+    title === "Application Form"
+      ? [
+          ["Name", data.name],
+          ["Age", data.age],
+          ["Relative's name", data.relative],
+          ["Address", data.address],
+          ["Phone", data.phone],
+          ["Current problem", data.currentProblem],
+        ]
+      : title === "Mental Status Exam"
+        ? [["Client Name", data.name], ["Date", data.date]]
+        : [["Client", data.name], ["Date", data.date]];
+
+  return (
+    <Page size="A4" style={reportStyles.page} wrap={false}>
+      <Text style={reportStyles.brand}>TREASURE</Text>
+      <Text style={reportStyles.subtitle}>CLIENT REPORT</Text>
+      <Text style={reportStyles.title}>{title}</Text>
+      <View style={reportStyles.table}>
+        {Array.from({ length: title === "Remediation & Improvement" ? 8 : Math.max(8, rows.length + 2) }).map((_, index) => {
+          const row = rows[index] ?? ["", ""];
+          return (
+            <View style={reportStyles.row} key={`${title}-${index}`}>
+              <Text style={reportStyles.label}>{row[0] ?? ""}</Text>
+              <Text style={reportStyles.value}>{row[1] ?? ""}</Text>
+            </View>
+          );
+        })}
+      </View>
+      <Text style={reportStyles.footer}>Name & Signature: ______________________________</Text>
+    </Page>
+  );
+}
+
+const reportStyles = StyleSheet.create({
+  page: { padding: 42, fontFamily: "Helvetica", backgroundColor: "#FFFFFF" },
+  brand: { fontSize: 26, color: GOLD, letterSpacing: 3, textAlign: "center" },
+  subtitle: { marginTop: 5, fontSize: 9, color: GREEN, textAlign: "center" },
+  title: { marginTop: 44, marginBottom: 24, fontSize: 18, fontFamily: "Helvetica-Bold", textAlign: "center", color: GREEN },
+  table: { borderWidth: 1, borderColor: "#555555" },
+  row: { minHeight: 54, flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#777777" },
+  label: { width: "36%", padding: 9, fontSize: 11, borderRightWidth: 1, borderRightColor: "#777777" },
+  value: { flex: 1, padding: 9, fontSize: 11 },
+  footer: { marginTop: 36, fontSize: 11 },
+});
+*/
+
 /* =========================================================
    PDF
 ========================================================= */
@@ -1095,10 +1157,11 @@ export function ApplicationPdf({
   data,
   logoSrc,
   ml,
+  pages = ["Application Form"],
 }: ApplicationPdfProps) {
   return (
     <Document>
-      <Page
+      {pages.includes("Application Form") && <Page
         size="A4"
         style={styles.page}
         wrap={false}
@@ -1413,7 +1476,10 @@ export function ApplicationPdf({
             />
           </Svg>
         </View>
-      </Page>
+      </Page>}
+      {pages.filter((page) => page !== "Application Form").map((page) => (
+        <ReportPdfPage key={page} page={page} data={data} />
+      ))}
     </Document>
   );
 }
@@ -1424,6 +1490,7 @@ export function ApplicationPdf({
 
 export async function downloadApplicationPdf(
   data: ApplicationPdfData,
+  pages: ApplicationPdfPage[] = ["Application Form"],
 ) {
   try {
     const {
@@ -1436,6 +1503,7 @@ export async function downloadApplicationPdf(
         data={data}
         logoSrc={logoSrc}
         ml={ml}
+        pages={pages}
       />,
     ).toBlob();
 

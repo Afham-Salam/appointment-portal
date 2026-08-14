@@ -72,7 +72,7 @@ export function FilterHeader({
           />
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
+        <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
           <Select
             value={selectedStatus}
             onChange={onStatusChange}
@@ -92,7 +92,7 @@ export function FilterHeader({
             inputReadOnly
             placement="bottomLeft"
             getPopupContainer={() => document.body}
-            className="h-10! w-full! min-w-0! sm:min-w-64 sm:flex-1 lg:w-64 lg:flex-none"
+            className="h-10! w-full! min-w-0! sm:min-w-64 sm:flex-1 lg:w-64! lg:flex-none"
             classNames={{
               popup: {
                 root: [

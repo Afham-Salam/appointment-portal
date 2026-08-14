@@ -7,6 +7,8 @@ import { FilterHeader } from "@/components/FilterHeader";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import type { Appointment } from "../appointments/page";
+import { FiDownload } from "react-icons/fi";
+import ReportDownloadModal from "@/components/ReportDownloadModal";
 
 type ClientRow = {
   id: number;
@@ -46,6 +48,11 @@ export default function ClientsPage() {
   const [dateRange, setDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
   >(null);
+  const [reportClient, setReportClient] = useState<ClientRow | null>(null);
+
+  const openReportModal = (client: ClientRow) => {
+    setReportClient(client);
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem("treasure-appointments");
@@ -114,15 +121,22 @@ export default function ClientsPage() {
       key: "actions",
       render: (row) => (
         <div className="table-actions">
-          <button
+           <button
             type="button"
             className="view-button"
             onClick={() =>
               router.push(`/client/viewdetails?id=${row.id}&from=clients`)
             }
-          >
-            View Details
-          </button>
+           >
+             View Details
+           </button>
+           <button
+             type="button"
+             className="view-button"
+             onClick={() => openReportModal(row)}
+           >
+             <FiDownload aria-hidden="true" /> Report
+           </button>
         </div>
       ),
     },
@@ -151,6 +165,13 @@ export default function ClientsPage() {
       <section className="content-card">
         <DataTable columns={columns} data={filteredClients} pageSize={10} />
       </section>
+
+      <ReportDownloadModal
+        key={reportClient ? `${reportClient.name}-${reportClient.clientType}` : "empty"}
+        client={reportClient}
+        open={Boolean(reportClient)}
+        onClose={() => setReportClient(null)}
+      />
     </>
   );
 }
