@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
 
   signatureRow: {
-    minHeight: 45,
+    minHeight: 32,
   },
 
   lastRow: {
