@@ -74,11 +74,40 @@ export function FormSection({
   );
 }
 
-export function TextGrid({ labels, editable }: { labels: string[]; editable: boolean }) {
+export function TextGrid({
+  labels,
+  editable,
+  textareaLabels = [],
+  dateLabels = [],
+}: {
+  labels: string[];
+  editable: boolean;
+  textareaLabels?: string[];
+  dateLabels?: string[];
+}) {
   return (
     <div className="text-grid">
-      {labels.map((label) => (
-        <label key={label}><span>{label}</span><input disabled={!editable} /></label>
+      {labels.map((label, index) => (
+        <label key={`${label}-${index}`}>
+          <span>{label}</span>
+          {dateLabels.includes(label) ? (
+            <DatePicker
+              disabled={!editable}
+              className="assessment-date-picker mx-1! h-10! w-[calc(100%-0.5rem)]! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!"
+              format="DD/MM/YYYY"
+            />
+          ) : textareaLabels.includes(label) ? (
+            <textarea
+              disabled={!editable}
+              className="min-h-16! resize-y! border-0! bg-white! p-3! disabled:bg-[#f4f4f0]!"
+            />
+          ) : (
+            <input
+              disabled={!editable}
+              className="bg-white! disabled:bg-[#f4f4f0]!"
+            />
+          )}
+        </label>
       ))}
     </div>
   );
@@ -87,6 +116,7 @@ export function TextGrid({ labels, editable }: { labels: string[]; editable: boo
 export function RepeatSection({ id, title, labels }: { id: string; title: string; labels: string[] }) {
   const [rows, setRows] = React.useState([1]);
   const [open, setOpen] = React.useState(true);
+  const responsiveColumns = title === "Plans" || title === "Remediation & Improvement";
   return (
     <div id={id}>
       <Collapse
@@ -103,7 +133,7 @@ export function RepeatSection({ id, title, labels }: { id: string; title: string
                 {rows.map((row) => (
                   <div key={row}>
                     <div className="flex items-center justify-between border-b border-[#c1c9c0] bg-[#bceecb] px-3 py-2 text-sm font-bold text-[#144229]"><span>Section {row}</span>{row > 1 && <button type="button" className="rounded p-1.5 text-[#9b3022]! hover:bg-white" onClick={() => setRows((items) => items.filter((item) => item !== row))} aria-label={`Delete section ${row}`}><FiTrash2 className="h-4 w-4" /></button>}</div>
-                    <div className="grid min-w-170 grid-cols-3 border-b border-[#c1c9c0] last:border-b-0">
+                    <div className={`grid border-b border-[#c1c9c0] last:border-b-0 ${responsiveColumns ? `grid-cols-1 ${title === "Plans" ? "sm:grid-cols-4" : "sm:grid-cols-4"}` : "grid-cols-3"}`}>
                       {labels.map((label) => <label key={label} className="flex min-w-0 flex-col gap-2 border-r border-[#c1c9c0] last:border-r-0"><span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">{label}</span>{label.toLowerCase().includes("date") ? <DatePicker className="repeat-date-picker mx-1! h-10! w-[calc(100%-0.5rem)]! max-w-full! px-3!" format="DD/MM/YYYY" /> : <textarea className="min-h-18.5! w-full! resize-y! border-0! p-3!" />}</label>)}
                     </div>
                   </div>

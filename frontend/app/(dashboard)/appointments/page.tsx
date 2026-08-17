@@ -11,10 +11,13 @@ import { Checkbox, DatePicker } from "antd";
 import {
   FiArrowLeft,
   FiCheck,
+  FiEdit2,
   FiPlus,
+  FiTrash2,
   FiX,
 } from "react-icons/fi";
 import AddAppointmentModal from "@/components/AddAppointmentModal";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import { downloadApplicationPdf } from "@/components/ApplicationPdf";
 import {
   Field,
@@ -138,7 +141,7 @@ export function ClientDetails({
         <div></div>
       </div>
       <div className="details-layout grid-cols-[220px_minmax(0,1fr)]!">
-        <nav className="sticky top-4 rounded-lg border border-[#c1c9c0] bg-white p-3">
+        <nav className="form-nav sticky top-4 rounded-lg border border-[#c1c9c0] bg-white p-3">
           <p className="m-0 mb-2 text-[10px] font-extrabold text-[#414942]">
             ON THIS PAGE
           </p>
@@ -342,6 +345,7 @@ export function ClientDetails({
                     "Name & Signature",
                     "Date",
                   ]}
+                  dateLabels={["Date"]}
                 />
               </FormSection>
             </div>
@@ -384,6 +388,13 @@ export function ClientDetails({
                     "Name & Signature",
                     "Date",
                   ]}
+                  textareaLabels={[
+                    "Mathematics",
+                    "Presented Problem",
+                    "Identified Problem",
+                    "Remarks",
+                  ]}
+                  dateLabels={["Date"]}
                 />
               </FormSection>
             </div>
@@ -392,7 +403,12 @@ export function ClientDetails({
             <RepeatSection
               id="Remediation & Improvement"
               title="Remediation & Improvement"
-              labels={["Date", "Remediation given", "Improvement seen"]}
+              labels={[
+                "Date",
+                "Remediation given",
+                "Improvement seen",
+                "Doctor / Counsellor Name & Signature",
+              ]}
             />
           )}
           {data.clientType === "Normal" && (
@@ -652,6 +668,8 @@ export default function AppointmentsPage() {
   const router = useRouter();
   const [rows, setRows] = useState<Appointment[]>(seed);
   const [showAdd, setShowAdd] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [dateRange, setDateRange] = useState<
@@ -726,6 +744,7 @@ export default function AppointmentsPage() {
       key: "actions",
       render: (row) => (
         <div className="table-actions">
+         
           {row.status === "Pending" && (
             <>
               <button
@@ -762,6 +781,22 @@ export default function AppointmentsPage() {
               View Details
             </button>
           )}
+           <button
+            className="border-[#333936]! bg-[#333936]! text-white!"
+            title="Edit appointment"
+            aria-label={`Edit ${row.name}`}
+            onClick={() => setAppointmentToEdit(row)}
+          >
+            <FiEdit2 />
+          </button>
+          <button
+            className="border-[#c9252d]! bg-[#c9252d]! text-white!"
+            title="Delete appointment"
+            aria-label={`Delete ${row.name}`}
+            onClick={() => setAppointmentToDelete(row)}
+          >
+            <FiTrash2 />
+          </button>
         </div>
       ),
     },
@@ -800,23 +835,61 @@ export default function AppointmentsPage() {
         onDateRangeChange={setDateRange}
       />
       <AddAppointmentModal
-        open={showAdd}
-        onCancel={() => setShowAdd(false)}
-        onSubmit={(form) => {
-          save([
-            {
-              ...form,
-              id: Date.now(),
-              status: "Pending",
-              createdAt: new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }),
-            },
-            ...rows,
-          ]);
+        open={showAdd || appointmentToEdit !== null}
+        initialValues={
+          appointmentToEdit
+            ? {
+                name: appointmentToEdit.name,
+                age: appointmentToEdit.age,
+                relative: appointmentToEdit.relative,
+                address: appointmentToEdit.address,
+                countryCode: appointmentToEdit.countryCode,
+                phone: appointmentToEdit.phone,
+                clientType: appointmentToEdit.clientType,
+              }
+            : undefined
+        }
+        title={appointmentToEdit ? "Edit appointment" : "New appointment"}
+        submitText={appointmentToEdit ? "Save Changes" : "Create Appointment"}
+        onCancel={() => {
           setShowAdd(false);
+          setAppointmentToEdit(null);
+        }}
+        onSubmit={(form) => {
+          if (appointmentToEdit) {
+            save(
+              rows.map((row) =>
+                row.id === appointmentToEdit.id ? { ...row, ...form } : row,
+              ),
+            );
+          } else {
+            save([
+              {
+                ...form,
+                id: Date.now(),
+                status: "Pending",
+                createdAt: new Date().toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+              },
+              ...rows,
+            ]);
+          }
+          setShowAdd(false);
+          setAppointmentToEdit(null);
+        }}
+      />
+      <DeleteConfirmationModal
+        open={appointmentToDelete !== null}
+        itemName={appointmentToDelete?.name}
+        onCancel={() => setAppointmentToDelete(null)}
+        onConfirm={() => {
+          if (appointmentToDelete) {
+            save(rows.filter((row) => row.id !== appointmentToDelete.id));
+          }
+          setAppointmentToDelete(null);
         }}
       />
 

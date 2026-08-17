@@ -102,12 +102,18 @@ type AddAppointmentModalProps = {
   open: boolean;
   onCancel: () => void;
   onSubmit: (values: AppointmentFormValues) => void;
+  initialValues?: AppointmentFormValues;
+  title?: string;
+  submitText?: string;
 };
 
 export default function AddAppointmentModal({
   open,
   onCancel,
   onSubmit,
+  initialValues,
+  title = "New appointment",
+  submitText = "Create Appointment",
 }: AddAppointmentModalProps) {
   const [form] = Form.useForm<ModalFormValues>();
   const selectedCountry = Form.useWatch("country", form) as Country | undefined;
@@ -123,8 +129,20 @@ export default function AddAppointmentModal({
   );
 
   useEffect(() => {
-    if (open) form.setFieldsValue(blankForm);
-  }, [open, form]);
+    if (!open) return;
+    if (!initialValues) {
+      form.setFieldsValue(blankForm);
+      return;
+    }
+
+    const country = getCountries().find(
+      (item) => `+${getCountryCallingCode(item)}` === initialValues.countryCode,
+    );
+    form.setFieldsValue({
+      ...initialValues,
+      country: country ?? blankForm.country,
+    });
+  }, [open, form, initialValues]);
 
   const handleCountryChange = (country: Country) => {
     const countryCode = `+${getCountryCallingCode(country)}`;
@@ -161,13 +179,13 @@ export default function AddAppointmentModal({
       <Modal
         title={
           <span className="text-lg font-semibold text-[#144229]">
-            New appointment
+            {title}
           </span>
         }
         open={open}
         onCancel={onCancel}
         onOk={handleSubmit}
-        okText="Create Appointment"
+        okText={submitText}
         cancelText="Cancel"
         width="100%"
         style={{ maxWidth: 720, top: 16, paddingBottom: 0 }}

@@ -455,6 +455,20 @@ h6 {
   border: 0;
   border-radius: 0;
 }
+.assessment-date-picker .ant-picker-suffix {
+  padding: 0 !important;
+  background: #fff !important;
+  background-color: #fff !important;
+  box-shadow: none !important;
+}
+.assessment-date-picker .ant-picker-input,
+.assessment-date-picker .ant-picker-input > input {
+  background: transparent !important;
+}
+.assessment-date-picker .ant-picker-suffix svg {
+  background: #fff !important;
+  background-color: #fff !important;
+}
 .malayalam {
   margin: 24px 5px 6px;
   color: var(--muted);
@@ -580,6 +594,9 @@ h6 {
   }
   .text-grid label:last-child {
     border-bottom: 0;
+  }
+  .form-nav {
+    display: none !important;
   }
   .print-header strong {
     font-size: 14px;
