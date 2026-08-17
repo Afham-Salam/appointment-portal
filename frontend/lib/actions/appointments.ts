@@ -271,3 +271,351 @@ export async function getApprovedClients() {
 
   return { clients, error: null }
 }
+
+// Fetch full client details with all related data
+export async function getClientDetails(clientId: string) {
+  const supabase = await createClient()
+
+  // Fetch client
+  const { data: client, error: clientError } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('id', clientId)
+    .single()
+
+  if (clientError || !client) return { error: clientError?.message || 'Client not found', data: null }
+
+const { data: appointment } = await supabase
+  .from('appointments')
+  .select('*')
+  .eq('client_id', clientId)
+  .eq('status', 'Accepted')
+  .order('created_at', { ascending: false })
+  .limit(1)
+  .single()
+
+// Fetch application form separately
+let applicationForm = null
+if (appointment) {
+  const { data } = await supabase
+    .from('application_forms')
+    .select('*')
+    .eq('appointment_id', appointment.id)
+    .single()
+  applicationForm = data
+}
+
+  // Fetch student intake (Student only)
+  const { data: studentIntake } = await supabase
+    .from('student_intake')
+    .select('*')
+    .eq('client_id', clientId)
+    .single()
+
+  // Fetch parents details (Student only)
+  const { data: parentsDetails } = await supabase
+    .from('parents_details')
+    .select('*')
+    .eq('client_id', clientId)
+    .single()
+
+  // Fetch assessment report (Student only)
+  const { data: assessmentReport } = await supabase
+    .from('assessment_reports')
+    .select('*')
+    .eq('client_id', clientId)
+    .single()
+
+  // Fetch mental status exam (Client only)
+  let mentalStatusExam = null
+  if (appointment) {
+    const { data } = await supabase
+      .from('mental_status_exams')
+      .select('*')
+      .eq('appointment_id', appointment.id)
+      .single()
+    mentalStatusExam = data
+  }
+
+  // Fetch remediation entries (Student)
+  const { data: remediationEntries } = await supabase
+    .from('remediation_entries')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('sort_order', { ascending: true })
+
+  // Fetch plan entries (Client)
+  let planEntries: typeof remediationEntries = []
+  if (appointment) {
+    const { data } = await supabase
+      .from('plan_entries')
+      .select('*')
+      .eq('appointment_id', appointment.id)
+      .order('sort_order', { ascending: true })
+    planEntries = data || []
+  }
+
+  return {
+    error: null,
+    data: {
+      client,
+      appointment,
+      applicationForm,
+      studentIntake,
+      parentsDetails,
+      assessmentReport,
+      mentalStatusExam,
+      remediationEntries: remediationEntries || [],
+      planEntries: planEntries || [],
+    },
+  }
+}
+
+// Save application form
+export async function saveApplicationForm(appointmentId: string, currentProblem: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('application_forms')
+    .upsert({ appointment_id: appointmentId, current_problem: currentProblem }, { onConflict: 'appointment_id' })
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Save client basic info
+export async function saveClientInfo(clientId: string, data: {
+  name: string
+  age: string
+  relative: string
+  address: string
+}) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('clients')
+    .update(data)
+    .eq('id', clientId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Save student intake form
+// REPLACE saveStudentIntake
+export async function saveStudentIntake(clientId: string, data: Record<string, string>) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('student_intake')
+    .upsert(
+      { client_id: clientId, form_data: data },
+      { onConflict: 'client_id' }
+    )
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// REPLACE saveParentsDetails
+export async function saveParentsDetails(clientId: string, data: Record<string, string>) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('parents_details')
+    .upsert(
+      { client_id: clientId, form_data: data },
+      { onConflict: 'client_id' }
+    )
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// REPLACE saveAssessmentReport
+export async function saveAssessmentReport(clientId: string, data: Record<string, string>) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('assessment_reports')
+    .upsert(
+      { client_id: clientId, form_data: data },
+      { onConflict: 'client_id' }
+    )
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Save mental status exam
+export async function saveMentalStatusExam(appointmentId: string, data: Record<string, any>) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('mental_status_exams')
+    .upsert(
+      { appointment_id: appointmentId, form_data: data },
+      { onConflict: 'appointment_id' }
+    )
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Add a remediation entry
+export async function addRemediationEntry(clientId: string, data: {
+  entry_date?: string
+  remediation_given: string
+  improvement_seen: string
+  sort_order: number
+}) {
+  const supabase = await createClient()
+
+  const { data: entry, error } = await supabase
+    .from('remediation_entries')
+    .insert({ client_id: clientId, ...data })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+  return { success: true, id: entry.id }
+}
+
+// Update a remediation entry
+export async function updateRemediationEntry(entryId: string, data: {
+  entry_date?: string
+  remediation_given?: string
+  improvement_seen?: string
+}) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('remediation_entries')
+    .update(data)
+    .eq('id', entryId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Delete a remediation entry
+export async function deleteRemediationEntry(entryId: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('remediation_entries')
+    .delete()
+    .eq('id', entryId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Add a plan entry
+export async function addPlanEntry(appointmentId: string, data: {
+  entry_date?: string
+  plan_recommendation: string
+  improvement_seen: string
+  doctor_signature: string
+  sort_order: number
+}) {
+  const supabase = await createClient()
+
+  const { data: entry, error } = await supabase
+    .from('plan_entries')
+    .insert({ appointment_id: appointmentId, ...data })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+  return { success: true, id: entry.id }
+}
+
+// Update a plan entry
+export async function updatePlanEntry(entryId: string, data: {
+  entry_date?: string
+  plan_recommendation?: string
+  improvement_seen?: string
+  doctor_signature?: string
+}) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('plan_entries')
+    .update(data)
+    .eq('id', entryId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Delete a plan entry
+export async function deletePlanEntry(entryId: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('plan_entries')
+    .delete()
+    .eq('id', entryId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Get database storage usage
+export async function getStorageUsage() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .rpc('get_db_size')
+
+  if (error) return { error: error.message, used: 0, limit: 500 }
+  return { used: data || 0, limit: 500, error: null } // 500 MB free tier
+}
+
+// Delete all appointment data older than a given date
+export async function deleteDataBeforeDate(beforeDate: string) {
+  const supabase = await createClient()
+
+  // Get appointments before the date
+  const { data: oldAppointments } = await supabase
+    .from('appointments')
+    .select('id, client_id')
+    .lt('created_at', beforeDate)
+
+  if (!oldAppointments || oldAppointments.length === 0) {
+    return { deleted: 0, error: null }
+  }
+
+  const appointmentIds = oldAppointments.map((a) => a.id)
+  const clientIds = [...new Set(oldAppointments.map((a) => a.client_id))]
+
+  // Check which clients still have newer appointments
+  const { data: activeClients } = await supabase
+    .from('appointments')
+    .select('client_id')
+    .gte('created_at', beforeDate)
+    .in('client_id', clientIds)
+
+  const activeClientIds = new Set((activeClients || []).map((a) => a.client_id))
+  const orphanedClientIds = clientIds.filter((id) => !activeClientIds.has(id))
+
+  // Delete in order (cascades handle related tables)
+  // 1. Delete old appointments (cascades: application_forms, mental_status_exams, plan_entries)
+  const { error: aptError } = await supabase
+    .from('appointments')
+    .delete()
+    .in('id', appointmentIds)
+
+  if (aptError) return { error: aptError.message, deleted: 0 }
+
+  // 2. Delete orphaned clients (cascades: student_intake, parents_details, assessment_reports, remediation_entries)
+  if (orphanedClientIds.length > 0) {
+    await supabase
+      .from('clients')
+      .delete()
+      .in('id', orphanedClientIds)
+  }
+
+  return { deleted: oldAppointments.length, error: null }
+}

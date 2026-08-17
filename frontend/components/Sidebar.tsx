@@ -9,6 +9,7 @@ import {
   FiGrid,
   FiLogOut,
   FiPlus,
+  FiSettings,
   FiUser,
   FiUsers,
 } from "react-icons/fi";
@@ -27,6 +28,7 @@ const navigation:NavItem[] = [
   { href: "/clients", icon: FiUsers, label: "Clients List", roles: ["admin"] },
   { href: "/notification", icon: FiBell, label: "Notifications", roles: ["admin"] },
   { href: "/profile", icon: FiUser, label: "My profile", roles: ["admin"] },
+  { href: "/settings", icon: FiSettings, label: "Settings", roles: ["admin"] },
 ] as const;
 
 

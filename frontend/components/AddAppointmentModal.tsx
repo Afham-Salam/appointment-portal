@@ -404,11 +404,10 @@ export default function AddAppointmentModal({
               <Select
                 className="w-full [&_.ant-select-selector]:rounded-md!"
                 classNames={{ popup: { root: selectPopupClassName } }}
-                options={[
-                  { value: "Student", label: "Student" },
-                  { value: "Parent", label: "Parent" },
-                  { value: "Normal", label: "Normal" },
-                ]}
+             options={[
+  { value: "Student", label: "Student" },
+  { value: "Client", label: "Client" },
+]}
               />
             </Form.Item>
 
