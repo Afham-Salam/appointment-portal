@@ -17,13 +17,18 @@ import {
   FiTrash2,
   FiX,
 } from "react-icons/fi";
-import AddAppointmentModal from "@/components/AddAppointmentModal";
+import AddAppointmentModal,{ type AppointmentFormValues } from "@/components/AddAppointmentModal";
 import { downloadApplicationPdf } from "@/components/ApplicationPdf";
+import {
+  getAppointments,
+  createAppointment,
+  updateAppointmentStatus,
+} from "@/lib/actions/appointments";
 
 type Status = "Pending" | "Accepted" | "Rejected";
-type ClientType = "Student" | "Parent" | "Normal";
+export type ClientType = "Student" | "Client";
 export type Appointment = {
-  id: number;
+  id: string;          // changed from number to string
   name: string;
   age: string;
   relative: string;
@@ -33,34 +38,8 @@ export type Appointment = {
   clientType: ClientType;
   status: Status;
   createdAt: string;
+  clientId: string;    // new — links to the client record
 };
-
-const seed: Appointment[] = [
-  {
-    id: 1,
-    name: "Amelia Carter",
-    age: "28",
-    relative: "",
-    address: "",
-    countryCode: "+91",
-    phone: "9061200099",
-    clientType: "Normal",
-    status: "Accepted",
-    createdAt: "Aug 10, 2026",
-  },
-  {
-    id: 2,
-    name: "Noah Williams",
-    age: "14",
-    relative: "David Williams",
-    address: "",
-    countryCode: "+91",
-    phone: "7306941801",
-    clientType: "Student",
-    status: "Pending",
-    createdAt: "Aug 11, 2026",
-  },
-];
 
 function Field({
   label,
@@ -180,17 +159,24 @@ export function ClientDetails({
   const [data, setData] = useState(appointment);
   const [currentProblem, setCurrentProblem] = useState("");
   const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const [open, setOpen] = useState<string[]>([
-    "Application Form",
-    ...(appointment.clientType === "Student"
-      ? ["Student Intake Form", "Remediation & Improvement"]
-      : []),
-    "Parents' Details",
-    "Assessment Report",
-    ...(appointment.clientType === "Normal"
-      ? ["Mental Status Exam", "Plans"]
-      : []),
-  ]);
+const [open, setOpen] = useState<string[]>([
+  "Application Form",
+  ...(appointment.clientType === "Student"
+    ? ["Student Intake Form", "Remediation & Improvement", "Parents' Details", "Assessment Report"]
+    : ["Mental Status Exam", "Plans"]),
+]);
+
+const navigationItems = [
+  "Application Form",
+  ...(data.clientType === "Student"
+    ? [
+        "Student Intake Form",
+        "Parents' Details",
+        "Assessment Report",
+        "Remediation & Improvement",
+      ]
+    : ["Mental Status Exam", "Plans"]),
+];
   const [editing, setEditing] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("Application Form");
   const toggle = (name: string) =>
@@ -198,23 +184,7 @@ export function ClientDetails({
       items.includes(name) ? items.filter((x) => x !== name) : [...items, name],
     );
   const editable = (name: string) => editing === name;
-  const navigationItems = [
-    "Application Form",
-    ...(data.clientType === "Student"
-      ? [
-          "Student Intake Form",
-          "Parents' Details",
-          "Assessment Report",
-          "Remediation & Improvement",
-        ]
-      : []),
-    ...(data.clientType === "Normal"
-      ? ["Mental Status Exam", "Plans"]
-      : []),
-    ...(data.clientType === "Parent"
-      ? ["Parents' Details", "Assessment Report"]
-      : []),
-  ];
+  
   const set = (key: keyof Appointment, value: string) =>
     setData((d) => ({ ...d, [key]: value }));
   useEffect(() => {
@@ -408,7 +378,7 @@ export function ClientDetails({
               </FormSection>
             </div>
           )}
-          {(data.clientType === "Student" || data.clientType === "Parent") && (
+          {data.clientType === "Student"  && (
             <div id="Parents' Details">
               <FormSection
                 title="Parents' Details"
@@ -449,7 +419,7 @@ export function ClientDetails({
               </FormSection>
             </div>
           )}
-          {(data.clientType === "Student" || data.clientType === "Parent") && (
+          {data.clientType === "Student" && (
             <div id="Assessment Report">
               <FormSection
                 title="Assessment Report"
@@ -498,7 +468,7 @@ export function ClientDetails({
               labels={["Date", "Remediation given", "Improvement seen"]}
             />
           )}
-          {data.clientType === "Normal" && (
+          {data.clientType === "Client" && (
             <div id="Mental Status Exam">
               <FormSection
                 title="Mental Status Exam"
@@ -733,7 +703,7 @@ export function ClientDetails({
               </FormSection>
             </div>
           )}
-          {data.clientType === "Normal" && (
+          {data.clientType === "Client" && (
             <RepeatSection
               id="Plans"
               title="Plans"
@@ -845,7 +815,9 @@ function RepeatSection({
 
 export default function AppointmentsPage() {
   const router = useRouter();
-  const [rows, setRows] = useState<Appointment[]>(seed);
+  const [rows, setRows] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -853,20 +825,19 @@ export default function AppointmentsPage() {
     [Dayjs | null, Dayjs | null] | null
   >(null);
 
+  const fetchAppointments = async () => {
+    const { appointments, error } = await getAppointments();
+    if (!error) setRows(appointments);
+    setLoading(false);
+  };
+ 
   useEffect(() => {
-    const saved = localStorage.getItem("treasure-appointments");
-    if (saved) {
-      try {
-        setRows(JSON.parse(saved) as Appointment[]);
-      } catch {
-        setRows(seed);
-      }
-    }
+    fetchAppointments();
   }, []);
 
-  const save = (next: Appointment[]) => {
-    setRows(next);
-    localStorage.setItem("treasure-appointments", JSON.stringify(next));
+  const handleStatusChange = async (id: string, status: "Accepted" | "Rejected") => {
+    const result = await updateAppointmentStatus(id, status);
+    if (!result.error) fetchAppointments(); // refresh the list
   };
   const filtered = useMemo(
     () =>
@@ -926,11 +897,7 @@ export default function AppointmentsPage() {
               <button
                 title="Accept"
                 onClick={() =>
-                  save(
-                    rows.map((r) =>
-                      r.id === row.id ? { ...r, status: "Accepted" } : r,
-                    ),
-                  )
+                  handleStatusChange(row.id, "Accepted")
                 }
               >
                 <FiCheck />
@@ -938,11 +905,7 @@ export default function AppointmentsPage() {
               <button
                 title="Reject"
                 onClick={() =>
-                  save(
-                    rows.map((r) =>
-                      r.id === row.id ? { ...r, status: "Rejected" } : r,
-                    ),
-                  )
+               handleStatusChange(row.id, "Accepted")
                 }
               >
                 <FiX />
@@ -961,6 +924,20 @@ export default function AppointmentsPage() {
       ),
     },
   ];
+   const handleCreateAppointment = async (form: AppointmentFormValues) => {
+    setSubmitting(true);
+    const result = await createAppointment(form);
+    setSubmitting(false);
+ 
+    if (result.error) {
+      // handle error (alert or toast)
+      alert(result.error);
+      return;
+    }
+ 
+    setShowAdd(false);
+    fetchAppointments(); // refresh the list
+  };
   return (
     <>
       <div className="mb-5 mt-4 flex flex-col gap-4 sm:mb-6 sm:mt-7 sm:flex-row sm:items-start sm:justify-between">
@@ -997,22 +974,8 @@ export default function AppointmentsPage() {
       <AddAppointmentModal
         open={showAdd}
         onCancel={() => setShowAdd(false)}
-        onSubmit={(form) => {
-          save([
-            {
-              ...form,
-              id: Date.now(),
-              status: "Pending",
-              createdAt: new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }),
-            },
-            ...rows,
-          ]);
-          setShowAdd(false);
-        }}
+          onSubmit={handleCreateAppointment}
+          loading={submitting}
       />
 
       <section className="content-card w-full overflow-hidden">
