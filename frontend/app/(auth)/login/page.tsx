@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   FiEye,
@@ -13,11 +12,27 @@ import {
 } from "react-icons/fi";
 import loginImage from "@/public/login.webp";
 import { FaArrowRightLong } from "react-icons/fa6";
+import { login } from "@/lib/actions/auth";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("Staff");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const formData = new FormData(event.currentTarget);
+    const result = await login(formData);
+
+    if (result?.error) {
+      setError(result.error);
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#faf9f6] md:flex md:items-center md:justify-center md:p-0">
@@ -51,6 +66,7 @@ export default function LoginPage() {
                 For the people who need help
               </p>
             </header>
+
             <div className="flex justify-center">
               <div className="inline-flex gap-1 rounded-md bg-gray-100 p-1 shadow-md">
                 {(
@@ -75,23 +91,26 @@ export default function LoginPage() {
                 ))}
               </div>
             </div>
-            <form
-              className="flex flex-col gap-6"
-              onSubmit={(event) => {
-                event.preventDefault();
-                router.push("/dashboard");
-              }}
-            >
+
+            <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+              {error && (
+                <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {error}
+                </p>
+              )}
+
               <label className="group relative flex items-center border-b border-gray-300 pb-2 transition-colors focus-within:border-[#5e8753]">
                 <FiMail className="mr-3 h-5 w-5 shrink-0 text-gray-400" />
                 <input
                   className="w-full border-0 bg-transparent py-2 text-gray-800 outline-none placeholder:text-gray-500 focus:ring-0"
                   name="email"
-                  placeholder="Email or Phone Number"
-                  type="text"
+                  placeholder="Email"
+                  type="email"
                   autoComplete="email"
+                  required
                 />
               </label>
+
               <label className="group relative flex items-center border-b border-gray-300 pb-2 transition-colors focus-within:border-[#5e8753]">
                 <FiLock className="mr-3 h-5 w-5 shrink-0 text-gray-400" />
                 <input
@@ -100,6 +119,7 @@ export default function LoginPage() {
                   placeholder="Password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
+                  required
                 />
                 <button
                   type="button"
@@ -110,6 +130,7 @@ export default function LoginPage() {
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </label>
+
               <div className="flex items-center justify-between pt-2 text-sm text-gray-600">
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
@@ -126,16 +147,19 @@ export default function LoginPage() {
                   Forgot Password?
                 </a>
               </div>
+
               <button
-                className="cursor-pointer mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-[#2D5A3F] px-4 py-4 text-lg font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#16482b] focus:outline-none focus:ring-2 focus:ring-[#2D5A3F] focus:ring-offset-2"
+                className="cursor-pointer mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-[#2D5A3F] px-4 py-4 text-lg font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#16482b] focus:outline-none focus:ring-2 focus:ring-[#2D5A3F] focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0"
                 type="submit"
+                disabled={loading}
               >
-                Log In
-                <FaArrowRightLong className="h-4 w-4 shrink-0" />
+                {loading ? "Logging in\u2026" : "Log In"}
+                {!loading && <FaArrowRightLong className="h-4 w-4 shrink-0" />}
               </button>
             </form>
           </div>
         </section>
+
         <section
           className="relative hidden min-h-screen w-1/2 bg-gray-50 md:block"
           aria-label="Mental health awareness illustration"

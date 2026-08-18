@@ -1,5 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Manrope, Source_Serif_4 } from "next/font/google";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -16,9 +19,6 @@ export const metadata: Metadata = {
   title: "Treasure | Appointment Portal",
   description: "Manage appointments and clients with Treasure.",
 };
-
-import type { ReactNode } from "react";
-import { AntdRegistry } from "@ant-design/nextjs-registry";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

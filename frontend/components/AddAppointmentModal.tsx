@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { ConfigProvider, Form, Input, Modal, Select } from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { ConfigProvider, Form, Input, Modal, Select, Alert,DatePicker  } from "antd";
 import {
   getCountries,
   getCountryCallingCode,
@@ -11,8 +11,10 @@ import {
 import en from "react-phone-number-input/locale/en";
 import flags from "react-phone-number-input/flags";
 import "react-phone-number-input/style.css";
+import { searchClientByPhone } from "@/lib/actions/appointments";
+import dayjs from "dayjs";
 
-export type ClientType = "Student" | "Parent" | "Normal";
+export type ClientType = "Student" | "Client";
 
 export type AppointmentFormValues = {
   name: string;
@@ -22,6 +24,7 @@ export type AppointmentFormValues = {
   countryCode: string;
   phone: string;
   clientType: ClientType;
+   scheduledDate?: string;
 };
 
 type ModalFormValues = AppointmentFormValues & {
@@ -37,6 +40,7 @@ const blankForm: ModalFormValues = {
   countryCode: "+91",
   phone: "",
   clientType: "Student",
+   scheduledDate: null as unknown as string,
 };
 
 const themeConfig = {
@@ -102,6 +106,7 @@ type AddAppointmentModalProps = {
   open: boolean;
   onCancel: () => void;
   onSubmit: (values: AppointmentFormValues) => void;
+  loading?: boolean;
   initialValues?: AppointmentFormValues;
   title?: string;
   submitText?: string;
@@ -111,12 +116,19 @@ export default function AddAppointmentModal({
   open,
   onCancel,
   onSubmit,
+  loading = false,
   initialValues,
   title = "New appointment",
   submitText = "Create Appointment",
 }: AddAppointmentModalProps) {
   const [form] = Form.useForm<ModalFormValues>();
   const selectedCountry = Form.useWatch("country", form) as Country | undefined;
+  const [lookupStatus, setLookupStatus] = useState<
+    "idle" | "searching" | "found" | "not_found"
+  >("idle");
+  const [pastAppointments, setPastAppointments] = useState<
+    { id: string; status: string; created_at: string }[]
+  >([]);
 
   const countryOptions = useMemo(
     () =>
@@ -130,6 +142,9 @@ export default function AddAppointmentModal({
 
   useEffect(() => {
     if (!open) return;
+    setLookupStatus("idle");
+    setPastAppointments([]);
+
     if (!initialValues) {
       form.setFieldsValue(blankForm);
       return;
@@ -143,6 +158,34 @@ export default function AddAppointmentModal({
       country: country ?? blankForm.country,
     });
   }, [open, form, initialValues]);
+
+  const handlePhoneLookup = async (digits: string) => {
+    if (digits.length < 7) {
+      setLookupStatus("idle");
+      setPastAppointments([]);
+      return;
+    }
+
+    setLookupStatus("searching");
+    const result = await searchClientByPhone(digits);
+
+    if (result.client) {
+      setLookupStatus("found");
+      setPastAppointments(result.appointments);
+
+      // Auto-fill form with existing client data
+      form.setFieldsValue({
+        name: result.client.name,
+        age: result.client.age || "",
+        relative: result.client.relative || "",
+        address: result.client.address || "",
+        clientType: result.client.client_type as ClientType,
+      });
+    } else {
+      setLookupStatus("not_found");
+      setPastAppointments([]);
+    }
+  };
 
   const handleCountryChange = (country: Country) => {
     const countryCode = `+${getCountryCallingCode(country)}`;
@@ -164,10 +207,11 @@ export default function AddAppointmentModal({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const { country, ...rest } = values;
+      const { country,scheduledDate, ...rest } = values;
       onSubmit({
         ...rest,
         countryCode: `+${getCountryCallingCode(country)}`,
+         scheduledDate: scheduledDate ? dayjs(scheduledDate).format("YYYY-MM-DD") : undefined,
       });
     } catch {
       /* validation errors shown by antd */
@@ -185,7 +229,7 @@ export default function AddAppointmentModal({
         open={open}
         onCancel={onCancel}
         onOk={handleSubmit}
-        okText={submitText}
+        okText={lookupStatus === "found" ? "Reschedule Appointment" : submitText}
         cancelText="Cancel"
         width="100%"
         style={{ maxWidth: 720, top: 16, paddingBottom: 0 }}
@@ -194,6 +238,7 @@ export default function AddAppointmentModal({
           body: { maxHeight: "70vh", overflowY: "auto" },
         }}
         destroyOnHidden
+        confirmLoading={loading}
         okButtonProps={{
           className:
             "h-11! bg-[#2D5A3F]! font-semibold! text-white! hover:bg-[#16482b]! hover:text-white!",
@@ -213,6 +258,123 @@ export default function AddAppointmentModal({
           <Form.Item name="countryCode" hidden>
             <Input />
           </Form.Item>
+
+          {/* Phone field FIRST so lookup happens before filling other fields */}
+          <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3">
+            <Form.Item
+              label="Code"
+              name="country"
+              rules={[{ required: true, message: "Select country" }]}
+            >
+              <Select
+                showSearch
+                onChange={handleCountryChange}
+                className="w-full [&_.ant-select-selector]:rounded-md!"
+                classNames={{ popup: { root: selectPopupClassName } }}
+                optionLabelProp="selected"
+                filterOption={(input, option) =>
+                  String(option?.search ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                options={countryOptions.map((option) => ({
+                  ...option,
+                  selected: <CountryOptionLabel country={option.value} />,
+                }))}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="Phone"
+              name="phone"
+              validateFirst
+              rules={[
+                { required: true, message: "Phone is required" },
+                {
+                  validator: async (_, value) => {
+                    const digits = String(value ?? "").replace(/\D/g, "");
+                    if (!digits) return Promise.resolve();
+
+                    const country =
+                      (form.getFieldValue("country") as Country) || "IN";
+                    const fullNumber = `+${getCountryCallingCode(country)}${digits}`;
+
+                    if (!isValidPhoneNumber(fullNumber)) {
+                      return Promise.reject(
+                        new Error(
+                          `Enter a valid ${en[country] ?? "country"} phone number`,
+                        ),
+                      );
+                    }
+
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <Input
+                inputMode="numeric"
+                placeholder={
+                  selectedCountry === "IN"
+                    ? "10-digit mobile number"
+                    : "Enter phone number"
+                }
+                className="rounded-md!"
+                onChange={(event) => {
+                  const digits = event.target.value.replace(/\D/g, "");
+                  form.setFieldValue("phone", digits);
+                  handlePhoneLookup(digits);
+                }}
+              />
+            </Form.Item>
+          </div>
+
+          {/* Returning client banner */}
+          {lookupStatus === "found" && (
+            <Alert
+              type="success"
+              showIcon
+              className="mb-4!"
+              title="Returning client found"
+              description={
+                <div>
+                  <p className="m-0 text-sm">
+                    Client details auto-filled. They have{" "}
+                    <strong>{pastAppointments.length}</strong> previous
+                    appointment{pastAppointments.length !== 1 ? "s" : ""}.
+                  </p>
+                  {pastAppointments.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {pastAppointments.map((apt) => (
+                        <span
+                          key={apt.id}
+                          className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            apt.status === "Accepted"
+                              ? "bg-green-100 text-green-800"
+                              : apt.status === "Pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {apt.status} —{" "}
+                          {new Date(apt.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              }
+            />
+          )}
+
+          {lookupStatus === "searching" && (
+            <p className="mb-4 text-xs text-[#414942]">
+              Checking for existing client...
+            </p>
+          )}
 
           <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
             <Form.Item
@@ -259,11 +421,10 @@ export default function AddAppointmentModal({
               <Select
                 className="w-full [&_.ant-select-selector]:rounded-md!"
                 classNames={{ popup: { root: selectPopupClassName } }}
-                options={[
-                  { value: "Student", label: "Student" },
-                  { value: "Parent", label: "Parent" },
-                  { value: "Normal", label: "Normal" },
-                ]}
+             options={[
+  { value: "Student", label: "Student" },
+  { value: "Client", label: "Client" },
+]}
               />
             </Form.Item>
 
@@ -278,74 +439,19 @@ export default function AddAppointmentModal({
                 className="min-h-24! rounded-md! resize-y!"
               />
             </Form.Item>
-
-            <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3 sm:col-span-2">
-              <Form.Item
-                label="Code"
-                name="country"
-                rules={[{ required: true, message: "Select country" }]}
-              >
-                <Select
-                  showSearch
-                  onChange={handleCountryChange}
-                  className="w-full [&_.ant-select-selector]:rounded-md!"
-                  classNames={{ popup: { root: selectPopupClassName } }}
-                  optionLabelProp="selected"
-                  filterOption={(input, option) =>
-                    String(option?.search ?? "")
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  options={countryOptions.map((option) => ({
-                    ...option,
-                    selected: <CountryOptionLabel country={option.value} />,
-                  }))}
-                />
-              </Form.Item>
-
-              <Form.Item
-                label="Phone"
-                name="phone"
-                validateFirst
-                rules={[
-                  { required: true, message: "Phone is required" },
-                  {
-                    validator: async (_, value) => {
-                      const digits = String(value ?? "").replace(/\D/g, "");
-                      if (!digits) return Promise.resolve();
-
-                      const country =
-                        (form.getFieldValue("country") as Country) || "IN";
-                      const fullNumber = `+${getCountryCallingCode(country)}${digits}`;
-
-                      if (!isValidPhoneNumber(fullNumber)) {
-                        return Promise.reject(
-                          new Error(
-                            `Enter a valid ${en[country] ?? "country"} phone number`,
-                          ),
-                        );
-                      }
-
-                      return Promise.resolve();
-                    },
-                  },
-                ]}
-              >
-                <Input
-                  inputMode="numeric"
-                  placeholder={
-                    selectedCountry === "IN"
-                      ? "10-digit mobile number"
-                      : "Enter phone number"
-                  }
-                  className="rounded-md!"
-                  onChange={(event) => {
-                    const digits = event.target.value.replace(/\D/g, "");
-                    form.setFieldValue("phone", digits);
-                  }}
-                />
-              </Form.Item>
-            </div>
+            <Form.Item
+              label="Appointment Date"
+              name="scheduledDate"
+              className="sm:col-span-2"
+              rules={[{ required: true, message: "Appointment date is required" }]}
+            >
+              <DatePicker
+                format="DD/MM/YYYY"
+                className="w-full! rounded-md!"
+                disabledDate={(current) => current && current < dayjs().startOf("day")}
+                placeholder="Select appointment date"
+              />
+            </Form.Item>
           </div>
         </Form>
       </Modal>

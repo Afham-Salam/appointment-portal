@@ -1,92 +1,71 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DataTable, Column } from "@/components/DataTable";
+import { DataTable, type Column } from "@/components/DataTable";
 import { FilterHeader } from "@/components/FilterHeader";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
+import { getApprovedClients } from "@/lib/actions/appointments";
 import type { Appointment } from "../appointments/page";
 import { FiDownload } from "react-icons/fi";
 import ReportDownloadModal from "@/components/ReportDownloadModal";
 
 type ClientRow = {
-  id: number;
+  id: string;
   name: string;
-  email: string;
-  lastVisit: string;
-  status: string;
   phone: string;
+  countryCode: string;
   clientType: string;
+  createdAt: string;
+  totalAppointments: number;
+  scheduledDate: string;
 };
 
-const STATUS_OPTIONS = [
-  { value: "all", label: "All Statuses" },
-  { value: "Active", label: "Active" },
-  { value: "Inactive", label: "Inactive" },
+const TYPE_OPTIONS = [
+  { value: "all", label: "All Types" },
+  { value: "Student", label: "Student" },
+  { value: "Client", label: "Client" },
 ];
-
-function appointmentsToClients(rows: Appointment[]): ClientRow[] {
-  return rows
-    .filter((row) => row.status === "Accepted")
-    .map((row) => ({
-      id: row.id,
-      name: row.name,
-      email: `${row.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
-      lastVisit: row.createdAt,
-      status: "Active",
-      phone: `${row.countryCode} ${row.phone}`.trim(),
-      clientType: row.clientType,
-    }));
-}
 
 export default function ClientsPage() {
   const router = useRouter();
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all");
-  const [dateRange, setDateRange] = useState<
-    [Dayjs | null, Dayjs | null] | null
-  >(null);
+const [page, setPage] = useState(1);
+const [total, setTotal] = useState(0);
+const pageSize = 10;
+  const [selectedType, setSelectedType] = useState("all");
+const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>([dayjs().startOf("day"), dayjs().endOf("day")]);
   const [reportClient, setReportClient] = useState<ClientRow | null>(null);
 
   const openReportModal = (client: ClientRow) => {
     setReportClient(client);
   };
 
-  useEffect(() => {
-    const saved = localStorage.getItem("treasure-appointments");
-    const rows: Appointment[] = saved ? JSON.parse(saved) : [];
-    setClients(appointmentsToClients(rows));
-  }, []);
 
-  const filteredClients = useMemo(() => {
-    return clients.filter((row) => {
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        if (
-          !row.name.toLowerCase().includes(q) &&
-          !row.email.toLowerCase().includes(q) &&
-          !row.phone.toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      if (selectedStatus !== "all" && row.status !== selectedStatus) {
-        return false;
-      }
-      if (dateRange?.[0] && dateRange?.[1]) {
-        const rowDate = dayjs(row.lastVisit, "MMM D, YYYY");
-        if (
-          rowDate.isBefore(dateRange[0].startOf("day")) ||
-          rowDate.isAfter(dateRange[1].endOf("day"))
-        ) {
-          return false;
-        }
-      }
-      return true;
+ useEffect(() => {
+  async function fetch() {
+    setLoading(true);
+    const { clients: data, total: count } = await getApprovedClients({
+      page,
+      pageSize,
+      search: searchQuery || undefined,
+      clientType: selectedType !== 'all' ? selectedType : undefined,
+      dateFrom: dateRange?.[0]?.format('YYYY-MM-DD') || undefined,
+      dateTo: dateRange?.[1]?.format('YYYY-MM-DD') || undefined,
     });
-  }, [clients, searchQuery, selectedStatus, dateRange]);
+    setClients(data.map((c) => ({
+      ...c,
+      phone: `${c.countryCode} ${c.phone}`.trim(),
+    })));
+    setTotal(count);
+    setLoading(false);
+  }
+  fetch();
+}, [page, searchQuery, selectedType, dateRange]);
+
 
   const columns: Column<ClientRow>[] = [
     {
@@ -104,18 +83,13 @@ export default function ClientsPage() {
         </span>
       ),
     },
-    { title: "Email", key: "email" },
     { title: "Type", key: "clientType" },
-    { title: "Last visit", key: "lastVisit" },
     {
-      title: "Status",
-      key: "status",
-      render: (row) => (
-        <span className={`status ${row.status.toLowerCase()}`}>
-          {row.status}
-        </span>
-      ),
+      title: "Appointments",
+      key: "totalAppointments",
+      render: (row) => <span className="font-medium">{row.totalAppointments}</span>,
     },
+    { title: "Joined", key: "createdAt" },
     {
       title: "Actions",
       key: "actions",
@@ -154,16 +128,22 @@ export default function ClientsPage() {
       <FilterHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search by name, email, or phone..."
-        selectedStatus={selectedStatus}
-        onStatusChange={setSelectedStatus}
-        statusOptions={STATUS_OPTIONS}
+        searchPlaceholder="Search by name, phone, or type..."
+        selectedStatus={selectedType}
+        onStatusChange={setSelectedType}
+        statusOptions={TYPE_OPTIONS}
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
       />
 
       <section className="content-card">
-        <DataTable columns={columns} data={filteredClients} pageSize={10} />
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-sm text-[#414942]">
+            Loading clients...
+          </div>
+        ) : (
+          <DataTable columns={columns} data={clients} pageSize={10} />
+        )}
       </section>
 
       <ReportDownloadModal

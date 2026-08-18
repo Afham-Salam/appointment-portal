@@ -13,31 +13,44 @@ import {
   FiUser,
   FiUsers,
 } from "react-icons/fi";
+import { logout } from "@/lib/actions/auth";
 
-const navigation = [
-  { href: "/dashboard", icon: FiGrid, label: "Dashboard" },
-  { href: "/appointments", icon: FiCalendar, label: "Appointments" },
-  { href: "/clients", icon: FiUsers, label: "Clients List" },
-  { href: "/notification", icon: FiBell, label: "Notifications" },
-  { href: "/profile", icon: FiUser, label: "My profile" },
-  // { href: "/settings", icon: FiSettings, label: "Settings" },
+type UserRole = "admin" | "staff";
+type NavItem = {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  roles: UserRole[];
+};
+const navigation:NavItem[] = [
+  { href: "/dashboard", icon: FiGrid, label: "Dashboard", roles: ["admin", "staff"] },
+  { href: "/appointments", icon: FiCalendar, label: "Appointments", roles: ["admin", "staff"] },
+  { href: "/clients", icon: FiUsers, label: "Clients List", roles: ["admin"] },
+  { href: "/notification", icon: FiBell, label: "Notifications", roles: ["admin"] },
+  { href: "/profile", icon: FiUser, label: "My profile", roles: ["admin"] },
+  { href: "/settings", icon: FiSettings, label: "Settings", roles: ["admin"] },
 ] as const;
 
+
 type SidebarProps = {
+  role: UserRole;
   mobile?: boolean;
   mobileOpen?: boolean;
   onNavigate?: () => void;
 };
 
 export default function Sidebar({
+  role,
   mobile = false,
   mobileOpen = false,
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
+
+  const visibleNav = navigation.filter((item) => item.roles.includes(role));
+
   const current =
-    navigation.find((item) => pathname.startsWith(item.href))?.href ??
+    visibleNav.find((item) => pathname.startsWith(item.href))?.href ??
     "/dashboard";
 
   return (
@@ -70,7 +83,7 @@ export default function Sidebar({
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">
-        {navigation.map(({ href, icon: Icon, label }) => {
+        {visibleNav.map(({ href, icon: Icon, label }) => {
           const active = current === href;
           return (
             <Link
@@ -93,17 +106,15 @@ export default function Sidebar({
         })}
       </nav>
 
-      <button
-        type="button"
-        onClick={() => {
-          onNavigate?.();
-          router.push("/login");
-        }}
-        className="cursor-pointer mt-auto flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white/70 hover:text-[#2D5A3F]"
-      >
-        <FiLogOut className="h-5 w-5 shrink-0" />
-        Logout
-      </button>
+      <form action={logout}>
+        <button
+          type="submit"
+          className="cursor-pointer mt-auto flex w-full items-center gap-3 rounded-md px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-white/70 hover:text-[#2D5A3F]"
+        >
+          <FiLogOut className="h-5 w-5 shrink-0" />
+          Logout
+        </button>
+      </form>
     </aside>
   );
 }

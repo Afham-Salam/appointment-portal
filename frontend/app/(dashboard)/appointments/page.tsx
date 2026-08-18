@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { DataTable, type Column } from "@/components/DataTable";
@@ -16,20 +16,37 @@ import {
   FiTrash2,
   FiX,
 } from "react-icons/fi";
-import AddAppointmentModal from "@/components/AddAppointmentModal";
+import AddAppointmentModal,{ type AppointmentFormValues } from "@/components/AddAppointmentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
-import { downloadApplicationPdf } from "@/components/ApplicationPdf";
+import { downloadApplicationPdf,printApplicationPdf  } from "@/components/ApplicationPdf";
+import {
+  getAppointments,
+  createAppointment,
+  updateAppointmentStatus,
+  deleteAppointment,
+  updateAppointmentDetails 
+} from "@/lib/actions/appointments";
+
 import {
   Field,
   FormSection,
   RepeatSection,
   TextGrid,
+   type RemediationRow,
 } from "@/components/ClientDetailSections";
+import {
+  saveClientInfo,
+  saveApplicationForm,
+  saveStudentIntake,
+  saveParentsDetails,
+  saveAssessmentReport,
+  saveMentalStatusExam,
+} from "@/lib/actions/appointments";
 
 type Status = "Pending" | "Accepted" | "Rejected";
-type ClientType = "Student" | "Parent" | "Normal";
+export type ClientType = "Student" | "Client";
 export type Appointment = {
-  id: number;
+  id: string;          // changed from number to string
   name: string;
   age: string;
   relative: string;
@@ -39,65 +56,73 @@ export type Appointment = {
   clientType: ClientType;
   status: Status;
   createdAt: string;
+  clientId: string;    // new — links to the client record
 };
 
-const seed: Appointment[] = [
-  {
-    id: 1,
-    name: "Amelia Carter",
-    age: "28",
-    relative: "",
-    address: "",
-    countryCode: "+91",
-    phone: "9061200099",
-    clientType: "Normal",
-    status: "Accepted",
-    createdAt: "Aug 10, 2026",
-  },
-  {
-    id: 2,
-    name: "Noah Williams",
-    age: "14",
-    relative: "David Williams",
-    address: "",
-    countryCode: "+91",
-    phone: "7306941801",
-    clientType: "Student",
-    status: "Pending",
-    createdAt: "Aug 11, 2026",
-  },
-];
+
 
 export function ClientDetails({
   appointment,
+  clientData,
   onBack,
   backLabel = "Appointments",
 }: {
   appointment: Appointment;
+  clientData?: {
+    client: any;
+    appointment: any;
+    applicationForm: any;
+    studentIntake: any;
+    parentsDetails: any;
+    assessmentReport: any;
+    mentalStatusExam: any;
+    remediationEntries: any[];
+    planEntries: any[];
+  } | null;
   onBack: () => void;
   backLabel?: string;
 }) {
   const [data, setData] = useState(appointment);
-  const [currentProblem, setCurrentProblem] = useState("");
+  const [currentProblem, setCurrentProblem] = useState(
+    clientData?.applicationForm?.current_problem || ""
+  );
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [saving, setSaving] = useState(false);
+ 
+  // TextGrid values for each section
+const [studentIntakeValues, setStudentIntakeValues] = useState<Record<string, string>>(
+  clientData?.studentIntake?.form_data || {}
+);
+const [parentsDetailsValues, setParentsDetailsValues] = useState<Record<string, string>>(
+  clientData?.parentsDetails?.form_data || {}
+);
+const [assessmentReportValues, setAssessmentReportValues] = useState<Record<string, string>>(
+  clientData?.assessmentReport?.form_data || {}
+);
+ 
+  // Mental status exam state
+const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>>(
+  clientData?.mentalStatusExam?.form_data || {}
+);
+ 
+  // Remediation entries
+  const remediationEntries: RemediationRow[] = (clientData?.remediationEntries || []).map(
+    (e: any) => ({
+      id: e.id,
+      entry_date: e.entry_date || "",
+      remediation_given: e.remediation_given || "",
+      improvement_seen: e.improvement_seen || "",
+      sort_order: e.sort_order || 0,
+    })
+  );
+ 
   const [open, setOpen] = useState<string[]>([
     "Application Form",
     ...(appointment.clientType === "Student"
-      ? ["Student Intake Form", "Remediation & Improvement"]
-      : []),
-    "Parents' Details",
-    "Assessment Report",
-    ...(appointment.clientType === "Normal"
-      ? ["Mental Status Exam", "Plans"]
-      : []),
+      ? ["Student Intake Form", "Remediation & Improvement", "Parents' Details", "Assessment Report"]
+      : ["Mental Status Exam", "Remediation & Improvement"]),
   ]);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState("Application Form");
-  const toggle = (name: string) =>
-    setOpen((items) =>
-      items.includes(name) ? items.filter((x) => x !== name) : [...items, name],
-    );
-  const editable = (name: string) => editing === name;
+ 
   const navigationItems = [
     "Application Form",
     ...(data.clientType === "Student"
@@ -107,16 +132,61 @@ export function ClientDetails({
           "Assessment Report",
           "Remediation & Improvement",
         ]
-      : []),
-    ...(data.clientType === "Normal"
-      ? ["Mental Status Exam", "Plans"]
-      : []),
-    ...(data.clientType === "Parent"
-      ? ["Parents' Details", "Assessment Report"]
-      : []),
+      : ["Mental Status Exam", "Remediation & Improvement"]),
   ];
+ 
+  const [editing, setEditing] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState("Application Form");
+ 
+  const toggle = (name: string) =>
+    setOpen((items) =>
+      items.includes(name) ? items.filter((x) => x !== name) : [...items, name]
+    );
+  const isEditing = (name: string) => editing === name;
+ 
   const set = (key: keyof Appointment, value: string) =>
     setData((d) => ({ ...d, [key]: value }));
+ 
+  // ─── Save handlers ───
+  const handleSave = async (section: string) => {
+    setSaving(true);
+ 
+    switch (section) {
+    case "Application Form":
+  await saveClientInfo(appointment.clientId, {
+    name: data.name,
+    age: data.age,
+    relative: data.relative,
+    address: data.address,
+  });
+  if (appointment.id) {
+    await saveApplicationForm(appointment.id, currentProblem);
+  }
+  break;
+ 
+      case "Student Intake Form":
+        await saveStudentIntake(appointment.clientId, studentIntakeValues);
+        break;
+ 
+      case "Parents' Details":
+        await saveParentsDetails(appointment.clientId, parentsDetailsValues);
+        break;
+ 
+      case "Assessment Report":
+        await saveAssessmentReport(appointment.clientId, assessmentReportValues);
+        break;
+ 
+      case "Mental Status Exam":
+        if (appointment.id) {
+          await saveMentalStatusExam(appointment.id, mentalStatusValues);
+        }
+        break;
+    }
+ 
+    setSaving(false);
+    setEditing(null);
+  };
+ 
   useEffect(() => {
     const observers = navigationItems.map((item) => {
       const element = document.getElementById(item);
@@ -125,13 +195,14 @@ export function ClientDetails({
         ([entry]) => {
           if (entry.isIntersecting) setActiveSection(item);
         },
-        { rootMargin: "-18% 0px -65% 0px" },
+        { rootMargin: "-18% 0px -65% 0px" }
       );
       observer.observe(element);
       return observer;
     });
     return () => observers.forEach((observer) => observer?.disconnect());
   }, [data.clientType]);
+ 
   return (
     <div className="client-workspace">
       <div className="details-toolbar">
@@ -148,14 +219,16 @@ export function ClientDetails({
           <div className="flex flex-col gap-1">
             {navigationItems.map((item) => (
               <button
-                className={`block w-full rounded-md border-0 px-2 py-2.5 text-left transition ${activeSection === item ? "bg-[#bceecb] font-semibold text-[#144229]" : "bg-transparent text-[#414942] hover:bg-[#bceecb] hover:text-[#144229]"}`}
+                className={`block w-full rounded-md border-0 px-2 py-2.5 text-left transition ${
+                  activeSection === item
+                    ? "bg-[#bceecb] font-semibold text-[#144229]"
+                    : "bg-transparent text-[#414942] hover:bg-[#bceecb] hover:text-[#144229]"
+                }`}
                 key={item}
                 onClick={() => {
                   setOpen((x) => (x.includes(item) ? x : [...x, item]));
                   setActiveSection(item);
-                  document
-                    .getElementById(item)
-                    ?.scrollIntoView({ behavior: "smooth" });
+                  document.getElementById(item)?.scrollIntoView({ behavior: "smooth" });
                 }}
               >
                 {item}
@@ -163,6 +236,7 @@ export function ClientDetails({
             ))}
           </div>
         </nav>
+ 
         <main className="print-area">
           <div className="print-header">
             <Image src="/logo.webp" alt="Treasure" width={42} height={42} />
@@ -176,26 +250,29 @@ export function ClientDetails({
               7306941801
             </span>
           </div>
+ 
           <div className="client-title">
             <div>
               <h1>{data.name}</h1>
               <p>
-                {data.clientType} client · Age {data.age}
+                {data.clientType} · Age {data.age}
               </p>
             </div>
             <span className="status accepted">Accepted</span>
           </div>
+ 
+          {/* ─── Application Form ─── */}
           <div id="Application Form" className="application-print">
             <FormSection
               title="Application Form"
               open={open.includes("Application Form")}
               onToggle={() => toggle("Application Form")}
-              editable={editable("Application Form")}
+              editing={isEditing("Application Form")}
               onEdit={() =>
-                setEditing(
-                  editable("Application Form") ? null : "Application Form",
-                )
+                setEditing(isEditing("Application Form") ? null : "Application Form")
               }
+              onSave={() => handleSave("Application Form")}
+              saving={saving}
               onDownload={async () => {
                 if (downloadingPdf) return;
                 try {
@@ -210,9 +287,7 @@ export function ClientDetails({
                   });
                 } catch (error) {
                   console.error(error);
-                  window.alert(
-                    "Could not generate the PDF. Please try again.",
-                  );
+                  window.alert("Could not generate the PDF. Please try again.");
                 } finally {
                   setDownloadingPdf(false);
                 }
@@ -223,25 +298,25 @@ export function ClientDetails({
                   label="Name"
                   value={data.name}
                   onChange={(v) => set("name", v)}
-                  disabled={!editable("Application Form")}
+                  disabled={!isEditing("Application Form")}
                 />
                 <Field
                   label="Age"
                   value={data.age}
                   onChange={(v) => set("age", v)}
-                  disabled={!editable("Application Form")}
+                  disabled={!isEditing("Application Form")}
                 />
                 <Field
                   label="Relative's name"
                   value={data.relative}
                   onChange={(v) => set("relative", v)}
-                  disabled={!editable("Application Form")}
+                  disabled={!isEditing("Application Form")}
                 />
                 <Field
                   label="Address"
                   value={data.address}
                   onChange={(v) => set("address", v)}
-                  disabled={!editable("Application Form")}
+                  disabled={!isEditing("Application Form")}
                 />
                 <Field
                   label="Phone"
@@ -252,31 +327,33 @@ export function ClientDetails({
                   <span className="font-medium">Current problem</span>
                   <textarea
                     value={currentProblem}
-                    onChange={(event) => setCurrentProblem(event.target.value)}
-                    disabled={!editable("Application Form")}
+                    onChange={(e) => setCurrentProblem(e.target.value)}
+                    disabled={!isEditing("Application Form")}
                     className="min-h-24 w-full rounded-md border border-[#c1c9c0] bg-white p-3 text-sm text-[#1a1c1a] outline-none transition focus:border-[#2D5A3F] focus:ring-2 focus:ring-[#2D5A3F]/15 disabled:bg-[#f4f4f0] disabled:text-[#414942]"
                   />
                 </label>
               </div>
             </FormSection>
           </div>
+ 
+          {/* ─── Student Intake Form ─── */}
           {data.clientType === "Student" && (
             <div id="Student Intake Form">
               <FormSection
                 title="Student Intake Form"
                 open={open.includes("Student Intake Form")}
                 onToggle={() => toggle("Student Intake Form")}
-                editable={editable("Student Intake Form")}
+                editing={isEditing("Student Intake Form")}
                 onEdit={() =>
-                  setEditing(
-                    editable("Student Intake Form")
-                      ? null
-                      : "Student Intake Form",
-                  )
+                  setEditing(isEditing("Student Intake Form") ? null : "Student Intake Form")
                 }
+                onSave={() => handleSave("Student Intake Form")}
+                saving={saving}
               >
                 <TextGrid
-                  editable={editable("Student Intake Form")}
+                  editable={isEditing("Student Intake Form")}
+                  values={studentIntakeValues}
+                  onChange={setStudentIntakeValues}
                   labels={[
                     "Name",
                     "Gender",
@@ -308,32 +385,36 @@ export function ClientDetails({
               </FormSection>
             </div>
           )}
-          {(data.clientType === "Student" || data.clientType === "Parent") && (
+ 
+          {/* ─── Parents' Details ─── */}
+          {data.clientType === "Student" && (
             <div id="Parents' Details">
               <FormSection
                 title="Parents' Details"
                 open={open.includes("Parents' Details")}
                 onToggle={() => toggle("Parents' Details")}
-                editable={editable("Parents' Details")}
+                editing={isEditing("Parents' Details")}
                 onEdit={() =>
-                  setEditing(
-                    editable("Parents' Details") ? null : "Parents' Details",
-                  )
+                  setEditing(isEditing("Parents' Details") ? null : "Parents' Details")
                 }
+                onSave={() => handleSave("Parents' Details")}
+                saving={saving}
               >
                 <TextGrid
-                  editable={editable("Parents' Details")}
+                  editable={isEditing("Parents' Details")}
+                  values={parentsDetailsValues}
+                  onChange={setParentsDetailsValues}
                   labels={[
                     "Father's Name",
-                    "Occupation",
-                    "Contact Number",
-                    "Education",
-                    "Address",
+                    "Father's Occupation",
+                    "Father's Contact Number",
+                    "Father's Education",
+                    "Father's Address",
                     "Mother's Name",
-                    "Occupation",
-                    "Contact Number",
-                    "Education",
-                    "Address",
+                    "Mother's Occupation",
+                    "Mother's Contact Number",
+                    "Mother's Education",
+                    "Mother's Address",
                     "Type of family",
                     "Type of House",
                     "Child living with",
@@ -350,21 +431,25 @@ export function ClientDetails({
               </FormSection>
             </div>
           )}
-          {(data.clientType === "Student" || data.clientType === "Parent") && (
+ 
+          {/* ─── Assessment Report ─── */}
+          {data.clientType === "Student" && (
             <div id="Assessment Report">
               <FormSection
                 title="Assessment Report"
                 open={open.includes("Assessment Report")}
                 onToggle={() => toggle("Assessment Report")}
-                editable={editable("Assessment Report")}
+                editing={isEditing("Assessment Report")}
                 onEdit={() =>
-                  setEditing(
-                    editable("Assessment Report") ? null : "Assessment Report",
-                  )
+                  setEditing(isEditing("Assessment Report") ? null : "Assessment Report")
                 }
+                onSave={() => handleSave("Assessment Report")}
+                saving={saving}
               >
                 <TextGrid
-                  editable={editable("Assessment Report")}
+                  editable={isEditing("Assessment Report")}
+                  values={assessmentReportValues}
+                  onChange={setAssessmentReportValues}
                   labels={[
                     "Logical Thinking",
                     "Listening & following verbal instructions",
@@ -399,9 +484,182 @@ export function ClientDetails({
               </FormSection>
             </div>
           )}
-          {data.clientType === "Student" && (
-            <RepeatSection
-              id="Remediation & Improvement"
+ 
+          {/* ─── Mental Status Exam ─── */}
+         {data.clientType === "Client" && (
+  <div id="Mental Status Exam">
+    <FormSection
+      title="Mental Status Exam"
+      open={open.includes("Mental Status Exam")}
+      onToggle={() => toggle("Mental Status Exam")}
+      editing={isEditing("Mental Status Exam")}
+      onEdit={() =>
+        setEditing(isEditing("Mental Status Exam") ? null : "Mental Status Exam")
+      }
+      onSave={() => handleSave("Mental Status Exam")}
+      saving={saving}
+      onPrint={() => {
+  printApplicationPdf({
+    name: data.name,
+    age: data.age,
+    relative: data.relative,
+    address: data.address,
+    phone: `${data.countryCode} ${data.phone}`.trim(),
+    currentProblem,
+  });
+}}
+    >
+      <div className="flex flex-col gap-4">
+        <div className="form-grid">
+          <Field label="Client Name" value={data.name} disabled />
+          <label className="flex flex-col gap-1.5 text-[13px] text-[#144229]">
+            <span className="font-medium">Date</span>
+            <DatePicker
+              format="DD/MM/YYYY"
+              disabled={!isEditing("Mental Status Exam")}
+              className="h-11! w-full"
+              value={mentalStatusValues.exam_date ? dayjs(mentalStatusValues.exam_date) : undefined}
+              onChange={(date) =>
+                setMentalStatusValues((prev) => ({
+                  ...prev,
+                  exam_date: date ? date.format("YYYY-MM-DD") : "",
+                }))
+              }
+            />
+          </label>
+        </div>
+
+        {(
+          [
+            {
+              key: "observations",
+              title: "OBSERVATIONS",
+              rows: [
+                ["Appearance", ["Neat", "Dishevelled", "Inappropriate", "Bizarre", "Other"]],
+                ["Speech", ["Normal", "Tangential", "Pressured", "Impoverished", "Other"]],
+                ["Eye Contact", ["Normal", "Intense", "Avoidant", "Other"]],
+                ["Motor Activity", ["Normal", "Restless", "Tics", "Slowed", "Other"]],
+                ["Affect", ["Full", "Constricted", "Flat", "Labile", "Other"]],
+              ],
+            },
+            {
+              key: "mood",
+              title: "MOOD",
+              rows: [["Mood", ["Euthymic", "Anxious", "Angry", "Depressed", "Euphoric", "Irritable", "Other"]]],
+            },
+            {
+              key: "cognition",
+              title: "COGNITION",
+              rows: [
+                ["Orientation Impairment", ["None", "Place", "Object", "Person", "Time"]],
+                ["Memory Impairment", ["None", "Short-Term", "Long-Term", "Other"]],
+                ["Attention", ["Normal", "Distracted", "Other"]],
+              ],
+            },
+            {
+              key: "perception",
+              title: "PERCEPTION",
+              rows: [
+                ["Hallucinations", ["None", "Auditory", "Visual", "Other"]],
+                ["Other", ["None", "Derealization", "Depersonalization"]],
+              ],
+            },
+            {
+              key: "thoughts",
+              title: "THOUGHTS",
+              rows: [
+                ["Suicidality", ["None", "Ideation", "Plan", "Intent", "Self-Harm"]],
+                ["Homicidality", ["None", "Aggressive", "Intent", "Plan"]],
+                ["Delusions", ["None", "Grandiose", "Paranoid", "Religious", "Other"]],
+              ],
+            },
+            {
+              key: "behavior",
+              title: "BEHAVIOR",
+              rows: [["Behavior", ["Cooperative", "Guarded", "Hyperactive", "Agitated", "Paranoid", "Stereotyped", "Aggressive", "Bizarre", "Withdrawn", "Other"]]],
+            },
+          ] as const
+        ).map((section) => (
+          <div key={section.title} className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4">
+            <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">{section.title}</h4>
+            {section.rows.map(([label, options]) => (
+              <div key={label} className="grid grid-cols-1 gap-2 border-b border-[#e8e8e5] py-2.5 last:border-b-0 sm:grid-cols-[180px_minmax(0,1fr)]">
+                <span className="text-sm font-semibold text-[#144229]">{label}</span>
+                <Checkbox.Group
+                  disabled={!isEditing("Mental Status Exam")}
+                  className="flex flex-wrap gap-x-4 gap-y-2"
+                  options={options.map((o) => ({ label: o, value: o }))}
+                  value={(mentalStatusValues[section.key] as Record<string, string[]>)?.[label] || []}
+                  onChange={(checked) =>
+                    setMentalStatusValues((prev) => ({
+                      ...prev,
+                      [section.key]: {
+                        ...(prev[section.key] as Record<string, string[]> || {}),
+                        [label]: checked,
+                      },
+                    }))
+                  }
+                />
+              </div>
+            ))}
+            <label className="mt-3 flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-[#144229]">Comments:</span>
+              <textarea
+                disabled={!isEditing("Mental Status Exam")}
+                className="min-h-20 w-full rounded-md border border-[#c1c9c0] p-3"
+                value={(mentalStatusValues[`${section.key}_comments`] as string) || ""}
+                onChange={(e) =>
+                  setMentalStatusValues((prev) => ({
+                    ...prev,
+                    [`${section.key}_comments`]: e.target.value,
+                  }))
+                }
+              />
+            </label>
+          </div>
+        ))}
+
+        <div className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4">
+          <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">INSIGHT & JUDGEMENT</h4>
+          {(["insight", "judgement"] as const).map((row) => (
+            <div key={row} className="mb-3 grid grid-cols-1 gap-3 border-b border-[#e8e8e5] pb-3 last:mb-0 last:border-b-0 last:pb-0 sm:grid-cols-[120px_minmax(0,1fr)_minmax(0,1.2fr)] sm:items-center">
+              <span className="text-sm font-bold text-[#144229]">{row.toUpperCase()}</span>
+              <Checkbox.Group
+                disabled={!isEditing("Mental Status Exam")}
+                className="flex flex-wrap gap-x-4 gap-y-2"
+                options={["Good", "Fair", "Poor"].map((o) => ({ label: o, value: o }))}
+                value={(mentalStatusValues[`${row}_rating`] as string[]) || []}
+                onChange={(checked) =>
+                  setMentalStatusValues((prev) => ({
+                    ...prev,
+                    [`${row}_rating`]: checked,
+                  }))
+                }
+              />
+              <input
+                disabled={!isEditing("Mental Status Exam")}
+                placeholder="Comments"
+                className="h-11 rounded-md border border-[#c1c9c0] px-3"
+                value={(mentalStatusValues[row] as string) || ""}
+                onChange={(e) =>
+                  setMentalStatusValues((prev) => ({
+                    ...prev,
+                    [row]: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </FormSection>
+  </div>
+)}
+ 
+          {/* ─── Remediation (shared by both Student & Client) ─── */}
+          <div id="Remediation & Improvement">
+                       <RepeatSection
+              id="remediation-section"
               title="Remediation & Improvement"
               labels={[
                 "Date",
@@ -409,255 +667,10 @@ export function ClientDetails({
                 "Improvement seen",
                 "Doctor / Counsellor Name & Signature",
               ]}
+              clientId={appointment.clientId}
+              initialEntries={remediationEntries}
             />
-          )}
-          {data.clientType === "Normal" && (
-            <div id="Mental Status Exam">
-              <FormSection
-                title="Mental Status Exam"
-                open={open.includes("Mental Status Exam")}
-                onToggle={() => toggle("Mental Status Exam")}
-                editable={editable("Mental Status Exam")}
-                onEdit={() =>
-                  setEditing(
-                    editable("Mental Status Exam")
-                      ? null
-                      : "Mental Status Exam",
-                  )
-                }
-              >
-                <div className="flex flex-col gap-4">
-                  <div className="form-grid">
-                    <Field
-                      label="Client Name"
-                      value={data.name}
-                      disabled
-                    />
-                    <label className="flex flex-col gap-1.5 text-[13px] text-[#144229]">
-                      <span className="font-medium">Date</span>
-                      <DatePicker
-                        format="DD/MM/YYYY"
-                        disabled={!editable("Mental Status Exam")}
-                        className="h-11! w-full"
-                      />
-                    </label>
-                  </div>
-
-                  {(
-                    [
-                      {
-                        title: "OBSERVATIONS",
-                        rows: [
-                          [
-                            "Appearance",
-                            [
-                              "Neat",
-                              "Dishevelled",
-                              "Inappropriate",
-                              "Bizarre",
-                              "Other",
-                            ],
-                          ],
-                          [
-                            "Speech",
-                            [
-                              "Normal",
-                              "Tangential",
-                              "Pressured",
-                              "Impoverished",
-                              "Other",
-                            ],
-                          ],
-                          [
-                            "Eye Contact",
-                            ["Normal", "Intense", "Avoidant", "Other"],
-                          ],
-                          [
-                            "Motor Activity",
-                            ["Normal", "Restless", "Tics", "Slowed", "Other"],
-                          ],
-                          [
-                            "Affect",
-                            ["Full", "Constricted", "Flat", "Labile", "Other"],
-                          ],
-                        ],
-                      },
-                      {
-                        title: "MOOD",
-                        rows: [
-                          [
-                            "Mood",
-                            [
-                              "Euthymic",
-                              "Anxious",
-                              "Angry",
-                              "Depressed",
-                              "Euphoric",
-                              "Irritable",
-                              "Other",
-                            ],
-                          ],
-                        ],
-                      },
-                      {
-                        title: "COGNITION",
-                        rows: [
-                          [
-                            "Orientation Impairment",
-                            ["None", "Place", "Object", "Person", "Time"],
-                          ],
-                          [
-                            "Memory Impairment",
-                            ["None", "Short-Term", "Long-Term", "Other"],
-                          ],
-                          ["Attention", ["Normal", "Distracted", "Other"]],
-                        ],
-                      },
-                      {
-                        title: "PERCEPTION",
-                        rows: [
-                          [
-                            "Hallucinations",
-                            ["None", "Auditory", "Visual", "Other"],
-                          ],
-                          [
-                            "Other",
-                            ["None", "Derealization", "Depersonalization"],
-                          ],
-                        ],
-                      },
-                      {
-                        title: "THOUGHTS",
-                        rows: [
-                          [
-                            "Suicidality",
-                            [
-                              "None",
-                              "Ideation",
-                              "Plan",
-                              "Intent",
-                              "Self-Harm",
-                            ],
-                          ],
-                          [
-                            "Homicidality",
-                            ["None", "Aggressive", "Intent", "Plan"],
-                          ],
-                          [
-                            "Delusions",
-                            [
-                              "None",
-                              "Grandiose",
-                              "Paranoid",
-                              "Religious",
-                              "Other",
-                            ],
-                          ],
-                        ],
-                      },
-                      {
-                        title: "BEHAVIOR",
-                        rows: [
-                          [
-                            "Behavior",
-                            [
-                              "Cooperative",
-                              "Guarded",
-                              "Hyperactive",
-                              "Agitated",
-                              "Paranoid",
-                              "Stereotyped",
-                              "Aggressive",
-                              "Bizarre",
-                              "Withdrawn",
-                              "Other",
-                            ],
-                          ],
-                        ],
-                      },
-                    ] as const
-                  ).map((section) => (
-                    <div
-                      key={section.title}
-                      className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4"
-                    >
-                      <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">
-                        {section.title}
-                      </h4>
-                      {section.rows.map(([label, options]) => (
-                        <div
-                          key={label}
-                          className="grid grid-cols-1 gap-2 border-b border-[#e8e8e5] py-2.5 last:border-b-0 sm:grid-cols-[180px_minmax(0,1fr)]"
-                        >
-                          <span className="text-sm font-semibold text-[#144229]">
-                            {label}
-                          </span>
-                          <Checkbox.Group
-                            disabled={!editable("Mental Status Exam")}
-                            className="flex flex-wrap gap-x-4 gap-y-2"
-                            options={options.map((option) => ({
-                              label: option,
-                              value: option,
-                            }))}
-                          />
-                        </div>
-                      ))}
-                      <label className="mt-3 flex flex-col gap-1.5">
-                        <span className="text-sm font-semibold text-[#144229]">
-                          Comments:
-                        </span>
-                        <textarea
-                          disabled={!editable("Mental Status Exam")}
-                          className="min-h-20 w-full rounded-md border border-[#c1c9c0] p-3"
-                        />
-                      </label>
-                    </div>
-                  ))}
-
-                  <div className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4">
-                    <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">
-                      INSIGHT & JUDGEMENT
-                    </h4>
-                    {(["INSIGHT", "JUDGEMENT"] as const).map((row) => (
-                      <div
-                        key={row}
-                        className="mb-3 grid grid-cols-1 gap-3 border-b border-[#e8e8e5] pb-3 last:mb-0 last:border-b-0 last:pb-0 sm:grid-cols-[120px_minmax(0,1fr)_minmax(0,1.2fr)] sm:items-center"
-                      >
-                        <span className="text-sm font-bold text-[#144229]">
-                          {row}
-                        </span>
-                        <Checkbox.Group
-                          disabled={!editable("Mental Status Exam")}
-                          className="flex flex-wrap gap-x-4 gap-y-2"
-                          options={["Good", "Fair", "Poor"].map((option) => ({
-                            label: option,
-                            value: option,
-                          }))}
-                        />
-                        <input
-                          disabled={!editable("Mental Status Exam")}
-                          placeholder="Comments"
-                          className="h-11 rounded-md border border-[#c1c9c0] px-3"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </FormSection>
-            </div>
-          )}
-          {data.clientType === "Normal" && (
-            <RepeatSection
-              id="Plans"
-              title="Plans"
-              labels={[
-                "Date",
-                "Plan / Recommendation",
-                "Improvement Seen",
-                "Doctor / Counsellor Name & Signature",
-              ]}
-            />
-          )}
+          </div>
         </main>
       </div>
     </div>
@@ -666,7 +679,12 @@ export function ClientDetails({
 
 export default function AppointmentsPage() {
   const router = useRouter();
-  const [rows, setRows] = useState<Appointment[]>(seed);
+  const [rows, setRows] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+const [total, setTotal] = useState(0);
+const pageSize = 10;
+  const [submitting, setSubmitting] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
@@ -676,41 +694,40 @@ export default function AppointmentsPage() {
     [Dayjs | null, Dayjs | null] | null
   >(null);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("treasure-appointments");
-    if (saved) {
-      try {
-        setRows(JSON.parse(saved) as Appointment[]);
-      } catch {
-        setRows(seed);
-      }
-    }
-  }, []);
+ const fetchAppointments = async () => {
+  setLoading(true);
+  const { appointments, total: count, error } = await getAppointments({
+    page,
+    pageSize,
+    search: query || undefined,
+    status: selectedStatus !== 'all' ? selectedStatus : undefined,
+    dateFrom: dateRange?.[0]?.format('YYYY-MM-DD') || undefined,
+    dateTo: dateRange?.[1]?.format('YYYY-MM-DD') || undefined,
+  });
+  if (!error) {
+    setRows(appointments);
+    setTotal(count);
+  }
+  setLoading(false);
+};
+ 
+ useEffect(() => {
+  fetchAppointments();
+}, [page, query, selectedStatus, dateRange]);
 
-  const save = (next: Appointment[]) => {
-    setRows(next);
-    localStorage.setItem("treasure-appointments", JSON.stringify(next));
+const [searchInput, setSearchInput] = useState("");
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setQuery(searchInput);
+    setPage(1); // reset to page 1 on new search
+  }, 400);
+  return () => clearTimeout(timer);
+}, [searchInput]);
+  const handleStatusChange = async (id: string, status: "Accepted" | "Rejected") => {
+    const result = await updateAppointmentStatus(id, status);
+    if (!result.error) fetchAppointments(); // refresh the list
   };
-  const filtered = useMemo(
-    () =>
-      rows.filter(
-        (r) =>
-          `${r.name} ${r.clientType} ${r.status}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (selectedStatus === "all" || r.status === selectedStatus) &&
-          (!dateRange?.[0] ||
-            !dateRange?.[1] ||
-            (() => {
-              const date = dayjs(r.createdAt, "MMM D, YYYY");
-              return (
-                !date.isBefore(dateRange[0]!.startOf("day")) &&
-                !date.isAfter(dateRange[1]!.endOf("day"))
-              );
-            })()),
-      ),
-    [rows, query, selectedStatus, dateRange],
-  );
+
   const columns: Column<Appointment>[] = [
     {
       title: "Sl No",
@@ -750,11 +767,7 @@ export default function AppointmentsPage() {
               <button
                 title="Accept"
                 onClick={() =>
-                  save(
-                    rows.map((r) =>
-                      r.id === row.id ? { ...r, status: "Accepted" } : r,
-                    ),
-                  )
+                  handleStatusChange(row.id, "Accepted")
                 }
               >
                 <FiCheck />
@@ -762,11 +775,7 @@ export default function AppointmentsPage() {
               <button
                 title="Reject"
                 onClick={() =>
-                  save(
-                    rows.map((r) =>
-                      r.id === row.id ? { ...r, status: "Rejected" } : r,
-                    ),
-                  )
+               handleStatusChange(row.id, "Rejected")
                 }
               >
                 <FiX />
@@ -776,7 +785,7 @@ export default function AppointmentsPage() {
           {row.status === "Accepted" && (
             <button
               className="view-button"
-              onClick={() => router.push(`/client/viewdetails?id=${row.id}`)}
+              onClick={() => router.push(`/client/viewdetails?id=${row.clientId}`)}
             >
               View Details
             </button>
@@ -801,6 +810,20 @@ export default function AppointmentsPage() {
       ),
     },
   ];
+   const handleCreateAppointment = async (form: AppointmentFormValues) => {
+    setSubmitting(true);
+    const result = await createAppointment(form);
+    setSubmitting(false);
+ 
+    if (result.error) {
+      // handle error (alert or toast)
+      alert(result.error);
+      return;
+    }
+ 
+    setShowAdd(false);
+    fetchAppointments(); // refresh the list
+  };
   return (
     <>
       <div className="mb-5 mt-4 flex flex-col gap-4 sm:mb-6 sm:mt-7 sm:flex-row sm:items-start sm:justify-between">
@@ -820,11 +843,12 @@ export default function AppointmentsPage() {
         </button>
       </div>
       <FilterHeader
-        searchQuery={query}
-        onSearchChange={setQuery}
+        searchQuery={searchInput}
+        onSearchChange={setSearchInput}
         searchPlaceholder="Search by name, phone, type, or status..."
         selectedStatus={selectedStatus}
-        onStatusChange={setSelectedStatus}
+onStatusChange={(val) => { setSelectedStatus(val); setPage(1); }}
+   onDateRangeChange={(val) => { setDateRange(val); setPage(1); }}
         statusOptions={[
           { value: "all", label: "All Statuses" },
           { value: "Accepted", label: "Accepted" },
@@ -832,9 +856,8 @@ export default function AppointmentsPage() {
           { value: "Rejected", label: "Rejected" },
         ]}
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
       />
-      <AddAppointmentModal
+            <AddAppointmentModal
         open={showAdd || appointmentToEdit !== null}
         initialValues={
           appointmentToEdit
@@ -855,46 +878,43 @@ export default function AppointmentsPage() {
           setShowAdd(false);
           setAppointmentToEdit(null);
         }}
-        onSubmit={(form) => {
-          if (appointmentToEdit) {
-            save(
-              rows.map((row) =>
-                row.id === appointmentToEdit.id ? { ...row, ...form } : row,
-              ),
-            );
-          } else {
-            save([
-              {
-                ...form,
-                id: Date.now(),
-                status: "Pending",
-                createdAt: new Date().toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                }),
-              },
-              ...rows,
-            ]);
-          }
-          setShowAdd(false);
-          setAppointmentToEdit(null);
-        }}
+    onSubmit={async (form) => {
+  setSubmitting(true);
+  if (appointmentToEdit) {
+    const result = await updateAppointmentDetails(
+      appointmentToEdit.id,
+      appointmentToEdit.clientId,
+      form
+    );
+    if (result.error) {
+      alert(result.error);
+    } else {
+      fetchAppointments();
+    }
+  } else {
+    await handleCreateAppointment(form);
+  }
+  setSubmitting(false);
+  setShowAdd(false);
+  setAppointmentToEdit(null);
+}}
+        loading={submitting}
       />
       <DeleteConfirmationModal
         open={appointmentToDelete !== null}
         itemName={appointmentToDelete?.name}
         onCancel={() => setAppointmentToDelete(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (appointmentToDelete) {
-            save(rows.filter((row) => row.id !== appointmentToDelete.id));
+            await deleteAppointment(appointmentToDelete.id);
+            fetchAppointments();
           }
           setAppointmentToDelete(null);
         }}
       />
 
       <section className="content-card w-full overflow-hidden">
-        <DataTable columns={columns} data={filtered} pageSize={10} />
+<DataTable columns={columns} data={rows} pageSize={pageSize} total={total} currentPage={page} onPageChange={setPage} />
       </section>
     </>
   );
