@@ -11,15 +11,19 @@ import { Checkbox, DatePicker } from "antd";
 import {
   FiArrowLeft,
   FiCheck,
+  FiEdit2,
   FiPlus,
+  FiTrash2,
   FiX,
 } from "react-icons/fi";
 import AddAppointmentModal,{ type AppointmentFormValues } from "@/components/AddAppointmentModal";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import { downloadApplicationPdf } from "@/components/ApplicationPdf";
 import {
   getAppointments,
   createAppointment,
   updateAppointmentStatus,
+  deleteAppointment,
 } from "@/lib/actions/appointments";
 
 import {
@@ -207,7 +211,7 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
         <div></div>
       </div>
       <div className="details-layout grid-cols-[220px_minmax(0,1fr)]!">
-        <nav className="sticky top-4 rounded-lg border border-[#c1c9c0] bg-white p-3">
+        <nav className="form-nav sticky top-4 rounded-lg border border-[#c1c9c0] bg-white p-3">
           <p className="m-0 mb-2 text-[10px] font-extrabold text-[#414942]">
             ON THIS PAGE
           </p>
@@ -421,6 +425,7 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                     "Name & Signature",
                     "Date",
                   ]}
+                  dateLabels={["Date"]}
                 />
               </FormSection>
             </div>
@@ -467,6 +472,13 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                     "Name & Signature",
                     "Date",
                   ]}
+                  textareaLabels={[
+                    "Mathematics",
+                    "Presented Problem",
+                    "Identified Problem",
+                    "Remarks",
+                  ]}
+                  dateLabels={["Date"]}
                 />
               </FormSection>
             </div>
@@ -635,10 +647,15 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
  
           {/* ─── Remediation (shared by both Student & Client) ─── */}
           <div id="Remediation & Improvement">
-            <RepeatSection
+                       <RepeatSection
               id="remediation-section"
               title="Remediation & Improvement"
-              labels={["Date", "Remediation given", "Improvement seen"]}
+              labels={[
+                "Date",
+                "Remediation given",
+                "Improvement seen",
+                "Doctor / Counsellor Name & Signature",
+              ]}
               clientId={appointment.clientId}
               initialEntries={remediationEntries}
             />
@@ -655,6 +672,8 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [dateRange, setDateRange] = useState<
@@ -728,6 +747,7 @@ export default function AppointmentsPage() {
       key: "actions",
       render: (row) => (
         <div className="table-actions">
+         
           {row.status === "Pending" && (
             <>
               <button
@@ -756,6 +776,22 @@ export default function AppointmentsPage() {
               View Details
             </button>
           )}
+           <button
+            className="border-[#333936]! bg-[#333936]! text-white!"
+            title="Edit appointment"
+            aria-label={`Edit ${row.name}`}
+            onClick={() => setAppointmentToEdit(row)}
+          >
+            <FiEdit2 />
+          </button>
+          <button
+            className="border-[#c9252d]! bg-[#c9252d]! text-white!"
+            title="Delete appointment"
+            aria-label={`Delete ${row.name}`}
+            onClick={() => setAppointmentToDelete(row)}
+          >
+            <FiTrash2 />
+          </button>
         </div>
       ),
     },
@@ -807,11 +843,51 @@ export default function AppointmentsPage() {
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
       />
-      <AddAppointmentModal
-        open={showAdd}
-        onCancel={() => setShowAdd(false)}
-          onSubmit={handleCreateAppointment}
-          loading={submitting}
+            <AddAppointmentModal
+        open={showAdd || appointmentToEdit !== null}
+        initialValues={
+          appointmentToEdit
+            ? {
+                name: appointmentToEdit.name,
+                age: appointmentToEdit.age,
+                relative: appointmentToEdit.relative,
+                address: appointmentToEdit.address,
+                countryCode: appointmentToEdit.countryCode,
+                phone: appointmentToEdit.phone,
+                clientType: appointmentToEdit.clientType,
+              }
+            : undefined
+        }
+        title={appointmentToEdit ? "Edit appointment" : "New appointment"}
+        submitText={appointmentToEdit ? "Save Changes" : "Create Appointment"}
+        onCancel={() => {
+          setShowAdd(false);
+          setAppointmentToEdit(null);
+        }}
+        onSubmit={async (form) => {
+          if (appointmentToEdit) {
+            // TODO: wire up updateAppointment server action later
+            setAppointmentToEdit(null);
+            fetchAppointments();
+          } else {
+            await handleCreateAppointment(form);
+          }
+          setShowAdd(false);
+          setAppointmentToEdit(null);
+        }}
+        loading={submitting}
+      />
+      <DeleteConfirmationModal
+        open={appointmentToDelete !== null}
+        itemName={appointmentToDelete?.name}
+        onCancel={() => setAppointmentToDelete(null)}
+        onConfirm={async () => {
+          if (appointmentToDelete) {
+            await deleteAppointment(appointmentToDelete.id);
+            fetchAppointments();
+          }
+          setAppointmentToDelete(null);
+        }}
       />
 
       <section className="content-card w-full overflow-hidden">

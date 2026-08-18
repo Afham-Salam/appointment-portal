@@ -107,6 +107,9 @@ type AddAppointmentModalProps = {
   onCancel: () => void;
   onSubmit: (values: AppointmentFormValues) => void;
   loading?: boolean;
+  initialValues?: AppointmentFormValues;
+  title?: string;
+  submitText?: string;
 };
 
 export default function AddAppointmentModal({
@@ -114,6 +117,9 @@ export default function AddAppointmentModal({
   onCancel,
   onSubmit,
   loading = false,
+  initialValues,
+  title = "New appointment",
+  submitText = "Create Appointment",
 }: AddAppointmentModalProps) {
   const [form] = Form.useForm<ModalFormValues>();
   const selectedCountry = Form.useWatch("country", form) as Country | undefined;
@@ -135,12 +141,23 @@ export default function AddAppointmentModal({
   );
 
   useEffect(() => {
-    if (open) {
-   form.setFieldsValue(blankForm);
-      setLookupStatus("idle");
-      setPastAppointments([]);
+    if (!open) return;
+    setLookupStatus("idle");
+    setPastAppointments([]);
+
+    if (!initialValues) {
+      form.setFieldsValue(blankForm);
+      return;
     }
-  }, [open, form]);
+
+    const country = getCountries().find(
+      (item) => `+${getCountryCallingCode(item)}` === initialValues.countryCode,
+    );
+    form.setFieldsValue({
+      ...initialValues,
+      country: country ?? blankForm.country,
+    });
+  }, [open, form, initialValues]);
 
   const handlePhoneLookup = async (digits: string) => {
     if (digits.length < 7) {
@@ -206,13 +223,13 @@ export default function AddAppointmentModal({
       <Modal
         title={
           <span className="text-lg font-semibold text-[#144229]">
-            New appointment
+            {title}
           </span>
         }
         open={open}
         onCancel={onCancel}
         onOk={handleSubmit}
-        okText={lookupStatus === "found" ? "Reschedule Appointment" : "Create Appointment"}
+        okText={lookupStatus === "found" ? "Reschedule Appointment" : submitText}
         cancelText="Cancel"
         width="100%"
         style={{ maxWidth: 720, top: 16, paddingBottom: 0 }}

@@ -131,17 +131,20 @@ export function FormSection({
   );
 }
 
-/* ─── TextGrid (stateful — captures values, accepts initial data) ─── */
 export function TextGrid({
   labels,
   editable,
   values,
   onChange,
+  textareaLabels = [],
+  dateLabels = [],
 }: {
   labels: string[];
   editable: boolean;
   values?: Record<string, string>;
   onChange?: (values: Record<string, string>) => void;
+  textareaLabels?: string[];
+  dateLabels?: string[];
 }) {
   const handleChange = (key: string, value: string) => {
     onChange?.({ ...values, [key]: value });
@@ -154,11 +157,27 @@ export function TextGrid({
         return (
           <label key={`${label}-${index}`}>
             <span>{label}</span>
-            <input
-              disabled={!editable}
-              value={values?.[key] || ""}
-              onChange={(e) => handleChange(key, e.target.value)}
-            />
+            {dateLabels.includes(label) ? (
+              <DatePicker
+                disabled={!editable}
+                className="assessment-date-picker mx-1! h-10! w-[calc(100%-0.5rem)]! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!"
+                format="DD/MM/YYYY"
+              />
+            ) : textareaLabels.includes(label) ? (
+              <textarea
+                disabled={!editable}
+                value={values?.[key] || ""}
+                onChange={(e) => handleChange(key, e.target.value)}
+                className="min-h-16! resize-y! border-0! bg-white! p-3! disabled:bg-[#f4f4f0]!"
+              />
+            ) : (
+              <input
+                disabled={!editable}
+                value={values?.[key] || ""}
+                onChange={(e) => handleChange(key, e.target.value)}
+                className="bg-white! disabled:bg-[#f4f4f0]!"
+              />
+            )}
           </label>
         );
       })}
@@ -215,6 +234,7 @@ export function RepeatSection({
         ],
   );
   const [open, setOpen] = React.useState(true);
+
   const [saving, setSaving] = React.useState(false);
 
   // Update rows when initialEntries change
@@ -282,7 +302,9 @@ export function RepeatSection({
     onEntriesChange?.();
   };
 
-  return (
+const responsiveColumns = title === "Plans" || title === "Remediation & Improvement";
+
+ return (
     <div id={id}>
       <Collapse
         className="mt-5! overflow-hidden rounded-lg border border-[#c1c9c0] bg-white [&_.ant-collapse-header]:items-center! [&_.ant-collapse-header]:py-4! [&_.ant-collapse-header-text]:text-[#144229]!"
@@ -320,61 +342,30 @@ export function RepeatSection({
                           )}
                         </div>
                       </div>
-                      <div className="grid min-w-170 grid-cols-3 border-b border-[#c1c9c0] last:border-b-0">
-                        {/* Date */}
+                      <div className={`grid border-b border-[#c1c9c0] last:border-b-0 ${responsiveColumns ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-3"}`}>
                         <label className="flex min-w-0 flex-col gap-2 border-r border-[#c1c9c0]">
-                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">
-                            Date
-                          </span>
+                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">Date</span>
                           <DatePicker
                             className="repeat-date-picker mx-1! h-10! w-[calc(100%-0.5rem)]! max-w-full! px-3!"
                             format="DD/MM/YYYY"
-                            value={
-                              row.entry_date
-                                ? dayjs(row.entry_date)
-                                : undefined
-                            }
-                            onChange={(date) =>
-                              updateRow(
-                                index,
-                                "entry_date",
-                                date ? date.format("YYYY-MM-DD") : "",
-                              )
-                            }
+                            value={row.entry_date ? dayjs(row.entry_date) : undefined}
+                            onChange={(date) => updateRow(index, "entry_date", date ? date.format("YYYY-MM-DD") : "")}
                           />
                         </label>
-                        {/* Remediation given */}
                         <label className="flex min-w-0 flex-col gap-2 border-r border-[#c1c9c0]">
-                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">
-                            {labels[1] || "Remediation given"}
-                          </span>
+                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">{labels[1] || "Remediation given"}</span>
                           <textarea
                             className="min-h-18.5! w-full! resize-y! border-0! p-3!"
                             value={row.remediation_given}
-                            onChange={(e) =>
-                              updateRow(
-                                index,
-                                "remediation_given",
-                                e.target.value,
-                              )
-                            }
+                            onChange={(e) => updateRow(index, "remediation_given", e.target.value)}
                           />
                         </label>
-                        {/* Improvement seen */}
                         <label className="flex min-w-0 flex-col gap-2">
-                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">
-                            {labels[2] || "Improvement seen"}
-                          </span>
+                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">{labels[2] || "Improvement seen"}</span>
                           <textarea
                             className="min-h-18.5! w-full! resize-y! border-0! p-3!"
                             value={row.improvement_seen}
-                            onChange={(e) =>
-                              updateRow(
-                                index,
-                                "improvement_seen",
-                                e.target.value,
-                              )
-                            }
+                            onChange={(e) => updateRow(index, "improvement_seen", e.target.value)}
                           />
                         </label>
                       </div>
