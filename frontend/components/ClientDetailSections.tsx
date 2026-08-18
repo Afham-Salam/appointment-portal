@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import * as React from "react";
 import { Collapse, DatePicker } from "antd";
-import { FiDownload, FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiDownload, FiEdit2, FiPlus, FiPrinter, FiTrash2 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
   addRemediationEntry,
@@ -50,6 +50,7 @@ export function FormSection({
   onSave,
   saving,
   onDownload,
+   onPrint,
 }: {
   title: string;
   children: ReactNode;
@@ -60,6 +61,7 @@ export function FormSection({
   onSave?: () => void;
   saving?: boolean;
   onDownload?: () => void;
+  onPrint?: () => void;
 }) {
   return (
     <Collapse
@@ -122,6 +124,19 @@ export function FormSection({
                   <FiDownload />
                 </button>
               )}
+              {onPrint && !editing && (
+  <button
+    type="button"
+    className="flex h-8 w-8 cursor-pointer items-center justify-center text-[#144229]"
+    onClick={(e) => {
+      e.stopPropagation();
+      onPrint();
+    }}
+    aria-label="Print"
+  >
+    <FiPrinter />
+  </button>
+)}
             </div>
           ),
           children: <div className="p-1">{children}</div>,

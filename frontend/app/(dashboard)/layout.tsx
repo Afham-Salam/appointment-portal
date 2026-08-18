@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
 
   return (
-    <DashboardShell role={user.role as "admin" | "staff"}>
+    <DashboardShell role={user.role as "admin" | "staff"} email={user.email}>
       {children}
     </DashboardShell>
   );

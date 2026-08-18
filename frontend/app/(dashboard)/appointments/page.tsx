@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { DataTable, type Column } from "@/components/DataTable";
@@ -18,12 +18,13 @@ import {
 } from "react-icons/fi";
 import AddAppointmentModal,{ type AppointmentFormValues } from "@/components/AddAppointmentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
-import { downloadApplicationPdf } from "@/components/ApplicationPdf";
+import { downloadApplicationPdf,printApplicationPdf  } from "@/components/ApplicationPdf";
 import {
   getAppointments,
   createAppointment,
   updateAppointmentStatus,
   deleteAppointment,
+  updateAppointmentDetails 
 } from "@/lib/actions/appointments";
 
 import {
@@ -497,6 +498,16 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
       }
       onSave={() => handleSave("Mental Status Exam")}
       saving={saving}
+      onPrint={() => {
+  printApplicationPdf({
+    name: data.name,
+    age: data.age,
+    relative: data.relative,
+    address: data.address,
+    phone: `${data.countryCode} ${data.phone}`.trim(),
+    currentProblem,
+  });
+}}
     >
       <div className="flex flex-col gap-4">
         <div className="form-grid">
@@ -670,6 +681,9 @@ export default function AppointmentsPage() {
   const router = useRouter();
   const [rows, setRows] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+const [total, setTotal] = useState(0);
+const pageSize = 10;
   const [submitting, setSubmitting] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
@@ -680,40 +694,40 @@ export default function AppointmentsPage() {
     [Dayjs | null, Dayjs | null] | null
   >(null);
 
-  const fetchAppointments = async () => {
-    const { appointments, error } = await getAppointments();
-    if (!error) setRows(appointments);
-    setLoading(false);
-  };
+ const fetchAppointments = async () => {
+  setLoading(true);
+  const { appointments, total: count, error } = await getAppointments({
+    page,
+    pageSize,
+    search: query || undefined,
+    status: selectedStatus !== 'all' ? selectedStatus : undefined,
+    dateFrom: dateRange?.[0]?.format('YYYY-MM-DD') || undefined,
+    dateTo: dateRange?.[1]?.format('YYYY-MM-DD') || undefined,
+  });
+  if (!error) {
+    setRows(appointments);
+    setTotal(count);
+  }
+  setLoading(false);
+};
  
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
+ useEffect(() => {
+  fetchAppointments();
+}, [page, query, selectedStatus, dateRange]);
 
+const [searchInput, setSearchInput] = useState("");
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setQuery(searchInput);
+    setPage(1); // reset to page 1 on new search
+  }, 400);
+  return () => clearTimeout(timer);
+}, [searchInput]);
   const handleStatusChange = async (id: string, status: "Accepted" | "Rejected") => {
     const result = await updateAppointmentStatus(id, status);
     if (!result.error) fetchAppointments(); // refresh the list
   };
-  const filtered = useMemo(
-    () =>
-      rows.filter(
-        (r) =>
-          `${r.name} ${r.clientType} ${r.status}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (selectedStatus === "all" || r.status === selectedStatus) &&
-          (!dateRange?.[0] ||
-            !dateRange?.[1] ||
-            (() => {
-              const date = dayjs(r.createdAt, "MMM D, YYYY");
-              return (
-                !date.isBefore(dateRange[0]!.startOf("day")) &&
-                !date.isAfter(dateRange[1]!.endOf("day"))
-              );
-            })()),
-      ),
-    [rows, query, selectedStatus, dateRange],
-  );
+
   const columns: Column<Appointment>[] = [
     {
       title: "Sl No",
@@ -829,11 +843,12 @@ export default function AppointmentsPage() {
         </button>
       </div>
       <FilterHeader
-        searchQuery={query}
-        onSearchChange={setQuery}
+        searchQuery={searchInput}
+        onSearchChange={setSearchInput}
         searchPlaceholder="Search by name, phone, type, or status..."
         selectedStatus={selectedStatus}
-        onStatusChange={setSelectedStatus}
+onStatusChange={(val) => { setSelectedStatus(val); setPage(1); }}
+   onDateRangeChange={(val) => { setDateRange(val); setPage(1); }}
         statusOptions={[
           { value: "all", label: "All Statuses" },
           { value: "Accepted", label: "Accepted" },
@@ -841,7 +856,6 @@ export default function AppointmentsPage() {
           { value: "Rejected", label: "Rejected" },
         ]}
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
       />
             <AddAppointmentModal
         open={showAdd || appointmentToEdit !== null}
@@ -864,17 +878,26 @@ export default function AppointmentsPage() {
           setShowAdd(false);
           setAppointmentToEdit(null);
         }}
-        onSubmit={async (form) => {
-          if (appointmentToEdit) {
-            // TODO: wire up updateAppointment server action later
-            setAppointmentToEdit(null);
-            fetchAppointments();
-          } else {
-            await handleCreateAppointment(form);
-          }
-          setShowAdd(false);
-          setAppointmentToEdit(null);
-        }}
+    onSubmit={async (form) => {
+  setSubmitting(true);
+  if (appointmentToEdit) {
+    const result = await updateAppointmentDetails(
+      appointmentToEdit.id,
+      appointmentToEdit.clientId,
+      form
+    );
+    if (result.error) {
+      alert(result.error);
+    } else {
+      fetchAppointments();
+    }
+  } else {
+    await handleCreateAppointment(form);
+  }
+  setSubmitting(false);
+  setShowAdd(false);
+  setAppointmentToEdit(null);
+}}
         loading={submitting}
       />
       <DeleteConfirmationModal
@@ -891,7 +914,7 @@ export default function AppointmentsPage() {
       />
 
       <section className="content-card w-full overflow-hidden">
-        <DataTable columns={columns} data={filtered} pageSize={10} />
+<DataTable columns={columns} data={rows} pageSize={pageSize} total={total} currentPage={page} onPageChange={setPage} />
       </section>
     </>
   );

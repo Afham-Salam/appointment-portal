@@ -6,7 +6,12 @@ import { useRouter } from "next/navigation";
 import { CgProfile } from "react-icons/cg";
 import { FiLogOut, FiUser } from "react-icons/fi";
 
-export default function ProfileMenu() {
+type ProfileMenuProps = {
+  email: string;
+  role: "admin" | "staff";
+};
+
+export default function ProfileMenu({ email, role }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -43,8 +48,8 @@ export default function ProfileMenu() {
       {open ? (
         <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-md border border-[#c1c9c0] bg-white shadow-[0_12px_32px_rgba(23,32,42,0.12)]">
           <div className="border-b border-[#e5e7eb] px-4 py-3">
-            <p className="m-0 text-sm font-semibold text-[#1a1c1a]">Dr. Morgan</p>
-            <p className="m-0 mt-0.5 text-xs text-[#69746d]">Staff</p>
+            <p className="m-0 text-sm font-semibold text-[#1a1c1a]">{email}</p>
+            <p className="m-0 mt-0.5 text-xs text-[#69746d]">{role}</p>
           </div>
 
           <div className="p-1.5">

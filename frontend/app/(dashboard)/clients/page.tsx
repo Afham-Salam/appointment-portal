@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DataTable, type Column } from "@/components/DataTable";
 import { FilterHeader } from "@/components/FilterHeader";
@@ -33,7 +33,9 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-
+const [page, setPage] = useState(1);
+const [total, setTotal] = useState(0);
+const pageSize = 10;
   const [selectedType, setSelectedType] = useState("all");
 const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>([dayjs().startOf("day"), dayjs().endOf("day")]);
   const [reportClient, setReportClient] = useState<ClientRow | null>(null);
@@ -43,50 +45,27 @@ const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(
   };
 
 
-  useEffect(() => {
-    async function fetch() {
-      const { clients: data } = await getApprovedClients();
-      setClients(
-        data.map((c) => ({
-          ...c,
-          phone: `${c.countryCode} ${c.phone}`.trim(),
-        }))
-      );
-      setLoading(false);
-    }
-    fetch();
-  }, []);
-
-  const filteredClients = useMemo(() => {
-    return clients.filter((row) => {
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        if (
-          !row.name.toLowerCase().includes(q) &&
-          !row.phone.toLowerCase().includes(q) &&
-          !row.clientType.toLowerCase().includes(q)
-        ) {
-          return false;
-        }
-      }
-      if (selectedType !== "all" && row.clientType !== selectedType) {
-        return false;
-      }
-      if (dateRange?.[0] && dateRange?.[1]) {
-        const rowDate = dayjs(row.scheduledDate || row.createdAt, [
-          "YYYY-MM-DD",
-          "MMM D, YYYY",
-        ]);
-        if (
-          rowDate.isBefore(dateRange[0].startOf("day")) ||
-          rowDate.isAfter(dateRange[1].endOf("day"))
-        ) {
-          return false;
-        }
-      }
-      return true;
+ useEffect(() => {
+  async function fetch() {
+    setLoading(true);
+    const { clients: data, total: count } = await getApprovedClients({
+      page,
+      pageSize,
+      search: searchQuery || undefined,
+      clientType: selectedType !== 'all' ? selectedType : undefined,
+      dateFrom: dateRange?.[0]?.format('YYYY-MM-DD') || undefined,
+      dateTo: dateRange?.[1]?.format('YYYY-MM-DD') || undefined,
     });
-  }, [clients, searchQuery, selectedType, dateRange]);
+    setClients(data.map((c) => ({
+      ...c,
+      phone: `${c.countryCode} ${c.phone}`.trim(),
+    })));
+    setTotal(count);
+    setLoading(false);
+  }
+  fetch();
+}, [page, searchQuery, selectedType, dateRange]);
+
 
   const columns: Column<ClientRow>[] = [
     {
@@ -163,7 +142,7 @@ const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(
             Loading clients...
           </div>
         ) : (
-          <DataTable columns={columns} data={filteredClients} pageSize={10} />
+          <DataTable columns={columns} data={clients} pageSize={10} />
         )}
       </section>
 

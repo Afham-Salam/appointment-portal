@@ -9,11 +9,12 @@ import ProfileMenu from "@/components/ProfileMenu";
 import { NotificationsProvider } from "@/components/NotificationsProvider";
 
 type Props = {
-  children: React.ReactNode;
+children: React.ReactNode;
   role: "admin" | "staff";
+  email: string;
 };
 
-export default function DashboardShell({ children, role }: Props) {
+export default function DashboardShell({ children, role,email }: Props) {
   const pathname = usePathname();
   const [mobile, setMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -67,7 +68,7 @@ export default function DashboardShell({ children, role }: Props) {
             </div>
             <div className="flex items-center gap-3">
               <NotificationMenu />
-              <ProfileMenu />
+              <ProfileMenu email={email} role={role} />
             </div>
           </header>
 

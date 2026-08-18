@@ -1546,3 +1546,36 @@ export async function downloadApplicationPdf(
     throw error;
   }
 }
+export async function printApplicationPdf(
+  data: ApplicationPdfData,
+  pages: ApplicationPdfPage[] = ["Application Form"],
+) {
+  try {
+    const { logoSrc, ml } = await prepareAssets();
+
+    const blob = await pdf(
+      <ApplicationPdf
+        data={data}
+        logoSrc={logoSrc}
+        ml={ml}
+        pages={pages}
+      />,
+    ).toBlob();
+
+    const url = URL.createObjectURL(blob);
+
+    // Open PDF in new tab — browser's print dialog will handle printer/scanner
+    const printWindow = window.open(url, "_blank");
+
+    if (printWindow) {
+      printWindow.addEventListener("load", () => {
+        setTimeout(() => printWindow.print(), 500);
+      });
+    }
+
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) {
+    console.error("PDF print failed:", error);
+    throw error;
+  }
+}

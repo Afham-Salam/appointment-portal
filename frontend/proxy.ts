@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -25,15 +25,26 @@ export default async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
 
+  // If session expired or invalid, redirect to login
   if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') 
+    (!user || error) &&
+    !request.nextUrl.pathname.startsWith('/login')
   ) {
+    // Clear stale auth cookies
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    const response = NextResponse.redirect(url)
+
+    // Remove all supabase cookies to prevent stale session loops
+    request.cookies.getAll().forEach((cookie) => {
+      if (cookie.name.includes('supabase') || cookie.name.includes('sb-')) {
+        response.cookies.delete(cookie.name)
+      }
+    })
+
+    return response
   }
 
   return supabaseResponse

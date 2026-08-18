@@ -112,65 +112,96 @@ export async function createAppointment(values: {
 }
 
 // Fetch all appointments with client info
-export async function getAppointments() {
+export async function getAppointments(params?: {
+  page?: number
+  pageSize?: number
+  search?: string
+  status?: string
+  dateFrom?: string
+  dateTo?: string
+}) {
   const supabase = await createClient()
-
- const { data, error } = await supabase
-  .from('appointments')
-  .select(`
-    id,
+  const {
+    page = 1,
+    pageSize = 10,
+    search,
     status,
-    scheduled_date,
-    notes,
-    created_at,
-    client:clients!inner (
-      id,
-      name,
-      age,
-      relative,
-      address,
-      country_code,
-      phone,
-      client_type
+    dateFrom,
+    dateTo,
+  } = params || {}
+ 
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+ 
+  let query = supabase
+    .from('appointments')
+    .select(
+      `
+      id, status, scheduled_date, notes, created_at,
+      client:clients!inner (
+        id, name, age, relative, address, country_code, phone, client_type
+      )
+    `,
+      { count: 'exact' },
     )
-  `)
-  .order('created_at', { ascending: false })
-
-  if (error) return { error: error.message, appointments: [] }
-
-const appointments = (data || []).map((apt) => {
-  const client = apt.client as unknown as {
-    id: string
-    name: string
-    age: string
-    relative: string
-    address: string
-    country_code: string
-    phone: string
-    client_type: string
+    .order('created_at', { ascending: false })
+    .range(from, to)
+ 
+  // Filter by status
+  if (status && status !== 'all') {
+    query = query.eq('status', status)
   }
-
-  return {
-    id: apt.id,
-    name: client.name || '',
-    age: client.age || '',
-    relative: client.relative || '',
-    address: client.address || '',
-    countryCode: client.country_code || '+91',
-    phone: client.phone || '',
-    clientType: (client.client_type || 'Client') as 'Student' | 'Client',
-    status: apt.status as 'Pending' | 'Accepted' | 'Rejected',
-    createdAt: new Date(apt.created_at).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    clientId: client.id || '',
-    scheduledDate: apt.scheduled_date,
+ 
+  // Filter by date range
+  if (dateFrom) {
+    query = query.gte('created_at', `${dateFrom}T00:00:00`)
   }
-})
-
-  return { appointments, error: null }
+  if (dateTo) {
+    query = query.lte('created_at', `${dateTo}T23:59:59`)
+  }
+ 
+  // Search by client name
+  if (search && search.trim()) {
+    query = query.ilike('client.name', `%${search.trim()}%`)
+  }
+ 
+  const { data, count, error } = await query
+ 
+  if (error) return { error: error.message, appointments: [], total: 0 }
+ 
+  const appointments = (data || []).map((apt) => {
+    const client = apt.client as unknown as {
+      id: string
+      name: string
+      age: string
+      relative: string
+      address: string
+      country_code: string
+      phone: string
+      client_type: string
+    }
+ 
+    return {
+      id: apt.id,
+      name: client.name || '',
+      age: client.age || '',
+      relative: client.relative || '',
+      address: client.address || '',
+      countryCode: client.country_code || '+91',
+      phone: client.phone || '',
+      clientType: (client.client_type || 'Client') as 'Student' | 'Client',
+      status: apt.status as 'Pending' | 'Accepted' | 'Rejected',
+      createdAt: new Date(apt.created_at).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      clientId: client.id || '',
+      scheduledDate: apt.scheduled_date,
+    }
+  })
+ 
+  return { appointments, total: count || 0, error: null }
 }
 
 // Update appointment status
@@ -203,31 +234,83 @@ export async function deleteAppointment(appointmentId: string) {
 }
 
 // Fetch clients who have at least one accepted appointment
-export async function getApprovedClients() {
+export async function getApprovedClients(params?: {
+  page?: number
+  pageSize?: number
+  search?: string
+  clientType?: string
+  dateFrom?: string
+  dateTo?: string
+}) {
   const supabase = await createClient()
+  const {
+    page = 1,
+    pageSize = 10,
+    search,
+    clientType,
+    dateFrom,
+    dateTo,
+  } = params || {}
 
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+
+  // First, get appointment IDs matching the date filter
+  let appointmentQuery = supabase
+    .from('appointments')
+    .select('client_id')
+    .eq('status', 'Accepted')
+
+  if (dateFrom) {
+    appointmentQuery = appointmentQuery.gte('scheduled_date', dateFrom)
+  }
+  if (dateTo) {
+    appointmentQuery = appointmentQuery.lte('scheduled_date', dateTo)
+  }
+
+  const { data: matchingAppointments } = await appointmentQuery
+
+  // If date filter is active but no matches, return empty
+  if ((dateFrom || dateTo) && (!matchingAppointments || matchingAppointments.length === 0)) {
+    return { clients: [], total: 0, error: null }
+  }
+
+  const matchedClientIds = matchingAppointments
+    ? [...new Set(matchingAppointments.map((a) => a.client_id))]
+    : null
+
+  // Now query clients
+  let query = supabase
     .from('clients')
-    .select(`
-      id,
-      name,
-      age,
-      phone,
-      country_code,
-      client_type,
-      address,
-      created_at,
+    .select(
+      `
+      id, name, age, phone, country_code, client_type, address, created_at,
       appointments!inner (
-        id,
-        status,
-        scheduled_date,
-        created_at
+        id, status, scheduled_date, created_at
       )
-    `)
+    `,
+      { count: 'exact' },
+    )
     .eq('appointments.status', 'Accepted')
     .order('created_at', { ascending: false })
+    .range(from, to)
 
-  if (error) return { error: error.message, clients: [] }
+  // Filter by matched client IDs from date query
+  if (matchedClientIds) {
+    query = query.in('id', matchedClientIds)
+  }
+
+  if (clientType && clientType !== 'all') {
+    query = query.eq('client_type', clientType)
+  }
+
+  if (search && search.trim()) {
+    query = query.or(`name.ilike.%${search.trim()}%,phone.ilike.%${search.trim()}%`)
+  }
+
+  const { data, count, error } = await query
+
+  if (error) return { error: error.message, clients: [], total: 0 }
 
   const seen = new Set<string>()
   const clients = (data || [])
@@ -244,7 +327,6 @@ export async function getApprovedClients() {
         created_at: string
       }[]
 
-      // Get the latest scheduled date
       const latestDate = appts
         .map((a) => a.scheduled_date)
         .filter(Boolean)
@@ -269,7 +351,48 @@ export async function getApprovedClients() {
       }
     })
 
-  return { clients, error: null }
+  return { clients, total: count || 0, error: null }
+}
+ 
+// ─── Dashboard: latest 5 appointments (no pagination needed) ───
+export async function getLatestAppointments(limit: number = 5) {
+  const supabase = await createClient()
+ 
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(`
+      id, status, scheduled_date, created_at,
+      client:clients!inner (
+        id, name, client_type
+      )
+    `)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+ 
+  if (error) return { appointments: [], error: error.message }
+ 
+  const appointments = (data || []).map((apt) => {
+    const client = apt.client as unknown as {
+      id: string
+      name: string
+      client_type: string
+    }
+ 
+    return {
+      id: apt.id,
+      patient: client.name,
+      type: client.client_type,
+      date: new Date(apt.created_at).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      status: apt.status,
+      clientId: client.id,
+    }
+  })
+ 
+  return { appointments, error: null }
 }
 
 // Fetch full client details with all related data
@@ -618,4 +741,107 @@ export async function deleteDataBeforeDate(beforeDate: string) {
   }
 
   return { deleted: oldAppointments.length, error: null }
+}
+
+// Update an existing appointment's client details
+export async function updateAppointmentDetails(
+  appointmentId: string,
+  clientId: string,
+  values: {
+    name: string
+    age: string
+    relative: string
+    address: string
+    countryCode: string
+    phone: string
+    clientType: 'Student' | 'Client'
+    scheduledDate?: string
+  }
+) {
+  const supabase = await createClient()
+
+  // Update client info
+  const { error: clientError } = await supabase
+    .from('clients')
+    .update({
+      name: values.name,
+      age: values.age,
+      relative: values.relative,
+      address: values.address,
+      country_code: values.countryCode,
+      phone: values.phone,
+      client_type: values.clientType,
+    })
+    .eq('id', clientId)
+
+  if (clientError) return { error: clientError.message }
+
+  // Update appointment date if provided
+  if (values.scheduledDate) {
+    const { error: aptError } = await supabase
+      .from('appointments')
+      .update({ scheduled_date: values.scheduledDate })
+      .eq('id', appointmentId)
+
+    if (aptError) return { error: aptError.message }
+  }
+
+  return { success: true }
+}
+
+// Dashboard stats
+export async function getDashboardStats() {
+  const supabase = await createClient()
+
+  const today = new Date().toISOString().split('T')[0]
+
+  // Total appointments
+  const { count: totalAppointments } = await supabase
+    .from('appointments')
+    .select('*', { count: 'exact', head: true })
+
+  // Pending
+  const { count: pendingAppointments } = await supabase
+    .from('appointments')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'Pending')
+
+  // Accepted
+  const { count: acceptedAppointments } = await supabase
+    .from('appointments')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'Accepted')
+
+  // Today's appointments
+  const { count: todayAppointments } = await supabase
+    .from('appointments')
+    .select('*', { count: 'exact', head: true })
+    .eq('scheduled_date', today)
+
+  // Total clients
+  const { count: totalClients } = await supabase
+    .from('clients')
+    .select('*', { count: 'exact', head: true })
+
+  // Student clients
+  const { count: studentClients } = await supabase
+    .from('clients')
+    .select('*', { count: 'exact', head: true })
+    .eq('client_type', 'Student')
+
+  // Normal/Client clients
+  const { count: normalClients } = await supabase
+    .from('clients')
+    .select('*', { count: 'exact', head: true })
+    .eq('client_type', 'Client')
+
+  return {
+    totalAppointments: totalAppointments || 0,
+    pendingAppointments: pendingAppointments || 0,
+    acceptedAppointments: acceptedAppointments || 0,
+    todayAppointments: todayAppointments || 0,
+    totalClients: totalClients || 0,
+    studentClients: studentClients || 0,
+    normalClients: normalClients || 0,
+  }
 }
