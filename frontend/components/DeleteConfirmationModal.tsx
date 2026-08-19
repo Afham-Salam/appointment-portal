@@ -18,6 +18,9 @@ type DeleteConfirmationModalProps = {
   itemName?: string;
   onCancel: () => void;
   onConfirm: () => void;
+  title?: string;
+  actionText?: string;
+  actionDescription?: string;
 };
 
 export default function DeleteConfirmationModal({
@@ -25,6 +28,9 @@ export default function DeleteConfirmationModal({
   itemName = "this appointment",
   onCancel,
   onConfirm,
+  title = "Delete appointment?",
+  actionText = "Delete",
+  actionDescription = "This action cannot be undone.",
 }: DeleteConfirmationModalProps) {
   return (
     <ConfigProvider theme={themeConfig}>
@@ -33,12 +39,12 @@ export default function DeleteConfirmationModal({
         title={
           <span className="flex items-center gap-2 text-lg font-semibold text-[#144229]">
             <ExclamationCircleOutlined className="text-[#c9252d]!" />
-            Delete appointment?
+            {title}
           </span>
         }
         onCancel={onCancel}
         onOk={onConfirm}
-        okText="Delete"
+        okText={actionText}
         cancelText="Cancel"
         okButtonProps={{
           danger: true,
@@ -50,9 +56,9 @@ export default function DeleteConfirmationModal({
         centered
       >
         <p className="mb-1 text-[#414942]">
-          Are you sure you want to delete <strong>{itemName}</strong>?
+          Are you sure you want to continue with <strong>{itemName}</strong>?
         </p>
-        <p className="m-0 text-sm text-[#69746d]">This action cannot be undone.</p>
+        <p className="m-0 text-sm text-[#69746d]">{actionDescription}</p>
       </Modal>
     </ConfigProvider>
   );

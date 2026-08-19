@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ConfigProvider, Form, Input, Modal, Select, Alert,DatePicker  } from "antd";
+import {
+  ConfigProvider,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Alert,
+  DatePicker,
+} from "antd";
 import {
   getCountries,
   getCountryCallingCode,
@@ -24,11 +32,12 @@ export type AppointmentFormValues = {
   countryCode: string;
   phone: string;
   clientType: ClientType;
-   scheduledDate?: string;
+  scheduledDate?: string;
 };
 
-type ModalFormValues = AppointmentFormValues & {
+type ModalFormValues = Omit<AppointmentFormValues, "scheduledDate"> & {
   country: Country;
+  scheduledDate?: dayjs.Dayjs | null;
 };
 
 const blankForm: ModalFormValues = {
@@ -39,8 +48,8 @@ const blankForm: ModalFormValues = {
   country: "IN",
   countryCode: "+91",
   phone: "",
-  clientType: "Student",
-   scheduledDate: null as unknown as string,
+  clientType: "Client",
+  scheduledDate: dayjs(),
 };
 
 const themeConfig = {
@@ -156,6 +165,9 @@ export default function AddAppointmentModal({
     form.setFieldsValue({
       ...initialValues,
       country: country ?? blankForm.country,
+      scheduledDate: initialValues.scheduledDate
+        ? dayjs(initialValues.scheduledDate)
+        : dayjs(),
     });
   }, [open, form, initialValues]);
 
@@ -207,11 +219,13 @@ export default function AddAppointmentModal({
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const { country,scheduledDate, ...rest } = values;
+      const { country, scheduledDate, ...rest } = values;
       onSubmit({
         ...rest,
         countryCode: `+${getCountryCallingCode(country)}`,
-         scheduledDate: scheduledDate ? dayjs(scheduledDate).format("YYYY-MM-DD") : undefined,
+        scheduledDate: scheduledDate
+          ? dayjs(scheduledDate).format("YYYY-MM-DD")
+          : undefined,
       });
     } catch {
       /* validation errors shown by antd */
@@ -222,14 +236,14 @@ export default function AddAppointmentModal({
     <ConfigProvider theme={themeConfig}>
       <Modal
         title={
-          <span className="text-lg font-semibold text-[#144229]">
-            {title}
-          </span>
+          <span className="text-lg font-semibold text-[#144229]">{title}</span>
         }
         open={open}
         onCancel={onCancel}
         onOk={handleSubmit}
-        okText={lookupStatus === "found" ? "Reschedule Appointment" : submitText}
+        okText={
+          lookupStatus === "found" ? "Reschedule Appointment" : submitText
+        }
         cancelText="Cancel"
         width="100%"
         style={{ maxWidth: 720, top: 16, paddingBottom: 0 }}
@@ -357,10 +371,13 @@ export default function AddAppointmentModal({
                           }`}
                         >
                           {apt.status} —{" "}
-                          {new Date(apt.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
+                          {new Date(apt.created_at).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )}
                         </span>
                       ))}
                     </div>
@@ -382,7 +399,17 @@ export default function AddAppointmentModal({
               name="name"
               rules={[{ required: true, message: "Name is required" }]}
             >
-              <Input placeholder="Enter full name" className="rounded-md!" />
+              <Input
+                type="text"
+                placeholder="Enter full name"
+                className="rounded-md!"
+                onChange={(event) => {
+                  form.setFieldValue(
+                    "name",
+                    event.target.value.replace(/[^\p{L}\s]/gu, ""),
+                  );
+                }}
+              />
             </Form.Item>
 
             <Form.Item
@@ -412,8 +439,15 @@ export default function AddAppointmentModal({
 
             <Form.Item label="Relative's name" name="relative">
               <Input
+                type="text"
                 placeholder="Enter relative's name"
                 className="rounded-md!"
+                onChange={(event) => {
+                  form.setFieldValue(
+                    "relative",
+                    event.target.value.replace(/[^\p{L}\s]/gu, ""),
+                  );
+                }}
               />
             </Form.Item>
 
@@ -421,18 +455,14 @@ export default function AddAppointmentModal({
               <Select
                 className="w-full [&_.ant-select-selector]:rounded-md!"
                 classNames={{ popup: { root: selectPopupClassName } }}
-             options={[
-  { value: "Student", label: "Student" },
-  { value: "Client", label: "Client" },
-]}
+                options={[
+                  { value: "Client", label: "Client" },
+                  { value: "Student", label: "Student" },
+                ]}
               />
             </Form.Item>
 
-            <Form.Item
-              label="Address"
-              name="address"
-              className="sm:col-span-2"
-            >
+            <Form.Item label="Address" name="address" className="sm:col-span-2">
               <Input.TextArea
                 rows={3}
                 placeholder="Enter address"
@@ -443,12 +473,16 @@ export default function AddAppointmentModal({
               label="Appointment Date"
               name="scheduledDate"
               className="sm:col-span-2"
-              rules={[{ required: true, message: "Appointment date is required" }]}
+              rules={[
+                { required: true, message: "Appointment date is required" },
+              ]}
             >
               <DatePicker
                 format="DD/MM/YYYY"
                 className="w-full! rounded-md!"
-                disabledDate={(current) => current && current < dayjs().startOf("day")}
+                disabledDate={(current) =>
+                  current && current < dayjs().startOf("day")
+                }
                 placeholder="Select appointment date"
               />
             </Form.Item>

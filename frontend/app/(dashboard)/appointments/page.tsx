@@ -16,15 +16,20 @@ import {
   FiTrash2,
   FiX,
 } from "react-icons/fi";
-import AddAppointmentModal,{ type AppointmentFormValues } from "@/components/AddAppointmentModal";
+import AddAppointmentModal, {
+  type AppointmentFormValues,
+} from "@/components/AddAppointmentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
-import { downloadApplicationPdf,printApplicationPdf  } from "@/components/ApplicationPdf";
+import {
+  downloadApplicationPdf,
+  printApplicationPdf,
+} from "@/components/ApplicationPdf";
 import {
   getAppointments,
   createAppointment,
   updateAppointmentStatus,
   deleteAppointment,
-  updateAppointmentDetails 
+  updateAppointmentDetails,
 } from "@/lib/actions/appointments";
 
 import {
@@ -32,7 +37,8 @@ import {
   FormSection,
   RepeatSection,
   TextGrid,
-   type RemediationRow,
+  AssessmentReportForm,
+  type RemediationRow,
 } from "@/components/ClientDetailSections";
 import {
   saveClientInfo,
@@ -47,7 +53,7 @@ import { useRole } from "@/components/RoleContext";
 type Status = "Pending" | "Accepted" | "Rejected";
 export type ClientType = "Student" | "Client";
 export type Appointment = {
-  id: string;          // changed from number to string
+  id: string; // changed from number to string
   name: string;
   age: string;
   relative: string;
@@ -57,10 +63,8 @@ export type Appointment = {
   clientType: ClientType;
   status: Status;
   createdAt: string;
-  clientId: string;    // new — links to the client record
+  clientId: string; // new — links to the client record
 };
-
-
 
 export function ClientDetails({
   appointment,
@@ -85,45 +89,50 @@ export function ClientDetails({
 }) {
   const [data, setData] = useState(appointment);
   const [currentProblem, setCurrentProblem] = useState(
-    clientData?.applicationForm?.current_problem || ""
+    clientData?.applicationForm?.current_problem || "",
   );
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [saving, setSaving] = useState(false);
- 
+
   // TextGrid values for each section
-const [studentIntakeValues, setStudentIntakeValues] = useState<Record<string, string>>(
-  clientData?.studentIntake?.form_data || {}
-);
-const [parentsDetailsValues, setParentsDetailsValues] = useState<Record<string, string>>(
-  clientData?.parentsDetails?.form_data || {}
-);
-const [assessmentReportValues, setAssessmentReportValues] = useState<Record<string, string>>(
-  clientData?.assessmentReport?.form_data || {}
-);
- 
+  const [studentIntakeValues, setStudentIntakeValues] = useState<
+    Record<string, string>
+  >(clientData?.studentIntake?.form_data || {});
+  const [parentsDetailsValues, setParentsDetailsValues] = useState<
+    Record<string, string>
+  >(clientData?.parentsDetails?.form_data || {});
+  const [assessmentReportValues, setAssessmentReportValues] = useState<
+    Record<string, string>
+  >(clientData?.assessmentReport?.form_data || {});
+
   // Mental status exam state
-const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>>(
-  clientData?.mentalStatusExam?.form_data || {}
-);
- 
+  const [mentalStatusValues, setMentalStatusValues] = useState<
+    Record<string, any>
+  >(clientData?.mentalStatusExam?.form_data || {});
+
   // Remediation entries
-  const remediationEntries: RemediationRow[] = (clientData?.remediationEntries || []).map(
-    (e: any) => ({
-      id: e.id,
-      entry_date: e.entry_date || "",
-      remediation_given: e.remediation_given || "",
-      improvement_seen: e.improvement_seen || "",
-      sort_order: e.sort_order || 0,
-    })
-  );
- 
+  const remediationEntries: RemediationRow[] = (
+    clientData?.remediationEntries || []
+  ).map((e: any) => ({
+    id: e.id,
+    entry_date: e.entry_date || "",
+    remediation_given: e.remediation_given || "",
+    improvement_seen: e.improvement_seen || "",
+    sort_order: e.sort_order || 0,
+  }));
+
   const [open, setOpen] = useState<string[]>([
     "Application Form",
     ...(appointment.clientType === "Student"
-      ? ["Student Intake Form", "Remediation & Improvement", "Parents' Details", "Assessment Report"]
+      ? [
+          "Student Intake Form",
+          "Remediation & Improvement",
+          "Parents' Details",
+          "Assessment Report",
+        ]
       : ["Mental Status Exam", "Remediation & Improvement"]),
   ]);
- 
+
   const navigationItems = [
     "Application Form",
     ...(data.clientType === "Student"
@@ -135,59 +144,62 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
         ]
       : ["Mental Status Exam", "Remediation & Improvement"]),
   ];
- 
+
   const [editing, setEditing] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("Application Form");
- 
+
   const toggle = (name: string) =>
     setOpen((items) =>
-      items.includes(name) ? items.filter((x) => x !== name) : [...items, name]
+      items.includes(name) ? items.filter((x) => x !== name) : [...items, name],
     );
   const isEditing = (name: string) => editing === name;
- 
+
   const set = (key: keyof Appointment, value: string) =>
     setData((d) => ({ ...d, [key]: value }));
- 
+
   // ─── Save handlers ───
   const handleSave = async (section: string) => {
     setSaving(true);
- 
+
     switch (section) {
-    case "Application Form":
-  await saveClientInfo(appointment.clientId, {
-    name: data.name,
-    age: data.age,
-    relative: data.relative,
-    address: data.address,
-  });
-  if (appointment.id) {
-    await saveApplicationForm(appointment.id, currentProblem);
-  }
-  break;
- 
+      case "Application Form":
+        await saveClientInfo(appointment.clientId, {
+          name: data.name,
+          age: data.age,
+          relative: data.relative,
+          address: data.address,
+        });
+        if (appointment.id) {
+          await saveApplicationForm(appointment.id, currentProblem);
+        }
+        break;
+
       case "Student Intake Form":
         await saveStudentIntake(appointment.clientId, studentIntakeValues);
         break;
- 
+
       case "Parents' Details":
         await saveParentsDetails(appointment.clientId, parentsDetailsValues);
         break;
- 
+
       case "Assessment Report":
-        await saveAssessmentReport(appointment.clientId, assessmentReportValues);
+        await saveAssessmentReport(
+          appointment.clientId,
+          assessmentReportValues,
+        );
         break;
- 
+
       case "Mental Status Exam":
         if (appointment.id) {
           await saveMentalStatusExam(appointment.id, mentalStatusValues);
         }
         break;
     }
- 
+
     setSaving(false);
     setEditing(null);
   };
- 
+
   useEffect(() => {
     const observers = navigationItems.map((item) => {
       const element = document.getElementById(item);
@@ -196,14 +208,14 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
         ([entry]) => {
           if (entry.isIntersecting) setActiveSection(item);
         },
-        { rootMargin: "-18% 0px -65% 0px" }
+        { rootMargin: "-18% 0px -65% 0px" },
       );
       observer.observe(element);
       return observer;
     });
     return () => observers.forEach((observer) => observer?.disconnect());
   }, [data.clientType]);
- 
+
   return (
     <div className="client-workspace">
       <div className="details-toolbar">
@@ -212,8 +224,8 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
         </button>
         <div></div>
       </div>
-      <div className="details-layout grid-cols-[220px_minmax(0,1fr)]!">
-        <nav className="form-nav sticky top-4 rounded-lg border border-[#c1c9c0] bg-white p-3">
+      <div className="details-layout block! xl:grid! xl:grid-cols-[220px_minmax(0,1fr)]!">
+        <nav className="form-nav sticky top-4 hidden rounded-lg border border-[#c1c9c0] bg-white p-3 xl:block">
           <p className="m-0 mb-2 text-[10px] font-extrabold text-[#414942]">
             ON THIS PAGE
           </p>
@@ -229,7 +241,9 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                 onClick={() => {
                   setOpen((x) => (x.includes(item) ? x : [...x, item]));
                   setActiveSection(item);
-                  document.getElementById(item)?.scrollIntoView({ behavior: "smooth" });
+                  document
+                    .getElementById(item)
+                    ?.scrollIntoView({ behavior: "smooth" });
                 }}
               >
                 {item}
@@ -237,7 +251,7 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
             ))}
           </div>
         </nav>
- 
+
         <main className="print-area">
           <div className="print-header">
             <Image src="/logo.webp" alt="Treasure" width={42} height={42} />
@@ -251,7 +265,7 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
               7306941801
             </span>
           </div>
- 
+
           <div className="client-title">
             <div>
               <h1>{data.name}</h1>
@@ -261,7 +275,7 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
             </div>
             <span className="status accepted">Accepted</span>
           </div>
- 
+
           {/* ─── Application Form ─── */}
           <div id="Application Form" className="application-print">
             <FormSection
@@ -270,7 +284,9 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
               onToggle={() => toggle("Application Form")}
               editing={isEditing("Application Form")}
               onEdit={() =>
-                setEditing(isEditing("Application Form") ? null : "Application Form")
+                setEditing(
+                  isEditing("Application Form") ? null : "Application Form",
+                )
               }
               onSave={() => handleSave("Application Form")}
               saving={saving}
@@ -328,15 +344,21 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                   <span className="font-medium">Current problem</span>
                   <textarea
                     value={currentProblem}
+                    maxLength={500}
                     onChange={(e) => setCurrentProblem(e.target.value)}
                     disabled={!isEditing("Application Form")}
                     className="min-h-24 w-full rounded-md border border-[#c1c9c0] bg-white p-3 text-sm text-[#1a1c1a] outline-none transition focus:border-[#2D5A3F] focus:ring-2 focus:ring-[#2D5A3F]/15 disabled:bg-[#f4f4f0] disabled:text-[#414942]"
                   />
+                  {currentProblem.length >= 500 && (
+                    <span className="text-xs font-medium text-[#c9252d]">
+                      Maximum 500 characters reached.
+                    </span>
+                  )}
                 </label>
               </div>
             </FormSection>
           </div>
- 
+
           {/* ─── Student Intake Form ─── */}
           {data.clientType === "Student" && (
             <div id="Student Intake Form">
@@ -346,7 +368,11 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                 onToggle={() => toggle("Student Intake Form")}
                 editing={isEditing("Student Intake Form")}
                 onEdit={() =>
-                  setEditing(isEditing("Student Intake Form") ? null : "Student Intake Form")
+                  setEditing(
+                    isEditing("Student Intake Form")
+                      ? null
+                      : "Student Intake Form",
+                  )
                 }
                 onSave={() => handleSave("Student Intake Form")}
                 saving={saving}
@@ -386,7 +412,7 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
               </FormSection>
             </div>
           )}
- 
+
           {/* ─── Parents' Details ─── */}
           {data.clientType === "Student" && (
             <div id="Parents' Details">
@@ -396,7 +422,9 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                 onToggle={() => toggle("Parents' Details")}
                 editing={isEditing("Parents' Details")}
                 onEdit={() =>
-                  setEditing(isEditing("Parents' Details") ? null : "Parents' Details")
+                  setEditing(
+                    isEditing("Parents' Details") ? null : "Parents' Details",
+                  )
                 }
                 onSave={() => handleSave("Parents' Details")}
                 saving={saving}
@@ -428,11 +456,12 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                     "Date",
                   ]}
                   dateLabels={["Date"]}
+                  radioOptions={{ "Type of family": ["Joint", "Nuclear"] }}
                 />
               </FormSection>
             </div>
           )}
- 
+
           {/* ─── Assessment Report ─── */}
           {data.clientType === "Student" && (
             <div id="Assessment Report">
@@ -442,224 +471,329 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
                 onToggle={() => toggle("Assessment Report")}
                 editing={isEditing("Assessment Report")}
                 onEdit={() =>
-                  setEditing(isEditing("Assessment Report") ? null : "Assessment Report")
+                  setEditing(
+                    isEditing("Assessment Report") ? null : "Assessment Report",
+                  )
                 }
                 onSave={() => handleSave("Assessment Report")}
                 saving={saving}
               >
-                <TextGrid
+                <AssessmentReportForm
                   editable={isEditing("Assessment Report")}
                   values={assessmentReportValues}
                   onChange={setAssessmentReportValues}
-                  labels={[
-                    "Logical Thinking",
-                    "Listening & following verbal instructions",
-                    "Sequencing of Numbers",
-                    "Sequencing of incidents",
-                    "Reasoning",
-                    "Number concept",
-                    "General awareness",
-                    "Attention",
-                    "Visual memory",
-                    "Verbal memory",
-                    "Reading (Level)",
-                    "General Reading",
-                    "Writing",
-                    "Mathematics",
-                    "Family History (if any)",
-                    "Presented Problem",
-                    "Identified Problem",
-                    "Remarks",
-                    "Assessed by",
-                    "Name & Signature",
-                    "Date",
-                  ]}
-                  textareaLabels={[
-                    "Mathematics",
-                    "Presented Problem",
-                    "Identified Problem",
-                    "Remarks",
-                  ]}
-                  dateLabels={["Date"]}
                 />
               </FormSection>
             </div>
           )}
- 
+
           {/* ─── Mental Status Exam ─── */}
-         {data.clientType === "Client" && (
-  <div id="Mental Status Exam">
-    <FormSection
-      title="Mental Status Exam"
-      open={open.includes("Mental Status Exam")}
-      onToggle={() => toggle("Mental Status Exam")}
-      editing={isEditing("Mental Status Exam")}
-      onEdit={() =>
-        setEditing(isEditing("Mental Status Exam") ? null : "Mental Status Exam")
-      }
-      onSave={() => handleSave("Mental Status Exam")}
-      saving={saving}
-      onPrint={() => {
-  printApplicationPdf({
-    name: data.name,
-    age: data.age,
-    relative: data.relative,
-    address: data.address,
-    phone: `${data.countryCode} ${data.phone}`.trim(),
-    currentProblem,
-  });
-}}
-    >
-      <div className="flex flex-col gap-4">
-        <div className="form-grid">
-          <Field label="Client Name" value={data.name} disabled />
-          <label className="flex flex-col gap-1.5 text-[13px] text-[#144229]">
-            <span className="font-medium">Date</span>
-            <DatePicker
-              format="DD/MM/YYYY"
-              disabled={!isEditing("Mental Status Exam")}
-              className="h-11! w-full"
-              value={mentalStatusValues.exam_date ? dayjs(mentalStatusValues.exam_date) : undefined}
-              onChange={(date) =>
-                setMentalStatusValues((prev) => ({
-                  ...prev,
-                  exam_date: date ? date.format("YYYY-MM-DD") : "",
-                }))
-              }
-            />
-          </label>
-        </div>
+          {data.clientType === "Client" && (
+            <div id="Mental Status Exam">
+              <FormSection
+                title="Mental Status Exam"
+                open={open.includes("Mental Status Exam")}
+                onToggle={() => toggle("Mental Status Exam")}
+                editing={isEditing("Mental Status Exam")}
+                onEdit={() =>
+                  setEditing(
+                    isEditing("Mental Status Exam")
+                      ? null
+                      : "Mental Status Exam",
+                  )
+                }
+                onSave={() => handleSave("Mental Status Exam")}
+                saving={saving}
+                onPrint={() => {
+                  printApplicationPdf({
+                    name: data.name,
+                    age: data.age,
+                    relative: data.relative,
+                    address: data.address,
+                    phone: `${data.countryCode} ${data.phone}`.trim(),
+                    currentProblem,
+                  });
+                }}
+              >
+                <div className="flex flex-col gap-4">
+                  <div className="form-grid">
+                    <Field label="Client Name" value={data.name} disabled />
+                    <label className="flex flex-col gap-1.5 text-[13px] text-[#144229]">
+                      <span className="font-medium">Date</span>
+                      <DatePicker
+                        format="DD/MM/YYYY"
+                        disabled={!isEditing("Mental Status Exam")}
+                        className="h-11! w-full"
+                        value={
+                          mentalStatusValues.exam_date
+                            ? dayjs(mentalStatusValues.exam_date)
+                            : undefined
+                        }
+                        onChange={(date) =>
+                          setMentalStatusValues((prev) => ({
+                            ...prev,
+                            exam_date: date ? date.format("YYYY-MM-DD") : "",
+                          }))
+                        }
+                      />
+                    </label>
+                  </div>
 
-        {(
-          [
-            {
-              key: "observations",
-              title: "OBSERVATIONS",
-              rows: [
-                ["Appearance", ["Neat", "Dishevelled", "Inappropriate", "Bizarre", "Other"]],
-                ["Speech", ["Normal", "Tangential", "Pressured", "Impoverished", "Other"]],
-                ["Eye Contact", ["Normal", "Intense", "Avoidant", "Other"]],
-                ["Motor Activity", ["Normal", "Restless", "Tics", "Slowed", "Other"]],
-                ["Affect", ["Full", "Constricted", "Flat", "Labile", "Other"]],
-              ],
-            },
-            {
-              key: "mood",
-              title: "MOOD",
-              rows: [["Mood", ["Euthymic", "Anxious", "Angry", "Depressed", "Euphoric", "Irritable", "Other"]]],
-            },
-            {
-              key: "cognition",
-              title: "COGNITION",
-              rows: [
-                ["Orientation Impairment", ["None", "Place", "Object", "Person", "Time"]],
-                ["Memory Impairment", ["None", "Short-Term", "Long-Term", "Other"]],
-                ["Attention", ["Normal", "Distracted", "Other"]],
-              ],
-            },
-            {
-              key: "perception",
-              title: "PERCEPTION",
-              rows: [
-                ["Hallucinations", ["None", "Auditory", "Visual", "Other"]],
-                ["Other", ["None", "Derealization", "Depersonalization"]],
-              ],
-            },
-            {
-              key: "thoughts",
-              title: "THOUGHTS",
-              rows: [
-                ["Suicidality", ["None", "Ideation", "Plan", "Intent", "Self-Harm"]],
-                ["Homicidality", ["None", "Aggressive", "Intent", "Plan"]],
-                ["Delusions", ["None", "Grandiose", "Paranoid", "Religious", "Other"]],
-              ],
-            },
-            {
-              key: "behavior",
-              title: "BEHAVIOR",
-              rows: [["Behavior", ["Cooperative", "Guarded", "Hyperactive", "Agitated", "Paranoid", "Stereotyped", "Aggressive", "Bizarre", "Withdrawn", "Other"]]],
-            },
-          ] as const
-        ).map((section) => (
-          <div key={section.title} className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4">
-            <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">{section.title}</h4>
-            {section.rows.map(([label, options]) => (
-              <div key={label} className="grid grid-cols-1 gap-2 border-b border-[#e8e8e5] py-2.5 last:border-b-0 sm:grid-cols-[180px_minmax(0,1fr)]">
-                <span className="text-sm font-semibold text-[#144229]">{label}</span>
-                <Checkbox.Group
-                  disabled={!isEditing("Mental Status Exam")}
-                  className="flex flex-wrap gap-x-4 gap-y-2"
-                  options={options.map((o) => ({ label: o, value: o }))}
-                  value={(mentalStatusValues[section.key] as Record<string, string[]>)?.[label] || []}
-                  onChange={(checked) =>
-                    setMentalStatusValues((prev) => ({
-                      ...prev,
-                      [section.key]: {
-                        ...(prev[section.key] as Record<string, string[]> || {}),
-                        [label]: checked,
+                  {(
+                    [
+                      {
+                        key: "observations",
+                        title: "OBSERVATIONS",
+                        rows: [
+                          [
+                            "Appearance",
+                            [
+                              "Neat",
+                              "Dishevelled",
+                              "Inappropriate",
+                              "Bizarre",
+                              "Other",
+                            ],
+                          ],
+                          [
+                            "Speech",
+                            [
+                              "Normal",
+                              "Tangential",
+                              "Pressured",
+                              "Impoverished",
+                              "Other",
+                            ],
+                          ],
+                          [
+                            "Eye Contact",
+                            ["Normal", "Intense", "Avoidant", "Other"],
+                          ],
+                          [
+                            "Motor Activity",
+                            ["Normal", "Restless", "Tics", "Slowed", "Other"],
+                          ],
+                          [
+                            "Affect",
+                            ["Full", "Constricted", "Flat", "Labile", "Other"],
+                          ],
+                        ],
                       },
-                    }))
-                  }
-                />
-              </div>
-            ))}
-            <label className="mt-3 flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-[#144229]">Comments:</span>
-              <textarea
-                disabled={!isEditing("Mental Status Exam")}
-                className="min-h-20 w-full rounded-md border border-[#c1c9c0] p-3"
-                value={(mentalStatusValues[`${section.key}_comments`] as string) || ""}
-                onChange={(e) =>
-                  setMentalStatusValues((prev) => ({
-                    ...prev,
-                    [`${section.key}_comments`]: e.target.value,
-                  }))
-                }
-              />
-            </label>
-          </div>
-        ))}
+                      {
+                        key: "mood",
+                        title: "MOOD",
+                        rows: [
+                          [
+                            "Mood",
+                            [
+                              "Euthymic",
+                              "Anxious",
+                              "Angry",
+                              "Depressed",
+                              "Euphoric",
+                              "Irritable",
+                              "Other",
+                            ],
+                          ],
+                        ],
+                      },
+                      {
+                        key: "cognition",
+                        title: "COGNITION",
+                        rows: [
+                          [
+                            "Orientation Impairment",
+                            ["None", "Place", "Object", "Person", "Time"],
+                          ],
+                          [
+                            "Memory Impairment",
+                            ["None", "Short-Term", "Long-Term", "Other"],
+                          ],
+                          ["Attention", ["Normal", "Distracted", "Other"]],
+                        ],
+                      },
+                      {
+                        key: "perception",
+                        title: "PERCEPTION",
+                        rows: [
+                          [
+                            "Hallucinations",
+                            ["None", "Auditory", "Visual", "Other"],
+                          ],
+                          [
+                            "Other",
+                            ["None", "Derealization", "Depersonalization"],
+                          ],
+                        ],
+                      },
+                      {
+                        key: "thoughts",
+                        title: "THOUGHTS",
+                        rows: [
+                          [
+                            "Suicidality",
+                            ["None", "Ideation", "Plan", "Intent", "Self-Harm"],
+                          ],
+                          [
+                            "Homicidality",
+                            ["None", "Aggressive", "Intent", "Plan"],
+                          ],
+                          [
+                            "Delusions",
+                            [
+                              "None",
+                              "Grandiose",
+                              "Paranoid",
+                              "Religious",
+                              "Other",
+                            ],
+                          ],
+                        ],
+                      },
+                      {
+                        key: "behavior",
+                        title: "BEHAVIOR",
+                        rows: [
+                          [
+                            "Behavior",
+                            [
+                              "Cooperative",
+                              "Guarded",
+                              "Hyperactive",
+                              "Agitated",
+                              "Paranoid",
+                              "Stereotyped",
+                              "Aggressive",
+                              "Bizarre",
+                              "Withdrawn",
+                              "Other",
+                            ],
+                          ],
+                        ],
+                      },
+                    ] as const
+                  ).map((section) => (
+                    <div
+                      key={section.title}
+                      className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4"
+                    >
+                      <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">
+                        {section.title}
+                      </h4>
+                      {section.rows.map(([label, options]) => (
+                        <div
+                          key={label}
+                          className="grid grid-cols-1 gap-2 border-b border-[#e8e8e5] py-2.5 last:border-b-0 sm:grid-cols-[180px_minmax(0,1fr)]"
+                        >
+                          <span className="text-sm font-semibold text-[#144229]">
+                            {label}
+                          </span>
+                          <Checkbox.Group
+                            disabled={!isEditing("Mental Status Exam")}
+                            className="flex flex-wrap gap-x-4 gap-y-2"
+                            options={options.map((o) => ({
+                              label: o,
+                              value: o,
+                            }))}
+                            value={
+                              (
+                                mentalStatusValues[section.key] as Record<
+                                  string,
+                                  string[]
+                                >
+                              )?.[label] || []
+                            }
+                            onChange={(checked) =>
+                              setMentalStatusValues((prev) => ({
+                                ...prev,
+                                [section.key]: {
+                                  ...((prev[section.key] as Record<
+                                    string,
+                                    string[]
+                                  >) || {}),
+                                  [label]: checked,
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                      ))}
+                      <label className="mt-3 flex flex-col gap-1.5">
+                        <span className="text-sm font-semibold text-[#144229]">
+                          Comments:
+                        </span>
+                        <textarea
+                          disabled={!isEditing("Mental Status Exam")}
+                          className="min-h-20 w-full rounded-md border border-[#c1c9c0] p-3"
+                          value={
+                            (mentalStatusValues[
+                              `${section.key}_comments`
+                            ] as string) || ""
+                          }
+                          onChange={(e) =>
+                            setMentalStatusValues((prev) => ({
+                              ...prev,
+                              [`${section.key}_comments`]: e.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                    </div>
+                  ))}
 
-        <div className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4">
-          <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">INSIGHT & JUDGEMENT</h4>
-          {(["insight", "judgement"] as const).map((row) => (
-            <div key={row} className="mb-3 grid grid-cols-1 gap-3 border-b border-[#e8e8e5] pb-3 last:mb-0 last:border-b-0 last:pb-0 sm:grid-cols-[120px_minmax(0,1fr)_minmax(0,1.2fr)] sm:items-center">
-              <span className="text-sm font-bold text-[#144229]">{row.toUpperCase()}</span>
-              <Checkbox.Group
-                disabled={!isEditing("Mental Status Exam")}
-                className="flex flex-wrap gap-x-4 gap-y-2"
-                options={["Good", "Fair", "Poor"].map((o) => ({ label: o, value: o }))}
-                value={(mentalStatusValues[`${row}_rating`] as string[]) || []}
-                onChange={(checked) =>
-                  setMentalStatusValues((prev) => ({
-                    ...prev,
-                    [`${row}_rating`]: checked,
-                  }))
-                }
-              />
-              <input
-                disabled={!isEditing("Mental Status Exam")}
-                placeholder="Comments"
-                className="h-11 rounded-md border border-[#c1c9c0] px-3"
-                value={(mentalStatusValues[row] as string) || ""}
-                onChange={(e) =>
-                  setMentalStatusValues((prev) => ({
-                    ...prev,
-                    [row]: e.target.value,
-                  }))
-                }
-              />
+                  <div className="rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-4">
+                    <h4 className="m-0 mb-3 text-sm font-bold text-[#144229]">
+                      INSIGHT & JUDGEMENT
+                    </h4>
+                    {(["insight", "judgement"] as const).map((row) => (
+                      <div
+                        key={row}
+                        className="mb-3 grid grid-cols-1 gap-3 border-b border-[#e8e8e5] pb-3 last:mb-0 last:border-b-0 last:pb-0 sm:grid-cols-[120px_minmax(0,1fr)_minmax(0,1.2fr)] sm:items-center"
+                      >
+                        <span className="text-sm font-bold text-[#144229]">
+                          {row.toUpperCase()}
+                        </span>
+                        <Checkbox.Group
+                          disabled={!isEditing("Mental Status Exam")}
+                          className="flex flex-wrap gap-x-4 gap-y-2"
+                          options={["Good", "Fair", "Poor"].map((o) => ({
+                            label: o,
+                            value: o,
+                          }))}
+                          value={
+                            (mentalStatusValues[`${row}_rating`] as string[]) ||
+                            []
+                          }
+                          onChange={(checked) =>
+                            setMentalStatusValues((prev) => ({
+                              ...prev,
+                              [`${row}_rating`]: checked,
+                            }))
+                          }
+                        />
+                        <input
+                          disabled={!isEditing("Mental Status Exam")}
+                          placeholder="Comments"
+                          className="h-11 rounded-md border border-[#c1c9c0] px-3"
+                          value={(mentalStatusValues[row] as string) || ""}
+                          onChange={(e) =>
+                            setMentalStatusValues((prev) => ({
+                              ...prev,
+                              [row]: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </FormSection>
             </div>
-          ))}
-        </div>
-      </div>
-    </FormSection>
-  </div>
-)}
- 
+          )}
+
           {/* ─── Remediation (shared by both Student & Client) ─── */}
           <div id="Remediation & Improvement">
-                       <RepeatSection
+            <RepeatSection
               id="remediation-section"
               title="Remediation & Improvement"
               labels={[
@@ -683,49 +817,66 @@ export default function AppointmentsPage() {
   const role = useRole();
   const [rows, setRows] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
-const [total, setTotal] = useState(0);
-const pageSize = 10;
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 10;
   const [submitting, setSubmitting] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
-  const [appointmentToEdit, setAppointmentToEdit] = useState<Appointment | null>(null);
-  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [appointmentToEdit, setAppointmentToEdit] =
+    useState<Appointment | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] =
+    useState<Appointment | null>(null);
+  const [appointmentToReject, setAppointmentToReject] =
+    useState<Appointment | null>(null);
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [dateRange, setDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
   >(null);
 
- const fetchAppointments = async () => {
-  setLoading(true);
-  const { appointments, total: count, error } = await getAppointments({
-    page,
-    pageSize,
-    search: query || undefined,
-    status: selectedStatus !== 'all' ? selectedStatus : undefined,
-    dateFrom: dateRange?.[0]?.format('YYYY-MM-DD') || undefined,
-    dateTo: dateRange?.[1]?.format('YYYY-MM-DD') || undefined,
-  });
-  if (!error) {
-    setRows(appointments);
-    setTotal(count);
-  }
-  setLoading(false);
-};
- 
- useEffect(() => {
-  fetchAppointments();
-}, [page, query, selectedStatus, dateRange]);
+  const fetchAppointments = async () => {
+    setLoading(true);
+    const {
+      appointments,
+      total: count,
+      error,
+    } = await getAppointments({
+      page,
+      pageSize,
+      search: query || undefined,
+      status: selectedStatus !== "all" ? selectedStatus : undefined,
+      dateFrom: dateRange?.[0]?.format("YYYY-MM-DD") || undefined,
+      dateTo: dateRange?.[1]?.format("YYYY-MM-DD") || undefined,
+    });
+    if (!error) {
+      setRows(appointments);
+      setTotal(count);
+    }
+    setLoading(false);
+  };
 
-const [searchInput, setSearchInput] = useState("");
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setQuery(searchInput);
-    setPage(1); // reset to page 1 on new search
-  }, 400);
-  return () => clearTimeout(timer);
-}, [searchInput]);
-  const handleStatusChange = async (id: string, status: "Accepted" | "Rejected") => {
+  useEffect(() => {
+    fetchAppointments();
+  }, [page, query, selectedStatus, dateRange]);
+
+  useEffect(() => {
+    window.addEventListener("appointment-created", fetchAppointments);
+    return () =>
+      window.removeEventListener("appointment-created", fetchAppointments);
+  });
+
+  const [searchInput, setSearchInput] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setQuery(searchInput);
+      setPage(1); // reset to page 1 on new search
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+  const handleStatusChange = async (
+    id: string,
+    status: "Accepted" | "Rejected",
+  ) => {
     const result = await updateAppointmentStatus(id, status);
     if (!result.error) fetchAppointments(); // refresh the list
   };
@@ -747,7 +898,21 @@ useEffect(() => {
       ),
     },
     { title: "Age", key: "age" },
-    { title: "Type", key: "clientType" },
+    {
+      title: "Type",
+      key: "clientType",
+      render: (row) => (
+        <span
+          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+            row.clientType === "Student"
+              ? "bg-[#e6f0ff] text-[#1d4ed8]"
+              : "bg-[#fff0d9] text-[#a15c00]"
+          }`}
+        >
+          {row.clientType}
+        </span>
+      ),
+    },
     { title: "Date", key: "createdAt" },
     {
       title: "Status",
@@ -758,7 +923,7 @@ useEffect(() => {
         </span>
       ),
     },
-   {
+    {
       title: "Actions",
       key: "actions",
       render: (row) => (
@@ -766,11 +931,23 @@ useEffect(() => {
           {/* Accept/Reject — admin only */}
           {role === "admin" && row.status === "Pending" && (
             <>
-              <button title="Accept" onClick={() => handleStatusChange(row.id, "Accepted")}>
+              <button
+                className="bg-[#2D5A3F]! flex items-center gap-2 text-white!"
+                title="Accept"
+                aria-label={`Accept appointment for ${row.name}`}
+                onClick={() => handleStatusChange(row.id, "Accepted")}
+              >
                 <FiCheck />
+                <span>Accept</span>
               </button>
-              <button title="Reject" onClick={() => handleStatusChange(row.id, "Rejected")}>
+              <button
+                className="bg-[#c9252d]! flex items-center gap-2 text-white!"
+                title="Reject"
+                aria-label={`Reject appointment for ${row.name}`}
+                onClick={() => setAppointmentToReject(row)}
+              >
                 <FiX />
+                <span>Reject</span>
               </button>
             </>
           )}
@@ -779,7 +956,11 @@ useEffect(() => {
           {role === "admin" && row.status === "Accepted" && (
             <button
               className="view-button"
-              onClick={() => router.push(`/client/viewdetails?id=${row.clientId}`)}
+              title="View details"
+              aria-label={`View details for ${row.name}`}
+              onClick={() =>
+                router.push(`/client/viewdetails?id=${row.clientId}`)
+              }
             >
               View Details
             </button>
@@ -789,6 +970,7 @@ useEffect(() => {
           <button
             className="border-[#333936]! bg-[#333936]! text-white!"
             title="Edit appointment"
+            aria-label={`Edit appointment for ${row.name}`}
             onClick={() => setAppointmentToEdit(row)}
           >
             <FiEdit2 />
@@ -796,6 +978,7 @@ useEffect(() => {
           <button
             className="border-[#c9252d]! bg-[#c9252d]! text-white!"
             title="Delete appointment"
+            aria-label={`Delete appointment for ${row.name}`}
             onClick={() => setAppointmentToDelete(row)}
           >
             <FiTrash2 />
@@ -804,17 +987,17 @@ useEffect(() => {
       ),
     },
   ];
-   const handleCreateAppointment = async (form: AppointmentFormValues) => {
+  const handleCreateAppointment = async (form: AppointmentFormValues) => {
     setSubmitting(true);
     const result = await createAppointment(form);
     setSubmitting(false);
- 
+
     if (result.error) {
       // handle error (alert or toast)
       alert(result.error);
       return;
     }
- 
+
     setShowAdd(false);
     fetchAppointments(); // refresh the list
   };
@@ -841,8 +1024,14 @@ useEffect(() => {
         onSearchChange={setSearchInput}
         searchPlaceholder="Search by name or phone"
         selectedStatus={selectedStatus}
-onStatusChange={(val) => { setSelectedStatus(val); setPage(1); }}
-   onDateRangeChange={(val) => { setDateRange(val); setPage(1); }}
+        onStatusChange={(val) => {
+          setSelectedStatus(val);
+          setPage(1);
+        }}
+        onDateRangeChange={(val) => {
+          setDateRange(val);
+          setPage(1);
+        }}
         statusOptions={[
           { value: "all", label: "All Statuses" },
           { value: "Accepted", label: "Accepted" },
@@ -851,7 +1040,7 @@ onStatusChange={(val) => { setSelectedStatus(val); setPage(1); }}
         ]}
         dateRange={dateRange}
       />
-            <AddAppointmentModal
+      <AddAppointmentModal
         open={showAdd || appointmentToEdit !== null}
         initialValues={
           appointmentToEdit
@@ -872,26 +1061,26 @@ onStatusChange={(val) => { setSelectedStatus(val); setPage(1); }}
           setShowAdd(false);
           setAppointmentToEdit(null);
         }}
-    onSubmit={async (form) => {
-  setSubmitting(true);
-  if (appointmentToEdit) {
-    const result = await updateAppointmentDetails(
-      appointmentToEdit.id,
-      appointmentToEdit.clientId,
-      form
-    );
-    if (result.error) {
-      alert(result.error);
-    } else {
-      fetchAppointments();
-    }
-  } else {
-    await handleCreateAppointment(form);
-  }
-  setSubmitting(false);
-  setShowAdd(false);
-  setAppointmentToEdit(null);
-}}
+        onSubmit={async (form) => {
+          setSubmitting(true);
+          if (appointmentToEdit) {
+            const result = await updateAppointmentDetails(
+              appointmentToEdit.id,
+              appointmentToEdit.clientId,
+              form,
+            );
+            if (result.error) {
+              alert(result.error);
+            } else {
+              fetchAppointments();
+            }
+          } else {
+            await handleCreateAppointment(form);
+          }
+          setSubmitting(false);
+          setShowAdd(false);
+          setAppointmentToEdit(null);
+        }}
         loading={submitting}
       />
       <DeleteConfirmationModal
@@ -906,9 +1095,31 @@ onStatusChange={(val) => { setSelectedStatus(val); setPage(1); }}
           setAppointmentToDelete(null);
         }}
       />
+      <DeleteConfirmationModal
+        open={appointmentToReject !== null}
+        itemName={appointmentToReject?.name}
+        title="Reject appointment?"
+        actionText="Reject"
+        actionDescription="This appointment will be marked as rejected."
+        onCancel={() => setAppointmentToReject(null)}
+        onConfirm={async () => {
+          if (appointmentToReject) {
+            await handleStatusChange(appointmentToReject.id, "Rejected");
+          }
+          setAppointmentToReject(null);
+        }}
+      />
 
       <section className="content-card w-full overflow-hidden">
-<DataTable columns={columns} data={rows} pageSize={pageSize} total={total} currentPage={page} onPageChange={setPage} />
+        <DataTable
+          columns={columns}
+          data={rows}
+          loading={loading}
+          pageSize={pageSize}
+          total={total}
+          currentPage={page}
+          onPageChange={setPage}
+        />
       </section>
     </>
   );

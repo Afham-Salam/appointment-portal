@@ -9,6 +9,7 @@
   --mint: #bceecb;
   --green: #144229;
   --green-container: #2d5a3f;
+  --secondary-gold: #7a5a22;
 }
 * {
   box-sizing: border-box;
@@ -331,13 +332,21 @@ h6 {
   color: var(--green);
   cursor: pointer;
 }
+.table-actions > button:not(.view-button):hover {
+  opacity: 0.88;
+}
+.table-actions > button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
 .table-actions > button {
-  min-height: 32px;
+  height: 34px;
+  min-height: 34px;
 }
 .view-button {
   padding: 0 10px;
-  background: var(--mint);
-  color: var(--green);
+  background: var(--secondary-gold);
+  color: #ffffff;
   font-size: 12px;
 }
 
@@ -447,13 +456,24 @@ h6 {
 }
 .text-grid span {
   padding: 11px 9px;
-  background: var(--surface-low);
+  background: #fff;
   color: var(--muted);
 }
 .text-grid input {
   min-width: 0;
   border: 0;
   border-radius: 0;
+}
+.text-grid .radio-option {
+  display: inline-flex;
+  grid-template-columns: none;
+  min-height: 0;
+  gap: 8px;
+  border: 0;
+}
+.text-grid .radio-option input {
+  min-height: 16px;
+  padding: 0;
 }
 .assessment-date-picker .ant-picker-suffix {
   padding: 0 !important;
@@ -657,6 +677,31 @@ h6 {
   }
   .content-card {
     overflow: hidden;
+  }
+}
+
+@media (max-width: 1279px) {
+  .details-layout {
+    display: block;
+  }
+  .form-nav {
+    display: none !important;
+  }
+  .text-grid {
+    grid-template-columns: 1fr;
+  }
+  .text-grid label {
+    grid-template-columns: 1fr;
+    border-right: 0;
+  }
+  .text-grid label:nth-child(even) {
+    border-right: 0;
+  }
+  .text-grid span {
+    border-bottom: 1px solid var(--line);
+  }
+  .text-grid label:nth-last-child(2) {
+    border-bottom: 1px solid var(--line);
   }
 }
 @media print {
