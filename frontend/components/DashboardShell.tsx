@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import NotificationMenu from "@/components/NotificationMenu";
 import ProfileMenu from "@/components/ProfileMenu";
 import { NotificationsProvider } from "@/components/NotificationsProvider";
+import { RoleProvider } from "./RoleContext";
 
 type Props = {
 children: React.ReactNode;
@@ -31,6 +32,7 @@ export default function DashboardShell({ children, role,email }: Props) {
   }, [pathname]);
 
   return (
+     <RoleProvider role={role}>
     <NotificationsProvider>
       <div className="flex h-dvh overflow-hidden bg-[#faf9f6]">
         <Sidebar
@@ -86,5 +88,6 @@ export default function DashboardShell({ children, role,email }: Props) {
         </div>
       </div>
     </NotificationsProvider>
+    </RoleProvider>
   );
 }

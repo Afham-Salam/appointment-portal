@@ -160,10 +160,10 @@ export async function getAppointments(params?: {
     query = query.lte('created_at', `${dateTo}T23:59:59`)
   }
  
-  // Search by client name
-  if (search && search.trim()) {
-    query = query.ilike('client.name', `%${search.trim()}%`)
-  }
+  // Search by client name or phone
+if (search && search.trim()) {
+  query = query.or(`name.ilike.%${search.trim()}%,phone.ilike.%${search.trim()}%`, { referencedTable: 'clients' })
+}
  
   const { data, count, error } = await query
  
@@ -844,4 +844,18 @@ export async function getDashboardStats() {
     studentClients: studentClients || 0,
     normalClients: normalClients || 0,
   }
+}
+
+// Fetch client basic info by ID
+export async function getClientById(clientId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('id', clientId)
+    .single()
+
+  if (error) return { error: error.message, client: null }
+  return { client: data, error: null }
 }

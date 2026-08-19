@@ -5,9 +5,11 @@ import {
   downloadApplicationPdf,
   type ApplicationPdfPage,
 } from "@/components/ApplicationPdf";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getClientDetails  } from "@/lib/actions/appointments";
 
 export type ReportClient = {
+  id: string;
   name: string;
   phone: string;
   clientType: string;
@@ -22,10 +24,6 @@ export function pagesForClient(clientType: string): ApplicationPdfPage[] {
       "Assessment Report",
       "Remediation & Improvement",
     ];
-  }
-
-  if (clientType === "Parent") {
-    return ["Application Form", "Parents' Details", "Assessment Report"];
   }
 
   return ["Application Form", "Mental Status Exam", "Plans"];
@@ -44,30 +42,50 @@ export default function ReportDownloadModal({
     client ? pagesForClient(client.clientType) : [],
   );
   const [loading, setLoading] = useState(false);
+  const [fullClient, setFullClient] = useState<any>(null);
+  const [fetching, setFetching] = useState(false);
 
-  const downloadReport = async () => {
-    if (!client || !selectedPages.length || loading) return;
 
-    setLoading(true);
-    try {
-      await downloadApplicationPdf(
-        {
-          name: client.name,
-          age: "",
-          relative: "",
-          address: "",
-          phone: client.phone,
-        },
-        selectedPages,
-      );
-      onClose();
-    } catch (error) {
-      console.error("Report PDF generation failed:", error);
-      window.alert("Could not generate the report PDF. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+// In useEffect:
+useEffect(() => {
+  if (!open || !client?.id) return;
+  setFetching(true);
+  getClientDetails(client.id).then((result) => {
+    setFullClient(result.data);
+    setFetching(false);
+  });
+  setSelectedPages(pagesForClient(client.clientType));
+}, [open, client]);
+
+// In downloadReport:
+const downloadReport = async () => {
+  if (!client || !selectedPages.length || loading || !fullClient) return;
+
+  setLoading(true);
+  try {
+       const pdfData = {
+      name: fullClient.client.name,
+      age: fullClient.client.age || "",
+      relative: fullClient.client.relative || "",
+      address: fullClient.client.address || "",
+      phone: `${fullClient.client.country_code || ""} ${fullClient.client.phone}`.trim(),
+      currentProblem: fullClient.applicationForm?.current_problem || "",
+      studentIntake: fullClient.studentIntake?.form_data || {},
+      parentsDetails: fullClient.parentsDetails?.form_data || {},
+      assessmentReport: fullClient.assessmentReport?.form_data || {},
+      mentalStatusExam: fullClient.mentalStatusExam?.form_data || {},
+      remediationEntries: fullClient.remediationEntries || [],
+    };
+
+    await downloadApplicationPdf(pdfData, selectedPages);
+    onClose();
+  } catch (error) {
+    console.error("Report PDF generation failed:", error);
+    window.alert("Could not generate the report PDF. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <ConfigProvider
@@ -103,11 +121,11 @@ export default function ReportDownloadModal({
           <Button
             key="download"
             type="primary"
-            disabled={!selectedPages.length}
+            disabled={!selectedPages.length || fetching}
             loading={loading}
             onClick={downloadReport}
           >
-            Download PDF
+            {fetching ? "Loading data..." : "Download PDF"}
           </Button>,
         ]}
       >

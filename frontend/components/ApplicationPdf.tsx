@@ -36,6 +36,11 @@ export type ApplicationPdfData = {
   currentProblem?: string;
   date?: string;
   signatureName?: string;
+  studentIntake?: Record<string, string>;
+  parentsDetails?: Record<string, string>;
+  assessmentReport?: Record<string, string>;
+  mentalStatusExam?: Record<string, any>;
+  remediationEntries?: any[];
 };
 
 export type ApplicationPdfPage =

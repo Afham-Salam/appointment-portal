@@ -42,6 +42,7 @@ import {
   saveAssessmentReport,
   saveMentalStatusExam,
 } from "@/lib/actions/appointments";
+import { useRole } from "@/components/RoleContext";
 
 type Status = "Pending" | "Accepted" | "Rejected";
 export type ClientType = "Student" | "Client";
@@ -679,6 +680,7 @@ const [mentalStatusValues, setMentalStatusValues] = useState<Record<string, any>
 
 export default function AppointmentsPage() {
   const router = useRouter();
+  const role = useRole();
   const [rows, setRows] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -756,33 +758,25 @@ useEffect(() => {
         </span>
       ),
     },
-    {
+   {
       title: "Actions",
       key: "actions",
       render: (row) => (
         <div className="table-actions">
-         
-          {row.status === "Pending" && (
+          {/* Accept/Reject — admin only */}
+          {role === "admin" && row.status === "Pending" && (
             <>
-              <button
-                title="Accept"
-                onClick={() =>
-                  handleStatusChange(row.id, "Accepted")
-                }
-              >
+              <button title="Accept" onClick={() => handleStatusChange(row.id, "Accepted")}>
                 <FiCheck />
               </button>
-              <button
-                title="Reject"
-                onClick={() =>
-               handleStatusChange(row.id, "Rejected")
-                }
-              >
+              <button title="Reject" onClick={() => handleStatusChange(row.id, "Rejected")}>
                 <FiX />
               </button>
             </>
           )}
-          {row.status === "Accepted" && (
+
+          {/* View Details — admin only */}
+          {role === "admin" && row.status === "Accepted" && (
             <button
               className="view-button"
               onClick={() => router.push(`/client/viewdetails?id=${row.clientId}`)}
@@ -790,10 +784,11 @@ useEffect(() => {
               View Details
             </button>
           )}
-           <button
+
+          {/* Edit & Delete — both roles */}
+          <button
             className="border-[#333936]! bg-[#333936]! text-white!"
             title="Edit appointment"
-            aria-label={`Edit ${row.name}`}
             onClick={() => setAppointmentToEdit(row)}
           >
             <FiEdit2 />
@@ -801,7 +796,6 @@ useEffect(() => {
           <button
             className="border-[#c9252d]! bg-[#c9252d]! text-white!"
             title="Delete appointment"
-            aria-label={`Delete ${row.name}`}
             onClick={() => setAppointmentToDelete(row)}
           >
             <FiTrash2 />
@@ -845,7 +839,7 @@ useEffect(() => {
       <FilterHeader
         searchQuery={searchInput}
         onSearchChange={setSearchInput}
-        searchPlaceholder="Search by name, phone, type, or status..."
+        searchPlaceholder="Search by name or phone"
         selectedStatus={selectedStatus}
 onStatusChange={(val) => { setSelectedStatus(val); setPage(1); }}
    onDateRangeChange={(val) => { setDateRange(val); setPage(1); }}

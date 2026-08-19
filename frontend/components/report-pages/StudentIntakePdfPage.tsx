@@ -1,6 +1,11 @@
 import { Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { ApplicationPdfData } from "@/components/ApplicationPdf";
 type PageProps = { data: ApplicationPdfData };
+
+function labelToKey(label: string, index: number): string {
+  return `${label.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${index}`;
+}
+
 const styles = StyleSheet.create({
   page: { padding: 42, fontFamily: "Helvetica" },
   title: {
@@ -53,30 +58,28 @@ function Table({ rows }: { rows: string[] }) {
 }
 
 export function StudentIntakePdfPage({ data }: PageProps) {
+  const labels = [
+    "Name", "Gender", "Age & DOB", "Name of school & Place", "Class",
+    "Medium", "Board of Education", "Father & Mother Name", "Contact Number",
+    "Place & District", "Medical Problem (if any)", "Behavior issues",
+    "Psychological issues", "History Of Family", "Special Talents (if any)",
+    "Areas of improvement", "Type of learner", "Non-academic performance",
+    "Easy subject & language", "Tough Subject & language", "Pregnancy history",
+    "Developmental stages", "Attitude of Father", "Attitude of Mother", "Family",
+  ];
+ 
   return (
     <Layout title="Student Intake Form">
-      <Table
-        rows={[
-          "Name",
-          "Gender",
-          "Age & DOB",
-          "Name of school & Place",
-          "Class",
-          "Medium",
-          "Board of Education",
-          "Father & Mother Name",
-          "Contact Number",
-          "Place & District",
-          "Medical Problem (if any)",
-          "Behavior issues",
-          "Psychological issues",
-          "History Of Family",
-          "Special Talents",
-          "Areas of improvement",
-          "Type of learner",
-          "Family",
-        ]}
-      />
+      <View style={styles.section}>
+        {labels.map((label, i) => (
+          <View style={styles.row} key={`${label}-${i}`}>
+            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.value, { padding: 8, fontSize: 10 }]}>
+              {data.studentIntake?.[labelToKey(label, i)] || ""}
+            </Text>
+          </View>
+        ))}
+      </View>
     </Layout>
   );
 }

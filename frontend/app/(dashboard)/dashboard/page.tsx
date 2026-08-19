@@ -14,6 +14,7 @@ import {
 import type { IconType } from "react-icons";
 import { DataTable, type Column } from "@/components/DataTable";
 import { getDashboardStats, getLatestAppointments } from "@/lib/actions/appointments";
+import { useRole } from "@/components/RoleContext";
 
 type StatCard = {
   label: string;
@@ -32,6 +33,7 @@ type AppointmentRow = {
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<StatCard[]>([]);
+  const role = useRole();
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,22 +79,26 @@ export default function DashboardPage() {
         </span>
       ),
     },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (row) => (
-        <Link
-          className="inline-flex rounded-md bg-[#bceecb] px-3 py-2 text-xs font-semibold text-[#144229]"
-          href={
-            row.status === "Accepted"
-              ? `/client/viewdetails?id=${row.clientId}`
-              : "/appointments"
-          }
-        >
-          {row.status === "Accepted" ? "View Details" : "View"}
-        </Link>
-      ),
-    },
+     ...(role === "admin"
+      ? [
+          {
+            title: "Actions",
+            key: "actions",
+            render: (row: AppointmentRow) => (
+              <Link
+                className="inline-flex rounded-md bg-[#bceecb] px-3 py-2 text-xs font-semibold text-[#144229]"
+                href={
+                  row.status === "Accepted"
+                    ? `/client/viewdetails?id=${row.clientId}`
+                    : "/appointments"
+                }
+              >
+                {row.status === "Accepted" ? "View Details" : "View"}
+              </Link>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (

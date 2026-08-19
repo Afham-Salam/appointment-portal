@@ -1,6 +1,10 @@
 import { Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { ApplicationPdfData } from "@/components/ApplicationPdf";
 type PageProps = { data: ApplicationPdfData };
+
+function labelToKey(label: string, index: number): string {
+  return `${label.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${index}`;
+}
 const styles = StyleSheet.create({
   page: { padding: 42, fontFamily: "Helvetica" },
   title: {
@@ -53,32 +57,28 @@ function Table({ rows }: { rows: string[] }) {
 }
 
 export function ParentsDetailsPdfPage({ data }: PageProps) {
+  const labels = [
+    "Father's Name", "Father's Occupation", "Father's Contact Number",
+    "Father's Education", "Father's Address", "Mother's Name",
+    "Mother's Occupation", "Mother's Contact Number", "Mother's Education",
+    "Mother's Address", "Type of family", "Type of House",
+    "Child living with", "Number of brothers", "Number of sisters",
+    "Age difference with immediate sibling", "Note", "Assessed by",
+    "Name & Signature", "Date",
+  ];
+ 
   return (
     <Layout title="Parents' Details">
-      <Table
-        rows={[
-          "Father's Name",
-          "Occupation",
-          "Contact Number",
-          "Education",
-          "Address",
-          "Mother's Name",
-          "Occupation",
-          "Contact Number",
-          "Education",
-          "Address",
-          "Type of family",
-          "Type of House",
-          "Child living with",
-          "Number of brothers",
-          "Number of sisters",
-          "Age difference with sibling",
-          "Note",
-          "Assessed by",
-          "Name & Signature",
-          "Date",
-        ]}
-      />
+      <View style={styles.section}>
+        {labels.map((label, i) => (
+          <View style={styles.row} key={`${label}-${i}`}>
+            <Text style={styles.label}>{label}</Text>
+            <Text style={[styles.value, { padding: 8, fontSize: 10 }]}>
+              {data.parentsDetails?.[labelToKey(label, i)] || ""}
+            </Text>
+          </View>
+        ))}
+      </View>
     </Layout>
   );
 }

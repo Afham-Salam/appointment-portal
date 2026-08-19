@@ -11,6 +11,10 @@ type PageProps = {
   data: ApplicationPdfData;
 };
 
+function labelToKey(label: string, index: number): string {
+  return `${label.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${index}`;
+}
+
 const BORDER = "#333333";
 const SECTION_BG = "#F5F5F2";
 
@@ -592,35 +596,20 @@ const sections: readonly ExamSectionData[] = [
 function CheckOption({
   label,
   columns,
+  checked = false,
 }: {
   label: string;
   columns: number;
+  checked?: boolean;
 }) {
-  /*
-   * Example:
-   *
-   * 5 columns = 20%
-   * 7 columns = 14.285%
-   * 4 columns = 25%
-   */
-
   const width = `${100 / columns}%`;
-
   return (
-    <View
-      style={[
-        styles.optionItem,
-
-        {
-          width,
-        },
-      ]}
-    >
-      <View style={styles.checkbox} />
-
-      <Text style={styles.optionText}>
-        {label}
-      </Text>
+    <View style={[styles.optionItem, { width }]}>
+      <View style={[
+        styles.checkbox,
+        checked ? { backgroundColor: "#333333" } : {},
+      ]} />
+      <Text style={styles.optionText}>{label}</Text>
     </View>
   );
 }
@@ -634,39 +623,26 @@ function ExamRow({
   options,
   columns,
   behavior = false,
+  checkedValues = [],
 }: {
   label: string;
   options: readonly string[];
   columns: number;
   behavior?: boolean;
+  checkedValues?: string[];
 }) {
   return (
-    <View
-      style={
-        behavior
-          ? styles.behaviorRow
-          : styles.tableRow
-      }
-      wrap={false}
-    >
-      {/* LEFT LABEL */}
-
+    <View style={behavior ? styles.behaviorRow : styles.tableRow} wrap={false}>
       <View style={styles.labelCell}>
-        {label ? (
-          <Text style={styles.labelText}>
-            {label}
-          </Text>
-        ) : null}
+        {label ? <Text style={styles.labelText}>{label}</Text> : null}
       </View>
-
-      {/* CHECKBOX GRID */}
-
       <View style={styles.optionsCell}>
         {options.map((option) => (
           <CheckOption
             key={option}
             label={option}
             columns={columns}
+            checked={checkedValues.includes(option)}
           />
         ))}
       </View>
@@ -678,67 +654,50 @@ function ExamRow({
    COMMENTS ROW
 ========================================================= */
 
-function CommentsRow() {
-  return (
-    <View
-      style={styles.commentRow}
-      wrap={false}
-    >
-      <Text style={styles.commentText}>
-        Comments:
-      </Text>
-    </View>
-  );
-}
 
 /* =========================================================
    EXAM SECTION
 ========================================================= */
 
-function ExamSection({
-  section,
-}: {
-  section: ExamSectionData;
-}) {
-  const isBehavior =
-    section.title === "BEHAVIOR";
+const sectionKeyMap: Record<string, string> = {
+  OBSERVATIONS: "observations",
+  MOOD: "mood",
+  COGNITION: "cognition",
+  PERCEPTION: "perception",
+  THOUGHTS: "thoughts",
+  BEHAVIOR: "behavior",
+};
+
+function ExamSection({ section, mentalData }: { section: ExamSectionData; mentalData?: Record<string, any> }) {
+  const isBehavior = section.title === "BEHAVIOR";
+  const dataKey = sectionKeyMap[section.title] || "";
+  const sectionData = mentalData?.[dataKey] as Record<string, string[]> | undefined;
+  const comments = (mentalData?.[`${dataKey}_comments`] as string) || "";
 
   return (
     <View wrap={false}>
-      {/* SECTION TITLE */}
-
       <View style={styles.sectionTitle}>
-        <Text
-          style={styles.sectionTitleText}
-        >
-          {section.title}
-        </Text>
+        <Text style={styles.sectionTitleText}>{section.title}</Text>
       </View>
+      {section.rows.map(({ label, options, columns }, index) => (
+        <ExamRow
+          key={`${section.title}-${label}-${index}`}
+          label={label}
+          options={options}
+          columns={columns}
+          behavior={isBehavior}
+          checkedValues={sectionData?.[label || "Mood"] || []}
+        />
+      ))}
+      <CommentsRow comment={comments} />
+    </View>
+  );
+}
 
-      {/* ROWS */}
-
-      {section.rows.map(
-        (
-          {
-            label,
-            options,
-            columns,
-          },
-          index,
-        ) => (
-          <ExamRow
-            key={`${section.title}-${label}-${index}`}
-            label={label}
-            options={options}
-            columns={columns}
-            behavior={isBehavior}
-          />
-        ),
-      )}
-
-      {/* COMMENTS */}
-
-      <CommentsRow />
+function CommentsRow({ comment }: { comment?: string }) {
+  return (
+    <View style={styles.commentRow} wrap={false}>
+      <Text style={styles.commentText}>Comments: {comment || ""}</Text>
     </View>
   );
 }
@@ -775,54 +734,27 @@ function BottomCheckOption({
    INSIGHT / JUDGEMENT ROW
 ========================================================= */
 
-function BottomRow({
-  title,
-  last = false,
-}: {
-  title: string;
-  last?: boolean;
+function BottomRow({ title, last = false, rating = [], comment = "" }: {
+  title: string; last?: boolean; rating?: string[]; comment?: string;
 }) {
   return (
-    <View
-      style={
-        last
-          ? styles.bottomRowLast
-          : styles.bottomRow
-      }
-      wrap={false}
-    >
-      {/* TITLE */}
-
+    <View style={last ? styles.bottomRowLast : styles.bottomRow} wrap={false}>
       <View style={styles.bottomLabel}>
-        <Text
-          style={styles.bottomLabelText}
-        >
-          {title}
-        </Text>
+        <Text style={styles.bottomLabelText}>{title}</Text>
       </View>
-
-      {/* OPTIONS + COMMENTS */}
-
       <View style={styles.bottomContent}>
-        <View
-          style={styles.bottomOptions}
-        >
-          <BottomCheckOption label="Good" />
-
-          <BottomCheckOption label="Fair" />
-
-          <BottomCheckOption label="Poor" />
+        <View style={styles.bottomOptions}>
+          {["Good", "Fair", "Poor"].map((opt) => (
+            <View key={opt} style={[styles.optionItem, { width: "33.333%" }]}>
+              <View style={[styles.checkbox, rating.includes(opt) ? { backgroundColor: "#333333" } : {}]} />
+              <Text style={styles.optionText}>{opt}</Text>
+            </View>
+          ))}
         </View>
-
-        <Text
-          style={styles.commentsLabel}
-        >
-          Comments:
-        </Text>
-
-        <View
-          style={styles.commentsLine}
-        />
+        <Text style={styles.commentsLabel}>Comments:</Text>
+        <View style={styles.commentsLine}>
+          {comment ? <Text style={{ fontSize: 8 }}>{comment}</Text> : null}
+        </View>
       </View>
     </View>
   );
@@ -832,83 +764,29 @@ function BottomRow({
    MENTAL STATUS PDF PAGE
 ========================================================= */
 
-export function MentalStatusPdfPage({
-  data,
-}: PageProps) {
+export function MentalStatusPdfPage({ data }: PageProps) {
+  const mentalData = data.mentalStatusExam || {};
+
   return (
-    <Page
-      size="A4"
-      style={styles.page}
-      wrap={false}
-    >
+    <Page size="A4" style={styles.page} wrap={false}>
       <View style={styles.exam}>
-        {/* =================================================
-            CLIENT NAME + DATE
-        ================================================= */}
-
         <View style={styles.clientRow}>
-          {/* CLIENT */}
-
-          <View
-            style={
-              styles.clientNameGroup
-            }
-          >
-            <Text
-              style={styles.clientLabel}
-            >
-              Client Name
-            </Text>
-
-            <Text
-              style={styles.clientValue}
-            >
-              {data.name || ""}
-            </Text>
+          <View style={styles.clientNameGroup}>
+            <Text style={styles.clientLabel}>Client Name</Text>
+            <Text style={styles.clientValue}>{data.name || ""}</Text>
           </View>
-
-          {/* DATE */}
-
           <View style={styles.dateGroup}>
-            <Text
-              style={styles.dateLabel}
-            >
-              Date
-            </Text>
-
-            <Text
-              style={styles.dateValue}
-            >
-              {data.date || ""}
-            </Text>
+            <Text style={styles.dateLabel}>Date</Text>
+            <Text style={styles.dateValue}>{mentalData.exam_date || ""}</Text>
           </View>
         </View>
 
-        {/* =================================================
-            OBSERVATIONS / MOOD / ETC.
-        ================================================= */}
-
         {sections.map((section) => (
-          <ExamSection
-            key={section.title}
-            section={section}
-          />
+          <ExamSection key={section.title} section={section} mentalData={mentalData} />
         ))}
 
-        {/* =================================================
-            INSIGHT
-        ================================================= */}
-
-        <BottomRow title="INSIGHT" />
-
-        {/* =================================================
-            JUDGEMENT
-        ================================================= */}
-
-        <BottomRow
-          title="JUDGEMENT"
-          last
-        />
+        <BottomRow title="INSIGHT" rating={mentalData.insight_rating || []} comment={mentalData.insight || ""} />
+        <BottomRow title="JUDGEMENT" last rating={mentalData.judgement_rating || []} comment={mentalData.judgement || ""} />
       </View>
     </Page>
   );
