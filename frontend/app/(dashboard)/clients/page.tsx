@@ -128,7 +128,7 @@ const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(
       <FilterHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search by name, phone, or type..."
+        searchPlaceholder="Search by name or phone"
         selectedStatus={selectedType}
         onStatusChange={setSelectedType}
         statusOptions={TYPE_OPTIONS}

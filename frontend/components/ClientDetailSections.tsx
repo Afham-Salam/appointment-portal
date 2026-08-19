@@ -177,6 +177,10 @@ export function TextGrid({
                 disabled={!editable}
                 className="assessment-date-picker mx-1! h-10! w-[calc(100%-0.5rem)]! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!"
                 format="DD/MM/YYYY"
+                value={values?.[key] ? dayjs(values[key]) : undefined}
+                onChange={(date) =>
+                  handleChange(key, date ? date.format("YYYY-MM-DD") : "")
+                }
               />
             ) : textareaLabels.includes(label) ? (
               <textarea

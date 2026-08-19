@@ -169,9 +169,36 @@ function Table() {
 }
 
 export function PlansPdfPage({ data }: PageProps) {
+  const entries = data.remediationEntries || [];
+
+  const blocks = entries.length > 0
+    ? entries
+    : [{ entry_date: "", remediation_given: "", improvement_seen: "" }];
+
   return (
     <Layout title="Plans">
-      <Table />
+      {blocks.map((entry: any, index: number) => (
+        <View
+          key={index}
+          style={[styles.section, styles.planBlock, index > 0 ? styles.secondPlanBlock : undefined]}
+        >
+          {([
+            { label: "Date", value: entry.entry_date || "", rowStyle: undefined },
+            { label: "Plan / Recommendation", value: entry.remediation_given || "", rowStyle: styles.planRow },
+            { label: "Improvement Seen", value: entry.improvement_seen || "", rowStyle: styles.improvementRow },
+            { label: "Doctor / Counsellor Name & Signature", value: "", rowStyle: styles.signatureRow },
+          ]).map((row, ri) => (
+            <View
+              key={`${row.label}-${index}-${ri}`}
+              style={[styles.row, row.rowStyle, ri === 3 ? styles.lastRow : undefined]}
+              wrap={false}
+            >
+              <Text style={styles.label}>{row.label}</Text>
+              <Text style={styles.value}>{row.value}</Text>
+            </View>
+          ))}
+        </View>
+      ))}
     </Layout>
   );
 }
