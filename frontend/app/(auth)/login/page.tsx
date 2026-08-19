@@ -66,7 +66,7 @@ export default function LoginPage() {
                 For the people who need help
               </p>
             </header>
-
+{/* 
             <div className="flex justify-center">
               <div className="inline-flex gap-1 rounded-md bg-gray-100 p-1 shadow-md">
                 {(
@@ -90,7 +90,7 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
               {error && (
@@ -131,7 +131,7 @@ export default function LoginPage() {
                 </button>
               </label>
 
-              <div className="flex items-center justify-between pt-2 text-sm text-gray-600">
+              {/* <div className="flex items-center justify-between pt-2 text-sm text-gray-600">
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
                     className="h-4 w-4 cursor-pointer rounded border-gray-300 text-[#5e8753] accent-[#5e8753]"
@@ -146,7 +146,7 @@ export default function LoginPage() {
                 >
                   Forgot Password?
                 </a>
-              </div>
+              </div> */}
 
               <button
                 className="cursor-pointer mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-[#2D5A3F] px-4 py-4 text-lg font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#16482b] focus:outline-none focus:ring-2 focus:ring-[#2D5A3F] focus:ring-offset-2 disabled:opacity-50 disabled:hover:translate-y-0"

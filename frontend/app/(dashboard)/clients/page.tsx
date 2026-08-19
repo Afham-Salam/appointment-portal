@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { DataTable, type Column } from "@/components/DataTable";
 import { FilterHeader } from "@/components/FilterHeader";
 import type { Dayjs } from "dayjs";
-import dayjs from "dayjs";
 import { getApprovedClients } from "@/lib/actions/appointments";
 import type { Appointment } from "../appointments/page";
 import { FiDownload } from "react-icons/fi";
@@ -37,7 +36,9 @@ const [page, setPage] = useState(1);
 const [total, setTotal] = useState(0);
 const pageSize = 10;
   const [selectedType, setSelectedType] = useState("all");
-const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>([dayjs().startOf("day"), dayjs().endOf("day")]);
+  const [dateRange, setDateRange] = useState<
+    [Dayjs | null, Dayjs | null] | null
+  >(null);
   const [reportClient, setReportClient] = useState<ClientRow | null>(null);
 
   const openReportModal = (client: ClientRow) => {
@@ -83,7 +84,21 @@ const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(
         </span>
       ),
     },
-    { title: "Type", key: "clientType" },
+    {
+      title: "Type",
+      key: "clientType",
+      render: (row) => (
+        <span
+          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+            row.clientType === "Student"
+              ? "bg-[#e6f0ff] text-[#1d4ed8]"
+              : "bg-[#fff0d9] text-[#a15c00]"
+          }`}
+        >
+          {row.clientType}
+        </span>
+      ),
+    },
     {
       title: "Appointments",
       key: "totalAppointments",
@@ -137,13 +152,12 @@ const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(
       />
 
       <section className="content-card">
-        {loading ? (
-          <div className="flex items-center justify-center py-12 text-sm text-[#414942]">
-            Loading clients...
-          </div>
-        ) : (
-          <DataTable columns={columns} data={clients} pageSize={10} />
-        )}
+        <DataTable
+          columns={columns}
+          data={clients}
+          loading={loading}
+          pageSize={10}
+        />
       </section>
 
       <ReportDownloadModal

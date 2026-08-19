@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -14,6 +15,10 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { logout } from "@/lib/actions/auth";
+import AddAppointmentModal, {
+  type AppointmentFormValues,
+} from "@/components/AddAppointmentModal";
+import { createAppointment } from "@/lib/actions/appointments";
 
 type UserRole = "admin" | "staff";
 type NavItem = {
@@ -26,8 +31,8 @@ const navigation:NavItem[] = [
   { href: "/dashboard", icon: FiGrid, label: "Dashboard", roles: ["admin", "staff"] },
   { href: "/appointments", icon: FiCalendar, label: "Appointments", roles: ["admin", "staff"] },
   { href: "/clients", icon: FiUsers, label: "Clients List", roles: ["admin"] },
-  { href: "/notification", icon: FiBell, label: "Notifications", roles: ["admin"] },
-  { href: "/profile", icon: FiUser, label: "My profile", roles: ["admin"] },
+  // { href: "/notification", icon: FiBell, label: "Notifications", roles: ["admin"] },
+  // { href: "/profile", icon: FiUser, label: "My profile", roles: ["admin"] },
   { href: "/settings", icon: FiSettings, label: "Settings", roles: ["admin"] },
 ] as const;
 
@@ -46,6 +51,9 @@ export default function Sidebar({
   onNavigate,
 }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [showAdd, setShowAdd] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const visibleNav = navigation.filter((item) => item.roles.includes(role));
 
@@ -53,8 +61,24 @@ export default function Sidebar({
     visibleNav.find((item) => pathname.startsWith(item.href))?.href ??
     "/dashboard";
 
+  const handleCreateAppointment = async (values: AppointmentFormValues) => {
+    setSubmitting(true);
+    const result = await createAppointment(values);
+    setSubmitting(false);
+
+    if (result.error) {
+      window.alert(result.error);
+      return;
+    }
+
+    setShowAdd(false);
+    window.dispatchEvent(new Event("appointment-created"));
+    if (pathname !== "/appointments") router.push("/appointments");
+  };
+
   return (
-    <aside
+    <>
+      <aside
       className={`flex h-dvh w-60 shrink-0 flex-col border-r border-[#e5e7eb] bg-[#edede8] px-4 py-6 transition-transform duration-200 ${
         mobile
           ? `fixed inset-y-0 left-0 z-1001 shadow-xl ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`
@@ -73,14 +97,17 @@ export default function Sidebar({
         />
       </div>
 
-      <Link
-        href="/appointments"
-        onClick={onNavigate}
+      <button
+        type="button"
+        onClick={() => {
+          setShowAdd(true);
+          onNavigate?.();
+        }}
         className="mb-8 flex items-center justify-center gap-2 rounded-md bg-[#2D5A3F] px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-[#16482b]"
       >
         <FiPlus className="h-4 w-4 shrink-0" />
         New Appointment
-      </Link>
+      </button>
 
       <nav className="flex flex-1 flex-col gap-1">
         {visibleNav.map(({ href, icon: Icon, label }) => {
@@ -115,6 +142,13 @@ export default function Sidebar({
           Logout
         </button>
       </form>
-    </aside>
+      </aside>
+      <AddAppointmentModal
+        open={showAdd}
+        onCancel={() => setShowAdd(false)}
+        onSubmit={handleCreateAppointment}
+        loading={submitting}
+      />
+    </>
   );
 }

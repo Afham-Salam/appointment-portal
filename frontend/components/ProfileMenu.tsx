@@ -53,14 +53,14 @@ export default function ProfileMenu({ email, role }: ProfileMenuProps) {
           </div>
 
           <div className="p-1.5">
-            <Link
+            {/* <Link
               href="/profile"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium text-[#414942] transition hover:bg-[#f4f4f0] hover:text-[#2D5A3F]"
             >
               <FiUser className="h-4 w-4 shrink-0" />
               My profile
-            </Link>
+            </Link> */}
             <button
               type="button"
               onClick={() => {

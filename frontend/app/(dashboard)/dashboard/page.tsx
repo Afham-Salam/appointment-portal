@@ -84,18 +84,15 @@ export default function DashboardPage() {
           {
             title: "Actions",
             key: "actions",
-            render: (row: AppointmentRow) => (
-              <Link
-                className="inline-flex rounded-md bg-[#bceecb] px-3 py-2 text-xs font-semibold text-[#144229]"
-                href={
-                  row.status === "Accepted"
-                    ? `/client/viewdetails?id=${row.clientId}`
-                    : "/appointments"
-                }
-              >
-                {row.status === "Accepted" ? "View Details" : "View"}
-              </Link>
-            ),
+            render: (row: AppointmentRow) =>
+              row.status === "Accepted" ? (
+                <Link
+                  className="inline-flex rounded-md bg-[#bceecb] px-3 py-2 text-xs font-semibold text-[#144229]"
+                  href={`/client/viewdetails?id=${row.clientId}`}
+                >
+                  View Details
+                </Link>
+              ) : null,
           },
         ]
       : []),
@@ -154,13 +151,12 @@ export default function DashboardPage() {
             View all
           </Link>
         </div>
-        {loading ? (
-          <div className="flex items-center justify-center py-12 text-sm text-[#414942]">
-            Loading...
-          </div>
-        ) : (
-          <DataTable columns={columns} data={appointments} pageSize={5} />
-        )}
+        <DataTable
+          columns={columns}
+          data={appointments}
+          loading={loading}
+          pageSize={5}
+        />
       </section>
     </>
   );

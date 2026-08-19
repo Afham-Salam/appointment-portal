@@ -153,6 +153,7 @@ export function TextGrid({
   onChange,
   textareaLabels = [],
   dateLabels = [],
+  radioOptions = {},
 }: {
   labels: string[];
   editable: boolean;
@@ -160,6 +161,7 @@ export function TextGrid({
   onChange?: (values: Record<string, string>) => void;
   textareaLabels?: string[];
   dateLabels?: string[];
+  radioOptions?: Record<string, string[]>;
 }) {
   const handleChange = (key: string, value: string) => {
     onChange?.({ ...values, [key]: value });
@@ -182,6 +184,34 @@ export function TextGrid({
                   handleChange(key, date ? date.format("YYYY-MM-DD") : "")
                 }
               />
+            ) : radioOptions[label] ? (
+              <div
+                className={`flex min-h-10 items-center gap-5 px-3 py-2 ${
+                  editable ? "bg-white" : "bg-[#f4f4f0]"
+                }`}
+              >
+                {radioOptions[label].map((option) => (
+                  <label
+                    key={option}
+                    className={`radio-option flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[#144229] transition ${
+                      values?.[key] === option
+                        ? "bg-[#e8f7ee] font-semibold"
+                        : "hover:bg-[#e8f7ee]"
+                    } ${!editable ? "cursor-default" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name={key}
+                      value={option}
+                      checked={values?.[key] === option}
+                      disabled={!editable}
+                      onChange={() => handleChange(key, option)}
+                      className="h-4 w-4 accent-[#2D5A3F]"
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
             ) : textareaLabels.includes(label) ? (
               <textarea
                 disabled={!editable}
@@ -200,6 +230,62 @@ export function TextGrid({
           </label>
         );
       })}
+    </div>
+  );
+}
+
+export function AssessmentReportForm({
+  editable,
+  values = {},
+  onChange,
+}: {
+  editable: boolean;
+  values?: Record<string, string>;
+  onChange?: (values: Record<string, string>) => void;
+}) {
+  const assessmentRows = [
+    "Logical Thinking", "Listening & following verbal instructions",
+    "Sequencing of Numbers", "Sequencing of incidents", "Reasoning",
+    "Number concept", "General awareness", "Age appropriate colour identification",
+    "Attention", "Visual memory", "Verbal memory", "Reading (Level)",
+  ];
+  const readingRows = ["Transposition", "Reversal", "Omissions", "Substitutions", "Insertions", "Pauses", "Inversion", "Comprehension"];
+  const key = (label: string, index: number) => labelToKey(label, index);
+  const update = (label: string, index: number, value: string) =>
+    onChange?.({ ...values, [key(label, index)]: value });
+  const input = (label: string, index: number, textarea = false, date = false) => {
+    const fieldKey = key(label, index);
+    if (date) {
+      return <DatePicker disabled={!editable} format="DD/MM/YYYY" className="h-10! w-[260px]! max-w-full! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!" value={values[fieldKey] ? dayjs(values[fieldKey]) : undefined} onChange={(value) => update(label, index, value ? value.format("YYYY-MM-DD") : "")} />;
+    }
+    return textarea ? (
+      <textarea disabled={!editable} value={values[fieldKey] || ""} onChange={(event) => update(label, index, event.target.value)} className="min-h-24 w-full resize-y border-0 bg-white p-3 text-sm outline-none disabled:bg-[#f4f4f0]" />
+    ) : (
+      <input disabled={!editable} value={values[fieldKey] || ""} onChange={(event) => update(label, index, event.target.value)} className="h-10 w-full border-0 bg-white px-3 text-sm outline-none disabled:bg-[#f4f4f0]" />
+    );
+  };
+  return (
+    <div className="space-y-5 rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-3 sm:p-4">
+      <div className="overflow-hidden rounded-md border border-[#c1c9c0] bg-white">
+        <div className="hidden grid-cols-[42px_minmax(0,1fr)_minmax(0,1fr)] bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid"><div className="border-r border-[#c1c9c0] p-3">Sl</div><div className="border-r border-[#c1c9c0] p-3">Type of Assessment</div><div className="p-3">Score</div></div>
+        {assessmentRows.map((label, rowIndex) => { const index = label.startsWith("Age appropriate") ? 21 : rowIndex; return <div key={label} className="grid grid-cols-1 border-t border-[#c1c9c0] text-sm text-[#144229] first:border-t-0 xl:grid-cols-[42px_minmax(0,1fr)_minmax(0,1fr)] xl:first:border-t"><div className="hidden border-r border-[#c1c9c0] p-3 xl:block">{rowIndex + 1}</div><div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">{label}</div><div>{input(label, index)}</div></div>; })}
+      </div>
+      <div className="overflow-hidden rounded-md border border-[#c1c9c0] bg-white">
+        <div className="grid grid-cols-1 bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid-cols-2"><div className="p-3 xl:border-r xl:border-[#c1c9c0]">General Reading</div><div className="hidden p-3 xl:block">Score</div></div>
+        {readingRows.map((label, rowIndex) => { const fullLabel = `General Reading - ${label}`; return <div key={label} className="grid grid-cols-1 border-t border-[#c1c9c0] text-sm text-[#144229] xl:grid-cols-2"><div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">{label}</div><div>{input(fullLabel, rowIndex + 22)}</div></div>; })}
+      </div>
+      <div className="grid overflow-hidden rounded-md border border-[#c1c9c0] bg-white xl:grid-cols-2">
+        {[["Writing", 12, false], ["Mathematics", 13, false], ["Family History (if any)", 14, true], ["Presented Problem", 15, true], ["Identified Problem", 16, true], ["Remarks", 17, true], ["Assessed by", 18, false], ["Name & Signature", 19, false], ["Date", 20, false]].map(([label, index, textarea]) => (
+          <label key={String(label)} className="border-b border-[#c1c9c0] text-sm text-[#144229] odd:xl:border-r">
+            <span className="block border-b border-[#c1c9c0] bg-white p-3 font-medium">{label}</span>
+            {label === "Date" ? (
+              <div className="bg-white p-3 disabled:bg-[#f4f4f0]">
+                {input(String(label), Number(index), false, true)}
+              </div>
+            ) : input(String(label), Number(index), Boolean(textarea))}
+          </label>
+        ))}
+      </div>
     </div>
   );
 }

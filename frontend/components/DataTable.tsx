@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { ConfigProvider, Empty, Spin } from "antd";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 export interface Column<T> {
@@ -12,6 +13,7 @@ export interface Column<T> {
 interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
+  loading?: boolean;
   pageSize?: number;
    total?: number;
   currentPage?: number;
@@ -19,8 +21,9 @@ interface DataTableProps<T> {
 }
 
 export function DataTable<T extends Record<string, any>>({
-   columns,
+  columns,
   data,
+  loading = false,
   pageSize: initialPageSize = 10,
   total: serverTotal,
   currentPage: serverPage,
@@ -54,7 +57,7 @@ export function DataTable<T extends Record<string, any>>({
 
   return (
     <div className="min-w-0">
-      <div className="w-full overflow-x-auto overscroll-x-contain px-3 py-4 [-webkit-overflow-scrolling:touch] sm:px-6 sm:py-5">
+      <div className="relative w-full overflow-x-auto overscroll-x-contain px-3 py-4 [-webkit-overflow-scrolling:touch] sm:px-6 sm:py-5">
         <p className="mb-2 text-[11px] text-[#69746d] sm:hidden">
           Swipe sideways to see all columns
         </p>
@@ -72,7 +75,17 @@ export function DataTable<T extends Record<string, any>>({
             </tr>
           </thead>
           <tbody>
-            {paginatedData.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={columns.length} className="h-24 text-center">
+                  <ConfigProvider
+                    theme={{ token: { colorPrimary: "#144229" } }}
+                  >
+                    <Spin size="large" aria-label="Loading" />
+                  </ConfigProvider>
+                </td>
+              </tr>
+            ) : paginatedData.length > 0 ? (
               paginatedData.map((row, rowIndex) => (
                 <tr key={row.id || rowIndex} className="hover:bg-[#fafdfb]">
                   {columns.map((col) => (
@@ -91,9 +104,12 @@ export function DataTable<T extends Record<string, any>>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="py-8 text-center text-[#414942]"
+                  className=" text-center text-[#414942]"
                 >
-                  No records found.
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="No records found"
+                  />
                 </td>
               </tr>
             )}

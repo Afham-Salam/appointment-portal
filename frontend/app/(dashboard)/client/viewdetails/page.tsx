@@ -5,6 +5,35 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ClientDetails } from "../../appointments/page";
 import { getClientDetails } from "@/lib/actions/appointments";
 import type { Appointment } from "../../appointments/page";
+import { ConfigProvider, Skeleton } from "antd";
+
+function ClientDetailsSkeleton() {
+  return (
+    <ConfigProvider theme={{ token: { colorPrimary: "#2D5A3F" } }}>
+      <div className="space-y-5">
+        <div className="flex items-center justify-between rounded-lg border border-[#c1c9c0] bg-white p-4">
+          <Skeleton.Button active size="large" />
+          <Skeleton.Input active size="small" />
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="hidden rounded-lg border border-[#c1c9c0] bg-white p-4 xl:block">
+            <Skeleton active paragraph={{ rows: 5 }} title={false} />
+          </div>
+
+          <div className="rounded-lg border border-[#c1c9c0] bg-white p-5">
+            <Skeleton active avatar paragraph={{ rows: 2 }} />
+            <div className="mt-6 space-y-5">
+              <Skeleton active paragraph={{ rows: 3 }} title />
+              <Skeleton active paragraph={{ rows: 4 }} title />
+              <Skeleton active paragraph={{ rows: 3 }} title />
+            </div>
+          </div>
+        </div>
+      </div>
+    </ConfigProvider>
+  );
+}
 
 function ClientDetailsRoute() {
   const router = useRouter();
@@ -57,11 +86,7 @@ function ClientDetailsRoute() {
   }, [params]);
 
   if (loading) {
-    return (
-      <div className="rounded-lg border border-[#c1c9c0] bg-white p-6 text-[#414942]">
-        Loading client details...
-      </div>
-    );
+    return <ClientDetailsSkeleton />;
   }
 
   if (!appointment) {
@@ -79,12 +104,25 @@ function ClientDetailsRoute() {
   }
 
   return (
-    <ClientDetails
-      appointment={appointment}
-      clientData={clientData}
-      onBack={() => router.push(backHref)}
-      backLabel={backLabel}
-    />
+    <ConfigProvider
+      theme={{
+        token: { colorPrimary: "#2D5A3F" },
+        components: {
+          DatePicker: {
+            activeBorderColor: "#2D5A3F",
+            hoverBorderColor: "#2D5A3F",
+            activeShadow: "0 0 0 2px rgba(45, 90, 63, 0.15)",
+          },
+        },
+      }}
+    >
+      <ClientDetails
+        appointment={appointment}
+        clientData={clientData}
+        onBack={() => router.push(backHref)}
+        backLabel={backLabel}
+      />
+    </ConfigProvider>
   );
 }
 
@@ -92,9 +130,7 @@ export default function ClientViewDetailsPage() {
   return (
     <Suspense
       fallback={
-        <div className="rounded-lg border border-[#c1c9c0] bg-white p-6 text-[#414942]">
-          Loading client details...
-        </div>
+        <ClientDetailsSkeleton />
       }
     >
       <ClientDetailsRoute />

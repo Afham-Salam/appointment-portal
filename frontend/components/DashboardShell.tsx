@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { FiMenu } from "react-icons/fi";
 import Sidebar from "@/components/Sidebar";
-import NotificationMenu from "@/components/NotificationMenu";
+// import NotificationMenu from "@/components/NotificationMenu";
 import ProfileMenu from "@/components/ProfileMenu";
 import { NotificationsProvider } from "@/components/NotificationsProvider";
 import { RoleProvider } from "./RoleContext";
@@ -21,7 +21,7 @@ export default function DashboardShell({ children, role,email }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const update = () => setMobile(window.innerWidth < 768);
+    const update = () => setMobile(window.innerWidth < 1280);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -30,6 +30,16 @@ export default function DashboardShell({ children, role,email }: Props) {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  const breadcrumb = pathname
+    .split("/")
+    .filter(Boolean)
+    .map((segment) =>
+      segment === "viewdetails"
+        ? "View details"
+        : segment.replaceAll("-", " "),
+    )
+    .join(" / ");
 
   return (
      <RoleProvider role={role}>
@@ -69,7 +79,7 @@ export default function DashboardShell({ children, role,email }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <NotificationMenu />
+              {/* <NotificationMenu /> */}
               <ProfileMenu email={email} role={role} />
             </div>
           </header>
@@ -80,7 +90,7 @@ export default function DashboardShell({ children, role,email }: Props) {
               <strong className="capitalize text-[#1a1c1a]">
                 {pathname === "/dashboard"
                   ? "Dashboard"
-                  : pathname.slice(1).replace("-", " ")}
+                  : breadcrumb}
               </strong>
             </div>
             {children}
