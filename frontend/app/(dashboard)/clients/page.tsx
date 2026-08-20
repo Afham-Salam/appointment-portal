@@ -121,7 +121,7 @@ const pageSize = 10;
            </button>
            <button
              type="button"
-             className="view-button"
+             className="reportbtn"
              onClick={() => openReportModal(row)}
            >
              <FiDownload aria-hidden="true" /> Report

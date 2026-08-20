@@ -11,6 +11,7 @@ import { Checkbox, DatePicker } from "antd";
 import {
   FiArrowLeft,
   FiCheck,
+  FiDownload,
   FiEdit2,
   FiPlus,
   FiTrash2,
@@ -20,9 +21,9 @@ import AddAppointmentModal, {
   type AppointmentFormValues,
 } from "@/components/AddAppointmentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
+import ReportDownloadModal from "@/components/ReportDownloadModal";
 import {
   downloadApplicationPdf,
-  printApplicationPdf,
 } from "@/components/ApplicationPdf";
 import {
   getAppointments,
@@ -93,6 +94,7 @@ export function ClientDetails({
   );
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showReportDownload, setShowReportDownload] = useState(false);
 
   // TextGrid values for each section
   const [studentIntakeValues, setStudentIntakeValues] = useState<
@@ -273,7 +275,17 @@ export function ClientDetails({
                 {data.clientType} · Age {data.age}
               </p>
             </div>
-            <span className="status accepted">Accepted</span>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                className="reportbtn"
+                onClick={() => setShowReportDownload(true)}
+              >
+                <FiDownload aria-hidden="true" />
+                 Report
+              </button>
+              <span className="status accepted">Accepted</span>
+            </div>
           </div>
 
           {/* ─── Application Form ─── */}
@@ -344,14 +356,14 @@ export function ClientDetails({
                   <span className="font-medium">Current problem</span>
                   <textarea
                     value={currentProblem}
-                    maxLength={500}
+                    maxLength={600}
                     onChange={(e) => setCurrentProblem(e.target.value)}
                     disabled={!isEditing("Application Form")}
                     className="min-h-24 w-full rounded-md border border-[#c1c9c0] bg-white p-3 text-sm text-[#1a1c1a] outline-none transition focus:border-[#2D5A3F] focus:ring-2 focus:ring-[#2D5A3F]/15 disabled:bg-[#f4f4f0] disabled:text-[#414942]"
                   />
-                  {currentProblem.length >= 500 && (
+                  {currentProblem.length >= 600 && (
                     <span className="text-xs font-medium text-[#c9252d]">
-                      Maximum 500 characters reached.
+                      Maximum 600 characters reached.
                     </span>
                   )}
                 </label>
@@ -381,6 +393,7 @@ export function ClientDetails({
                   editable={isEditing("Student Intake Form")}
                   values={studentIntakeValues}
                   onChange={setStudentIntakeValues}
+                  maxLength={50}
                   labels={[
                     "Name",
                     "Gender",
@@ -457,6 +470,7 @@ export function ClientDetails({
                   ]}
                   dateLabels={["Date"]}
                   radioOptions={{ "Type of family": ["Joint", "Nuclear"] }}
+                  maxLength={50}
                 />
               </FormSection>
             </div>
@@ -504,16 +518,6 @@ export function ClientDetails({
                 }
                 onSave={() => handleSave("Mental Status Exam")}
                 saving={saving}
-                onPrint={() => {
-                  printApplicationPdf({
-                    name: data.name,
-                    age: data.age,
-                    relative: data.relative,
-                    address: data.address,
-                    phone: `${data.countryCode} ${data.phone}`.trim(),
-                    currentProblem,
-                  });
-                }}
               >
                 <div className="flex flex-col gap-4">
                   <div className="form-grid">
@@ -719,12 +723,13 @@ export function ClientDetails({
                         </div>
                       ))}
                       <label className="mt-3 flex flex-col gap-1.5">
-                        <span className="text-sm font-semibold text-[#144229]">
+                        <span className="text-sm font-bold text-[#144229]">
                           Comments:
                         </span>
                         <textarea
                           disabled={!isEditing("Mental Status Exam")}
-                          className="min-h-20 w-full rounded-md border border-[#c1c9c0] p-3"
+                          maxLength={400}
+                          className="min-h-20 w-full rounded-md border border-[#c1c9c0] bg-white p-3 disabled:bg-[#f4f4f0]"
                           value={
                             (mentalStatusValues[
                               `${section.key}_comments`
@@ -737,6 +742,13 @@ export function ClientDetails({
                             }))
                           }
                         />
+                        {String(
+                          mentalStatusValues[`${section.key}_comments`] || "",
+                        ).length >= 400 && (
+                          <span className="text-xs font-medium text-[#c9252d]">
+                            Maximum 400 characters reached.
+                          </span>
+                        )}
                       </label>
                     </div>
                   ))}
@@ -774,7 +786,8 @@ export function ClientDetails({
                         <input
                           disabled={!isEditing("Mental Status Exam")}
                           placeholder="Comments"
-                          className="h-11 rounded-md border border-[#c1c9c0] px-3"
+                          maxLength={400}
+                          className="h-11 rounded-md border border-[#c1c9c0] bg-white px-3 disabled:bg-[#f4f4f0]"
                           value={(mentalStatusValues[row] as string) || ""}
                           onChange={(e) =>
                             setMentalStatusValues((prev) => ({
@@ -808,6 +821,16 @@ export function ClientDetails({
           </div>
         </main>
       </div>
+      <ReportDownloadModal
+        client={{
+          id: appointment.clientId,
+          name: appointment.name,
+          phone: appointment.phone,
+          clientType: appointment.clientType,
+        }}
+        open={showReportDownload}
+        onClose={() => setShowReportDownload(false)}
+      />
     </div>
   );
 }

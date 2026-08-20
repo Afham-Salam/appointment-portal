@@ -35,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#faf9f6] md:flex md:items-center md:justify-center md:p-0">
+    <main className="md:min-h-screen bg-[#faf9f6] md:flex md:items-center md:justify-center md:p-0">
       <div className="flex min-h-screen w-full items-center justify-center flex-col overflow-hidden bg-[#faf9f6] shadow-2xl md:flex-row">
         <section
           className="flex w-full flex-col justify-center bg-[#faf9f6] px-6 md:min-h-screen md:w-1/2 md:px-14 lg:px-24"

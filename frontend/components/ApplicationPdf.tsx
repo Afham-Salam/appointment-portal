@@ -283,13 +283,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  /*
-   * Reduced from 140.
-   * This removes the large empty gap below
-   * the last dotted line.
-   */
   problemWritingArea: {
-    minHeight: 122,
+    minHeight: 40,
+    paddingBottom: 8,
   },
 
   problemText: {
@@ -299,18 +295,6 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
 
-  writingLine: {
-    height: 24,
-
-    borderBottomWidth: 1,
-    borderBottomColor: "#333333",
-    borderBottomStyle: "dashed",
-  },
-
-  /*
-   * Reduced top space so consent Malayalam
-   * comes closer to the dotted lines.
-   */
   consent: {
     marginTop: 2,
 
@@ -1351,10 +1335,6 @@ export function ApplicationPdf({
             />
           </View>
 
-          {/* =================================================
-              FIVE DOTTED LINES
-          ================================================= */}
-
           <View
             style={
               styles.problemWritingArea
@@ -1370,25 +1350,6 @@ export function ApplicationPdf({
               </Text>
             ) : null}
 
-            <View
-              style={styles.writingLine}
-            />
-
-            <View
-              style={styles.writingLine}
-            />
-
-            <View
-              style={styles.writingLine}
-            />
-
-            <View
-              style={styles.writingLine}
-            />
-
-            <View
-              style={styles.writingLine}
-            />
           </View>
 
           {/* =================================================
