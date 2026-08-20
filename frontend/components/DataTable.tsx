@@ -15,7 +15,7 @@ interface DataTableProps<T> {
   data: T[];
   loading?: boolean;
   pageSize?: number;
-   total?: number;
+  total?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
 }
@@ -29,23 +29,34 @@ export function DataTable<T extends Record<string, any>>({
   currentPage: serverPage,
   onPageChange,
 }: DataTableProps<T>) {
-    const [localPage, setLocalPage] = useState(1);
+  const [localPage, setLocalPage] = useState(1);
   const [sizePerPage, setSizePerPage] = useState(initialPageSize);
 
-  const isServerPaginated = serverTotal !== undefined && onPageChange !== undefined;
+  const isServerPaginated =
+    serverTotal !== undefined && onPageChange !== undefined;
 
-  const activePage = isServerPaginated ? (serverPage || 1) : Math.min(localPage, Math.ceil(data.length / sizePerPage) || 1);
+  const activePage = isServerPaginated
+    ? serverPage || 1
+    : Math.min(localPage, Math.ceil(data.length / sizePerPage) || 1);
   const totalItems = isServerPaginated ? serverTotal : data.length;
   const totalPages = Math.ceil(totalItems / sizePerPage) || 1;
 
   // Client-side: slice data. Server-side: data is already one page
   const startIndex = isServerPaginated ? 0 : (activePage - 1) * sizePerPage;
-  const endIndex = isServerPaginated ? data.length : Math.min(startIndex + sizePerPage, data.length);
-  const paginatedData = isServerPaginated ? data : data.slice(startIndex, endIndex);
+  const endIndex = isServerPaginated
+    ? data.length
+    : Math.min(startIndex + sizePerPage, data.length);
+  const paginatedData = isServerPaginated
+    ? data
+    : data.slice(startIndex, endIndex);
 
   // Display indexes for "Showing X to Y of Z"
-  const displayStart = isServerPaginated ? (activePage - 1) * sizePerPage + 1 : startIndex + 1;
-  const displayEnd = isServerPaginated ? (activePage - 1) * sizePerPage + data.length : endIndex;
+  const displayStart = isServerPaginated
+    ? (activePage - 1) * sizePerPage + 1
+    : startIndex + 1;
+  const displayEnd = isServerPaginated
+    ? (activePage - 1) * sizePerPage + data.length
+    : endIndex;
 
   const handlePageChange = (page: number) => {
     if (isServerPaginated) {
@@ -94,8 +105,13 @@ export function DataTable<T extends Record<string, any>>({
                       className="border-b border-[#c1c9c0] px-3 py-3 text-[#1a1c1a] sm:px-4 sm:py-3.5"
                     >
                       {col.render
-  ? col.render(row, (isServerPaginated ? (activePage - 1) * sizePerPage : startIndex) + rowIndex)
-  : row[col.key]}
+                        ? col.render(
+                            row,
+                            (isServerPaginated
+                              ? (activePage - 1) * sizePerPage
+                              : startIndex) + rowIndex,
+                          )
+                        : row[col.key]}
                     </td>
                   ))}
                 </tr>
@@ -117,7 +133,7 @@ export function DataTable<T extends Record<string, any>>({
         </table>
       </div>
 
-           {totalItems > 0 && (
+      {totalItems > 0 && (
         <div className="flex flex-col gap-4 border-t border-[#c1c9c0] px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             {!isServerPaginated && (
@@ -151,9 +167,13 @@ export function DataTable<T extends Record<string, any>>({
                 {totalItems === 0 ? 0 : displayStart}
               </strong>{" "}
               to{" "}
-              <strong className="font-semibold text-[#1a1c1a]">{displayEnd}</strong>{" "}
+              <strong className="font-semibold text-[#1a1c1a]">
+                {displayEnd}
+              </strong>{" "}
               of{" "}
-              <strong className="font-semibold text-[#1a1c1a]">{totalItems}</strong>{" "}
+              <strong className="font-semibold text-[#1a1c1a]">
+                {totalItems}
+              </strong>{" "}
               entries
             </span>
           </div>
@@ -169,21 +189,19 @@ export function DataTable<T extends Record<string, any>>({
                 <FiChevronLeft className="h-4 w-4" />
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (pg) => (
-                  <button
-                    key={pg}
-                    onClick={() => handlePageChange(pg)}
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
-                      activePage === pg
-                        ? "bg-[#144229] text-white"
-                        : "border border-[#c1c9c0] bg-white text-[#414942] hover:bg-neutral-50"
-                    }`}
-                  >
-                    {pg}
-                  </button>
-                ),
-              )}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                <button
+                  key={pg}
+                  onClick={() => handlePageChange(pg)}
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
+                    activePage === pg
+                      ? "bg-[#144229] text-white"
+                      : "border border-[#c1c9c0] bg-white text-[#414942] hover:bg-neutral-50"
+                  }`}
+                >
+                  {pg}
+                </button>
+              ))}
 
               <button
                 onClick={() => handlePageChange(activePage + 1)}

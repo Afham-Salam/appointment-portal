@@ -236,7 +236,9 @@ export default function AddAppointmentModal({
     <ConfigProvider theme={themeConfig}>
       <Modal
         title={
-          <span className="text-lg font-semibold text-[#144229]">{title}</span>
+          <span className="text-lg font-semibold capitalize tracking-wide text-[#144229]">
+            {title}
+          </span>
         }
         open={open}
         onCancel={onCancel}

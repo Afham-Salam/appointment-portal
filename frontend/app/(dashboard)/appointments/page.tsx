@@ -22,9 +22,7 @@ import AddAppointmentModal, {
 } from "@/components/AddAppointmentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import ReportDownloadModal from "@/components/ReportDownloadModal";
-import {
-  downloadApplicationPdf,
-} from "@/components/ApplicationPdf";
+import { downloadApplicationPdf } from "@/components/ApplicationPdf";
 import {
   getAppointments,
   createAppointment,
@@ -282,7 +280,7 @@ export function ClientDetails({
                 onClick={() => setShowReportDownload(true)}
               >
                 <FiDownload aria-hidden="true" />
-                 Report
+                Report
               </button>
               <span className="status accepted">Accepted</span>
             </div>
@@ -941,21 +939,14 @@ export default function AppointmentsPage() {
       title: "Status",
       key: "status",
       render: (row) => (
-        <span className={`status ${row.status.toLowerCase()}`}>
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (row) => (
-        <div className="table-actions">
-          {/* Accept/Reject — admin only */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`status ${row.status.toLowerCase()}`}>
+            {row.status}
+          </span>
           {role === "admin" && row.status === "Pending" && (
             <>
               <button
-                className="bg-[#2D5A3F]! flex items-center gap-2 text-white!"
+                className="cursor-pointer flex items-center justify-center gap-1.5 rounded-md! border-[#4f8d63]! bg-[#b9e3c4]! px-2.5! py-1.5! text-xs! font-semibold text-[#174d2b]!"
                 title="Accept"
                 aria-label={`Accept appointment for ${row.name}`}
                 onClick={() => handleStatusChange(row.id, "Accepted")}
@@ -964,7 +955,7 @@ export default function AppointmentsPage() {
                 <span>Accept</span>
               </button>
               <button
-                className="bg-[#c9252d]! flex items-center gap-2 text-white!"
+                className="cursor-pointer flex items-center justify-center gap-1.5 rounded-md! border-[#d45a61]! bg-[#f3b9bd]! px-2.5! py-1.5! text-xs! font-semibold text-[#7b2027]!"
                 title="Reject"
                 aria-label={`Reject appointment for ${row.name}`}
                 onClick={() => setAppointmentToReject(row)}
@@ -974,24 +965,33 @@ export default function AppointmentsPage() {
               </button>
             </>
           )}
-
-          {/* View Details — admin only */}
-          {role === "admin" && row.status === "Accepted" && (
-            <button
-              className="view-button"
-              title="View details"
-              aria-label={`View details for ${row.name}`}
-              onClick={() =>
-                router.push(`/client/viewdetails?id=${row.clientId}`)
-              }
-            >
-              View Details
-            </button>
-          )}
+        </div>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (row) => (
+        <div className="table-actions">
+          {/* Reserve the same space so Edit/Delete stay aligned in every row. */}
+          <span className="view-slot">
+            {role === "admin" && row.status === "Accepted" && (
+              <button
+                className="view-button"
+                title="View details"
+                aria-label={`View details for ${row.name}`}
+                onClick={() =>
+                  router.push(`/client/viewdetails?id=${row.clientId}`)
+                }
+              >
+                View Details
+              </button>
+            )}
+          </span>
 
           {/* Edit & Delete — both roles */}
           <button
-            className="border-[#333936]! bg-[#333936]! text-white!"
+            className="border-[#333936]! bg-[#333936]! flex items-center justify-center text-white! w-[34px] px-0!"
             title="Edit appointment"
             aria-label={`Edit appointment for ${row.name}`}
             onClick={() => setAppointmentToEdit(row)}
@@ -999,7 +999,7 @@ export default function AppointmentsPage() {
             <FiEdit2 />
           </button>
           <button
-            className="border-[#c9252d]! bg-[#c9252d]! text-white!"
+            className="border-[#c9252d]! bg-[#c9252d]! flex items-center justify-center text-white! w-[34px] px-0!"
             title="Delete appointment"
             aria-label={`Delete appointment for ${row.name}`}
             onClick={() => setAppointmentToDelete(row)}
