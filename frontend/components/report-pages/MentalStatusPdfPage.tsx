@@ -197,6 +197,18 @@ const styles = StyleSheet.create({
     borderColor: "#444444",
 
     marginRight: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  checkmark: {
+    width: 3.5,
+    height: 2,
+    borderLeftWidth: 0.8,
+    borderBottomWidth: 0.8,
+    borderColor: "#222222",
+    transform: "rotate(-45deg)",
+    marginTop: -1,
   },
 
   optionText: {
@@ -213,12 +225,25 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     paddingHorizontal: 7,
 
+    flexDirection: "row",
+    alignItems: "flex-start",
+
     borderBottomWidth: 1,
     borderBottomColor: BORDER,
   },
 
   commentText: {
     fontSize: 8.5,
+    flex: 1,
+  },
+
+  commentLabel: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    color: "#000000",
+    paddingHorizontal: 3,
+    paddingVertical: 1.5,
+    marginRight: 4,
   },
 
   /* ======================================================
@@ -605,10 +630,9 @@ function CheckOption({
   const width = `${100 / columns}%`;
   return (
     <View style={[styles.optionItem, { width }]}>
-      <View style={[
-        styles.checkbox,
-        checked ? { backgroundColor: "#333333" } : {},
-      ]} />
+      <View style={styles.checkbox}>
+        {checked ? <View style={styles.checkmark} /> : null}
+      </View>
       <Text style={styles.optionText}>{label}</Text>
     </View>
   );
@@ -697,7 +721,8 @@ function ExamSection({ section, mentalData }: { section: ExamSectionData; mental
 function CommentsRow({ comment }: { comment?: string }) {
   return (
     <View style={styles.commentRow} wrap={false}>
-      <Text style={styles.commentText}>Comments: {comment || ""}</Text>
+      <Text style={styles.commentLabel}>Comments:</Text>
+      <Text style={styles.commentText}>{comment || ""}</Text>
     </View>
   );
 }
@@ -746,7 +771,9 @@ function BottomRow({ title, last = false, rating = [], comment = "" }: {
         <View style={styles.bottomOptions}>
           {["Good", "Fair", "Poor"].map((opt) => (
             <View key={opt} style={[styles.optionItem, { width: "33.333%" }]}>
-              <View style={[styles.checkbox, rating.includes(opt) ? { backgroundColor: "#333333" } : {}]} />
+              <View style={styles.checkbox}>
+                {rating.includes(opt) ? <View style={styles.checkmark} /> : null}
+              </View>
               <Text style={styles.optionText}>{opt}</Text>
             </View>
           ))}

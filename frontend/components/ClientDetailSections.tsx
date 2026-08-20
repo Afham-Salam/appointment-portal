@@ -3,7 +3,12 @@
 import type { ReactNode } from "react";
 import * as React from "react";
 import { Collapse, DatePicker } from "antd";
-import { FiDownload, FiEdit2, FiPlus, FiPrinter, FiTrash2 } from "react-icons/fi";
+import {
+  FiDownload,
+  FiEdit2,
+  FiPlus,
+  FiTrash2,
+} from "react-icons/fi";
 import dayjs from "dayjs";
 import {
   addRemediationEntry,
@@ -50,7 +55,6 @@ export function FormSection({
   onSave,
   saving,
   onDownload,
-   onPrint,
 }: {
   title: string;
   children: ReactNode;
@@ -61,7 +65,6 @@ export function FormSection({
   onSave?: () => void;
   saving?: boolean;
   onDownload?: () => void;
-  onPrint?: () => void;
 }) {
   return (
     <Collapse
@@ -124,19 +127,6 @@ export function FormSection({
                   <FiDownload />
                 </button>
               )}
-              {onPrint && !editing && (
-  <button
-    type="button"
-    className="flex h-8 w-8 cursor-pointer items-center justify-center text-[#144229]"
-    onClick={(e) => {
-      e.stopPropagation();
-      onPrint();
-    }}
-    aria-label="Print"
-  >
-    <FiPrinter />
-  </button>
-)}
             </div>
           ),
           children: <div className="p-1">{children}</div>,
@@ -154,6 +144,7 @@ export function TextGrid({
   textareaLabels = [],
   dateLabels = [],
   radioOptions = {},
+  maxLength,
 }: {
   labels: string[];
   editable: boolean;
@@ -162,6 +153,7 @@ export function TextGrid({
   textareaLabels?: string[];
   dateLabels?: string[];
   radioOptions?: Record<string, string[]>;
+  maxLength?: number;
 }) {
   const handleChange = (key: string, value: string) => {
     onChange?.({ ...values, [key]: value });
@@ -216,6 +208,7 @@ export function TextGrid({
               <textarea
                 disabled={!editable}
                 value={values?.[key] || ""}
+                maxLength={maxLength}
                 onChange={(e) => handleChange(key, e.target.value)}
                 className="min-h-16! resize-y! border-0! bg-white! p-3! disabled:bg-[#f4f4f0]!"
               />
@@ -223,6 +216,7 @@ export function TextGrid({
               <input
                 disabled={!editable}
                 value={values?.[key] || ""}
+                maxLength={maxLength}
                 onChange={(e) => handleChange(key, e.target.value)}
                 className="bg-white! disabled:bg-[#f4f4f0]!"
               />
@@ -244,45 +238,149 @@ export function AssessmentReportForm({
   onChange?: (values: Record<string, string>) => void;
 }) {
   const assessmentRows = [
-    "Logical Thinking", "Listening & following verbal instructions",
-    "Sequencing of Numbers", "Sequencing of incidents", "Reasoning",
-    "Number concept", "General awareness", "Age appropriate colour identification",
-    "Attention", "Visual memory", "Verbal memory", "Reading (Level)",
+    "Logical Thinking",
+    "Listening & following verbal instructions",
+    "Sequencing of Numbers",
+    "Sequencing of incidents",
+    "Reasoning",
+    "Number concept",
+    "General awareness",
+    "Age appropriate colour identification",
+    "Attention",
+    "Visual memory",
+    "Verbal memory",
+    "Reading (Level)",
   ];
-  const readingRows = ["Transposition", "Reversal", "Omissions", "Substitutions", "Insertions", "Pauses", "Inversion", "Comprehension"];
+  const readingRows = [
+    "Transposition",
+    "Reversal",
+    "Omissions",
+    "Substitutions",
+    "Insertions",
+    "Pauses",
+    "Inversion",
+    "Comprehension",
+  ];
   const key = (label: string, index: number) => labelToKey(label, index);
   const update = (label: string, index: number, value: string) =>
     onChange?.({ ...values, [key(label, index)]: value });
-  const input = (label: string, index: number, textarea = false, date = false) => {
+  const input = (
+    label: string,
+    index: number,
+    textarea = false,
+    date = false,
+    maxLength?: number,
+  ) => {
     const fieldKey = key(label, index);
     if (date) {
-      return <DatePicker disabled={!editable} format="DD/MM/YYYY" className="h-10! w-[260px]! max-w-full! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!" value={values[fieldKey] ? dayjs(values[fieldKey]) : undefined} onChange={(value) => update(label, index, value ? value.format("YYYY-MM-DD") : "")} />;
+      return (
+        <DatePicker
+          disabled={!editable}
+          format="DD/MM/YYYY"
+          className="h-10! w-[260px]! max-w-full! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!"
+          value={values[fieldKey] ? dayjs(values[fieldKey]) : undefined}
+          onChange={(value) =>
+            update(label, index, value ? value.format("YYYY-MM-DD") : "")
+          }
+        />
+      );
     }
     return textarea ? (
-      <textarea disabled={!editable} value={values[fieldKey] || ""} onChange={(event) => update(label, index, event.target.value)} className="min-h-24 w-full resize-y border-0 bg-white p-3 text-sm outline-none disabled:bg-[#f4f4f0]" />
+      <textarea
+        disabled={!editable}
+        value={values[fieldKey] || ""}
+        maxLength={maxLength}
+        onChange={(event) => update(label, index, event.target.value)}
+        className="min-h-24 w-full resize-y border-0 bg-white p-3 text-sm outline-none disabled:bg-[#f4f4f0]"
+      />
     ) : (
-      <input disabled={!editable} value={values[fieldKey] || ""} onChange={(event) => update(label, index, event.target.value)} className="h-10 w-full border-0 bg-white px-3 text-sm outline-none disabled:bg-[#f4f4f0]" />
+      <input
+        disabled={!editable}
+        value={values[fieldKey] || ""}
+        onChange={(event) => update(label, index, event.target.value)}
+        className="h-10 w-full border-0 bg-white px-3 text-sm outline-none disabled:bg-[#f4f4f0]"
+      />
     );
   };
   return (
     <div className="space-y-5 rounded-md border border-[#c1c9c0] bg-[#faf9f6] p-3 sm:p-4">
       <div className="overflow-hidden rounded-md border border-[#c1c9c0] bg-white">
-        <div className="hidden grid-cols-[42px_minmax(0,1fr)_minmax(0,1fr)] bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid"><div className="border-r border-[#c1c9c0] p-3">Sl</div><div className="border-r border-[#c1c9c0] p-3">Type of Assessment</div><div className="p-3">Score</div></div>
-        {assessmentRows.map((label, rowIndex) => { const index = label.startsWith("Age appropriate") ? 21 : rowIndex; return <div key={label} className="grid grid-cols-1 border-t border-[#c1c9c0] text-sm text-[#144229] first:border-t-0 xl:grid-cols-[42px_minmax(0,1fr)_minmax(0,1fr)] xl:first:border-t"><div className="hidden border-r border-[#c1c9c0] p-3 xl:block">{rowIndex + 1}</div><div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">{label}</div><div>{input(label, index)}</div></div>; })}
+        <div className="hidden grid-cols-[42px_minmax(0,1fr)_minmax(0,1fr)] bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid">
+          <div className="border-r border-[#c1c9c0] p-3">Sl</div>
+          <div className="border-r border-[#c1c9c0] p-3">
+            Type of Assessment
+          </div>
+          <div className="p-3">Score</div>
+        </div>
+        {assessmentRows.map((label, rowIndex) => {
+          const index = label.startsWith("Age appropriate") ? 21 : rowIndex;
+          return (
+            <div
+              key={label}
+              className="grid grid-cols-1 border-t border-[#c1c9c0] text-sm text-[#144229] first:border-t-0 xl:grid-cols-[42px_minmax(0,1fr)_minmax(0,1fr)] xl:first:border-t"
+            >
+              <div className="hidden border-r border-[#c1c9c0] p-3 xl:block">
+                {rowIndex + 1}
+              </div>
+              <div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">
+                {label}
+              </div>
+              <div>{input(label, index)}</div>
+            </div>
+          );
+        })}
       </div>
       <div className="overflow-hidden rounded-md border border-[#c1c9c0] bg-white">
-        <div className="grid grid-cols-1 bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid-cols-2"><div className="p-3 xl:border-r xl:border-[#c1c9c0]">General Reading</div><div className="hidden p-3 xl:block">Score</div></div>
-        {readingRows.map((label, rowIndex) => { const fullLabel = `General Reading - ${label}`; return <div key={label} className="grid grid-cols-1 border-t border-[#c1c9c0] text-sm text-[#144229] xl:grid-cols-2"><div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">{label}</div><div>{input(fullLabel, rowIndex + 22)}</div></div>; })}
+        <div className="grid grid-cols-1 bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid-cols-2">
+          <div className="p-3 xl:border-r xl:border-[#c1c9c0]">Writing</div>
+          <div className="hidden p-3 xl:block">Score</div>
+        </div>
+        {readingRows.map((label, rowIndex) => {
+          const fullLabel = `General Reading - ${label}`;
+          return (
+            <div
+              key={label}
+              className="grid grid-cols-1 border-t border-[#c1c9c0] text-sm text-[#144229] xl:grid-cols-2"
+            >
+              <div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">
+                {label}
+              </div>
+              <div>{input(fullLabel, rowIndex + 22)}</div>
+            </div>
+          );
+        })}
       </div>
       <div className="grid overflow-hidden rounded-md border border-[#c1c9c0] bg-white xl:grid-cols-2">
-        {[["Writing", 12, false], ["Mathematics", 13, false], ["Family History (if any)", 14, true], ["Presented Problem", 15, true], ["Identified Problem", 16, true], ["Remarks", 17, true], ["Assessed by", 18, false], ["Name & Signature", 19, false], ["Date", 20, false]].map(([label, index, textarea]) => (
-          <label key={String(label)} className="border-b border-[#c1c9c0] text-sm text-[#144229] odd:xl:border-r">
-            <span className="block border-b border-[#c1c9c0] bg-white p-3 font-medium">{label}</span>
+        {[
+          ["Mathematics", 13, false],
+          ["Family History (if any)", 14, true],
+          ["Presented Problem", 15, true],
+          ["Identified Problem", 16, true],
+          ["Remarks", 17, true],
+          ["Assessed by", 18, false],
+          ["Name & Signature", 19, false],
+          ["Date", 20, false],
+        ].map(([label, index, textarea]) => (
+          <label
+            key={String(label)}
+            className="border-b border-[#c1c9c0] text-sm text-[#144229] odd:xl:border-r"
+          >
+            <span className="block border-b border-[#c1c9c0] bg-white p-3 font-medium">
+              {label}
+            </span>
             {label === "Date" ? (
               <div className="bg-white p-3 disabled:bg-[#f4f4f0]">
                 {input(String(label), Number(index), false, true)}
               </div>
-            ) : input(String(label), Number(index), Boolean(textarea))}
+            ) : (
+              input(
+                String(label),
+                Number(index),
+                Boolean(textarea),
+                false,
+                textarea ? 400 : undefined,
+              )
+            )}
           </label>
         ))}
       </div>
@@ -407,9 +505,10 @@ export function RepeatSection({
     onEntriesChange?.();
   };
 
-const responsiveColumns = title === "Plans" || title === "Remediation & Improvement";
+  const responsiveColumns =
+    title === "Plans" || title === "Remediation & Improvement";
 
- return (
+  return (
     <div id={id}>
       <Collapse
         className="mt-5! overflow-hidden rounded-lg border border-[#c1c9c0] bg-white [&_.ant-collapse-header]:items-center! [&_.ant-collapse-header]:py-4! [&_.ant-collapse-header-text]:text-[#144229]!"
@@ -447,31 +546,71 @@ const responsiveColumns = title === "Plans" || title === "Remediation & Improvem
                           )}
                         </div>
                       </div>
-                      <div className={`grid border-b border-[#c1c9c0] last:border-b-0 ${responsiveColumns ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-3"}`}>
+                      <div
+                        className={`grid border-b border-[#c1c9c0] last:border-b-0 ${responsiveColumns ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-3"}`}
+                      >
                         <label className="flex min-w-0 flex-col gap-2 border-r border-[#c1c9c0]">
-                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">Date</span>
+                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">
+                            Date
+                          </span>
                           <DatePicker
                             className="repeat-date-picker mx-1! h-10! w-[calc(100%-0.5rem)]! max-w-full! px-3!"
                             format="DD/MM/YYYY"
-                            value={row.entry_date ? dayjs(row.entry_date) : undefined}
-                            onChange={(date) => updateRow(index, "entry_date", date ? date.format("YYYY-MM-DD") : "")}
+                            value={
+                              row.entry_date ? dayjs(row.entry_date) : undefined
+                            }
+                            onChange={(date) =>
+                              updateRow(
+                                index,
+                                "entry_date",
+                                date ? date.format("YYYY-MM-DD") : "",
+                              )
+                            }
                           />
                         </label>
                         <label className="flex min-w-0 flex-col gap-2 border-r border-[#c1c9c0]">
-                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">{labels[1] || "Remediation given"}</span>
+                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">
+                            {labels[1] || "Remediation given"}
+                          </span>
                           <textarea
                             className="min-h-18.5! w-full! resize-y! border-0! p-3!"
                             value={row.remediation_given}
-                            onChange={(e) => updateRow(index, "remediation_given", e.target.value)}
+                            maxLength={600}
+                            onChange={(e) =>
+                              updateRow(
+                                index,
+                                "remediation_given",
+                                e.target.value,
+                              )
+                            }
                           />
+                          {row.remediation_given.length >= 600 && (
+                            <span className="bg-white px-3 pb-2 text-xs font-medium text-[#c9252d]">
+                              Maximum 600 characters reached.
+                            </span>
+                          )}
                         </label>
                         <label className="flex min-w-0 flex-col gap-2">
-                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">{labels[2] || "Improvement seen"}</span>
+                          <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">
+                            {labels[2] || "Improvement seen"}
+                          </span>
                           <textarea
                             className="min-h-18.5! w-full! resize-y! border-0! p-3!"
                             value={row.improvement_seen}
-                            onChange={(e) => updateRow(index, "improvement_seen", e.target.value)}
+                            maxLength={600}
+                            onChange={(e) =>
+                              updateRow(
+                                index,
+                                "improvement_seen",
+                                e.target.value,
+                              )
+                            }
                           />
+                          {row.improvement_seen.length >= 600 && (
+                            <span className="bg-white px-3 pb-2 text-xs font-medium text-[#c9252d]">
+                              Maximum 600 characters reached.
+                            </span>
+                          )}
                         </label>
                       </div>
                     </div>

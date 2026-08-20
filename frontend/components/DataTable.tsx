@@ -188,7 +188,7 @@ export function DataTable<T extends Record<string, any>>({
               <button
                 onClick={() => handlePageChange(activePage + 1)}
                 disabled={activePage === totalPages}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#c1c9c0] bg-white text-[#414942] transition-colors hover:bg-neutral-50 disabled:pointer-events-none disabled:opacity-40"
+                className="cursor-pointer inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#c1c9c0] bg-white text-[#414942] transition-colors hover:bg-neutral-50 disabled:pointer-events-none disabled:opacity-40"
                 aria-label="Next Page"
               >
                 <FiChevronRight className="h-4 w-4" />

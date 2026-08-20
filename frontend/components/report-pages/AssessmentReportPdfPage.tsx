@@ -173,7 +173,7 @@ function AssessmentPage({ data }: PageProps) {
     <Page size="A4" style={styles.page} wrap={false}>
       <Text style={styles.heading}>Assessment Report Sheet</Text>
       <AssessmentTable data={data} />
-      <SimpleScoreTable title="General Reading" rows={readingRows} />
+      <SimpleScoreTable title="Writing" rows={readingRows} />
       {/* ... rest stays same */}
     </Page>
   );

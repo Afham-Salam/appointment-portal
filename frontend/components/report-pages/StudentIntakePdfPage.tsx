@@ -7,23 +7,23 @@ function labelToKey(label: string, index: number): string {
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 42, fontFamily: "Helvetica" },
+  page: { padding: 30, fontFamily: "Helvetica" },
   title: {
     textAlign: "center",
     fontSize: 12,
     fontFamily: "Helvetica-Bold",
-    marginBottom: 10,
+    marginBottom: 7,
   },
   section: { borderWidth: 1 },
   row: {
     flexDirection: "row",
-    minHeight: 34,
+    minHeight: 27,
     borderBottomWidth: 1,
     borderBottomColor: "#999",
   },
   label: {
     width: "42%",
-    padding: 8,
+    padding: 5,
     fontSize: 10,
     borderRightWidth: 1,
     borderRightColor: "#999",
@@ -70,11 +70,11 @@ export function StudentIntakePdfPage({ data }: PageProps) {
  
   return (
     <Layout title="Student Intake Form">
-      <View style={styles.section}>
+      <View style={styles.section} wrap={false}>
         {labels.map((label, i) => (
           <View style={styles.row} key={`${label}-${i}`}>
             <Text style={styles.label}>{label}</Text>
-            <Text style={[styles.value, { padding: 8, fontSize: 10 }]}>
+            <Text style={[styles.value, { padding: 5, fontSize: 10 }]}> 
               {data.studentIntake?.[labelToKey(label, i)] || ""}
             </Text>
           </View>
