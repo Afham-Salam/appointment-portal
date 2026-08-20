@@ -322,15 +322,23 @@ h6 {
 .table-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
 }
+.view-slot {
+  display: inline-flex;
+  width: 94px;
+}
 .table-actions > button:not(.view-button) {
-  padding: 7px;
+  padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 5px;
   background: #fff;
   color: var(--green);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .table-actions > button:not(.view-button):hover {
   opacity: 0.88;
@@ -344,6 +352,12 @@ h6 {
   min-height: 34px;
 }
 .view-button {
+  display: inline-flex;
+  width: 94px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
   padding: 0 10px;
   /* background: var(--secondary-gold); */
   border: 1px solid var(--green-container);
@@ -515,6 +529,70 @@ h6 {
 .assessment-date-picker .ant-picker-suffix svg {
   background: #fff !important;
   background-color: #fff !important;
+}
+
+/* Shared Ant Design datepicker theme. The dropdown is rendered in a portal. */
+.ant-picker {
+  border-color: var(--line) !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+}
+.ant-picker:hover,
+.ant-picker-focused {
+  border-color: var(--green-container) !important;
+  box-shadow: 0 0 0 2px rgba(45, 90, 63, 0.15) !important;
+}
+.ant-picker-input > input {
+  color: var(--ink) !important;
+}
+.ant-picker-input > input::placeholder {
+  color: var(--muted) !important;
+}
+.ant-picker-dropdown {
+  color: var(--ink) !important;
+}
+.ant-picker-dropdown .ant-picker-panel-container {
+  border: 1px solid var(--line) !important;
+  background: #fff !important;
+  box-shadow: 0 10px 24px rgba(26, 28, 26, 0.12) !important;
+}
+.ant-picker-dropdown .ant-picker-header,
+.ant-picker-dropdown .ant-picker-content th {
+  color: var(--green) !important;
+}
+.ant-picker-dropdown .ant-picker-header button {
+  color: var(--muted) !important;
+}
+.ant-picker-dropdown .ant-picker-header button:hover {
+  color: var(--green-container) !important;
+}
+.ant-picker-dropdown .ant-picker-cell {
+  color: var(--ink) !important;
+}
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+  background: var(--green-container) !important;
+  color: #fff !important;
+}
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: var(--green-container) !important;
+}
+.ant-picker-dropdown .ant-picker-cell-in-view:hover .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-hover-start .ant-picker-cell-inner,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-hover-end .ant-picker-cell-inner {
+  background: var(--mint) !important;
+  color: var(--green) !important;
+}
+.ant-picker-dropdown .ant-picker-cell-disabled .ant-picker-cell-inner {
+  color: #aeb5af !important;
+  background: var(--surface-low) !important;
+}
+.ant-picker-dropdown .ant-picker-footer {
+  border-top-color: var(--surface-low) !important;
+}
+.ant-picker-dropdown .ant-picker-today-btn {
+  color: var(--green-container) !important;
 }
 .malayalam {
   margin: 24px 5px 6px;

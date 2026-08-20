@@ -277,7 +277,7 @@ export function AssessmentReportForm({
         <DatePicker
           disabled={!editable}
           format="DD/MM/YYYY"
-          className="h-10! w-[260px]! max-w-full! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!"
+           className="h-10! w-[260px]! max-w-full! rounded-md! border-[#c1c9c0]! bg-white! px-3! [&.ant-picker-disabled]:bg-[#f4f4f0]!"
           value={values[fieldKey] ? dayjs(values[fieldKey]) : undefined}
           onChange={(value) =>
             update(label, index, value ? value.format("YYYY-MM-DD") : "")
@@ -291,14 +291,14 @@ export function AssessmentReportForm({
         value={values[fieldKey] || ""}
         maxLength={maxLength}
         onChange={(event) => update(label, index, event.target.value)}
-        className="min-h-24 w-full resize-y border-0 bg-white p-3 text-sm outline-none disabled:bg-[#f4f4f0]"
+         className="min-h-24 w-full resize-y border-0 bg-white p-3 text-sm outline-none disabled:bg-[#f4f4f0]"
       />
     ) : (
       <input
         disabled={!editable}
         value={values[fieldKey] || ""}
         onChange={(event) => update(label, index, event.target.value)}
-        className="h-10 w-full border-0 bg-white px-3 text-sm outline-none disabled:bg-[#f4f4f0]"
+         className="h-10 w-full border-0 bg-white px-3 text-sm outline-none disabled:bg-[#f4f4f0]"
       />
     );
   };
@@ -325,7 +325,9 @@ export function AssessmentReportForm({
               <div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">
                 {label}
               </div>
-              <div>{input(label, index)}</div>
+              <div className={editable ? "bg-white" : "bg-[#f4f4f0]"}>
+                {input(label, index)}
+              </div>
             </div>
           );
         })}
@@ -345,14 +347,16 @@ export function AssessmentReportForm({
               <div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">
                 {label}
               </div>
-              <div>{input(fullLabel, rowIndex + 22)}</div>
+              <div className={editable ? "bg-white" : "bg-[#f4f4f0]"}>
+                {input(fullLabel, rowIndex + 22)}
+              </div>
             </div>
           );
         })}
       </div>
-      <div className="grid overflow-hidden rounded-md border border-[#c1c9c0] bg-white xl:grid-cols-2">
+       <div className="grid items-start overflow-hidden rounded-md border border-[#c1c9c0] bg-[#f4f4f0] xl:grid-cols-2">
         {[
-          ["Mathematics", 13, false],
+           ["Mathematics", 13, true],
           ["Family History (if any)", 14, true],
           ["Presented Problem", 15, true],
           ["Identified Problem", 16, true],
@@ -361,15 +365,19 @@ export function AssessmentReportForm({
           ["Name & Signature", 19, false],
           ["Date", 20, false],
         ].map(([label, index, textarea]) => (
-          <label
-            key={String(label)}
-            className="border-b border-[#c1c9c0] text-sm text-[#144229] odd:xl:border-r"
-          >
+           <label
+             key={String(label)}
+             className={`border-b border-[#c1c9c0] text-sm text-[#144229] odd:xl:border-r ${
+               editable ? "bg-white" : "bg-[#f4f4f0]"
+             } ${
+               label === "Name & Signature" ? "[&>input]:h-16!" : ""
+             }`}
+           >
             <span className="block border-b border-[#c1c9c0] bg-white p-3 font-medium">
               {label}
             </span>
             {label === "Date" ? (
-              <div className="bg-white p-3 disabled:bg-[#f4f4f0]">
+               <div className="bg-[#f4f4f0] p-3 disabled:bg-[#f4f4f0]">
                 {input(String(label), Number(index), false, true)}
               </div>
             ) : (

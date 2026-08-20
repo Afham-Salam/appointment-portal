@@ -86,7 +86,7 @@ export default function Sidebar({
       }`}
       aria-label="Main navigation"
     >
-      <div className="mb-8 flex justify-center px-2">
+      <div className="mb-8 flex justify-center items-center px-2 gap-2">
         <Image
           src="/logo.webp"
           alt="Treasure Counseling Center"
@@ -95,6 +95,8 @@ export default function Sidebar({
           className="h-14 w-14 object-contain"
           priority
         />
+        <p className="bg-linear-to-b from-[#f1d28b] via-[#a86d22] to-[#6f3f12] bg-clip-text font-serif text-[18px] font-semibold uppercase leading-none tracking-[0.14em] text-transparent drop-shadow-[0_1px_1px_rgba(93,53,13,0.3)] sm:text-[22px]">Treasure</p>
+
       </div>
 
       <button
