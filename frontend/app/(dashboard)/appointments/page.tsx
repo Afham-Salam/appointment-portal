@@ -63,10 +63,7 @@ export type Appointment = {
   status: Status;
   createdAt: string;
   clientId: string; // new — links to the client record
-<<<<<<< HEAD
-=======
-   scheduledDate?: string;
->>>>>>> a6fd5402b2281bd4e2a8aef604b81179456b7585
+  scheduledDate?: string;
 };
 
 export function ClientDetails({
@@ -286,7 +283,6 @@ export function ClientDetails({
                 <FiDownload aria-hidden="true" />
                 Report
               </button>
-              <span className="status accepted">Accepted</span>
             </div>
           </div>
 
@@ -888,11 +884,7 @@ export default function AppointmentsPage() {
     window.addEventListener("appointment-created", fetchAppointments);
     return () =>
       window.removeEventListener("appointment-created", fetchAppointments);
-<<<<<<< HEAD
-  });
-=======
-  },[]);
->>>>>>> a6fd5402b2281bd4e2a8aef604b81179456b7585
+  }, []);
 
   const [searchInput, setSearchInput] = useState("");
   useEffect(() => {

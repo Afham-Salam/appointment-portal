@@ -261,6 +261,15 @@ export function AssessmentReportForm({
     "Inversion",
     "Comprehension",
   ];
+  const writingRows = [
+    "Transposition",
+    "Reversal",
+    "Omissions",
+    "Substitutions",
+    "Inversion",
+    "Self-correction",
+    "Insertion",
+  ];
   const key = (label: string, index: number) => labelToKey(label, index);
   const update = (label: string, index: number, value: string) =>
     onChange?.({ ...values, [key(label, index)]: value });
@@ -332,11 +341,11 @@ export function AssessmentReportForm({
           );
         })}
       </div>
-      <div className="overflow-hidden rounded-md border border-[#c1c9c0] bg-white">
-        <div className="grid grid-cols-1 bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid-cols-2">
-          <div className="p-3 xl:border-r xl:border-[#c1c9c0]">Writing</div>
-          <div className="hidden p-3 xl:block">Score</div>
-        </div>
+       <div className="overflow-hidden rounded-md border border-[#c1c9c0] bg-white">
+         <div className="grid grid-cols-1 bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid-cols-2">
+           <div className="p-3 xl:border-r xl:border-[#c1c9c0]">General Reading</div>
+           <div className="hidden p-3 xl:block">Score</div>
+         </div>
         {readingRows.map((label, rowIndex) => {
           const fullLabel = `General Reading - ${label}`;
           return (
@@ -352,8 +361,41 @@ export function AssessmentReportForm({
               </div>
             </div>
           );
-        })}
-      </div>
+         })}
+       </div>
+       <div className="grid grid-cols-2 overflow-hidden rounded-md border border-[#c1c9c0] bg-white text-sm text-[#144229]">
+         <div className="flex border-r border-[#c1c9c0]">
+           <div className="w-10 shrink-0 border-r border-[#c1c9c0] p-3">13</div>
+           <div className="p-3 font-medium">Writing</div>
+         </div>
+         <div className={editable ? "bg-white" : "bg-[#f4f4f0]"}>
+           {input("Writing", 30)}
+         </div>
+       </div>
+       <div className="overflow-hidden rounded-md border border-[#c1c9c0] bg-white">
+         <div className="grid grid-cols-1 bg-[#f4f4f0] text-xs font-bold text-[#144229] xl:grid-cols-2">
+           <div className="p-3 xl:border-r xl:border-[#c1c9c0]">
+             Writing (Check notebook writing for the last 6 months. Select 6 pages randomly)
+           </div>
+           <div className="hidden p-3 xl:block">Score</div>
+         </div>
+         {writingRows.map((label, rowIndex) => {
+           const fullLabel = `Writing - ${label}`;
+           return (
+             <div
+               key={`writing-${label}`}
+               className="grid grid-cols-1 border-t border-[#c1c9c0] text-sm text-[#144229] xl:grid-cols-2"
+             >
+               <div className="border-b border-[#c1c9c0] bg-white p-3 font-medium xl:border-r xl:border-b-0 xl:font-normal">
+                 {label}
+               </div>
+               <div className={editable ? "bg-white" : "bg-[#f4f4f0]"}>
+                 {input(fullLabel, rowIndex + 31)}
+               </div>
+             </div>
+           );
+         })}
+       </div>
        <div className="grid items-start overflow-hidden rounded-md border border-[#c1c9c0] bg-[#f4f4f0] xl:grid-cols-2">
         {[
            ["Mathematics", 13, true],
@@ -377,7 +419,9 @@ export function AssessmentReportForm({
               {label}
             </span>
             {label === "Date" ? (
-               <div className="bg-[#f4f4f0] p-3 disabled:bg-[#f4f4f0]">
+               <div
+                 className={`${editable ? "bg-white" : "bg-[#f4f4f0]"} p-3`}
+               >
                 {input(String(label), Number(index), false, true)}
               </div>
             ) : (

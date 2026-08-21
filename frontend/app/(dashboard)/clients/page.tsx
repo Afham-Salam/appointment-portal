@@ -4,11 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DataTable, type Column } from "@/components/DataTable";
 import { FilterHeader } from "@/components/FilterHeader";
-<<<<<<< HEAD
 import type { Dayjs } from "dayjs";
-=======
-import dayjs, { type Dayjs } from "dayjs";
->>>>>>> a6fd5402b2281bd4e2a8aef604b81179456b7585
 import { getApprovedClients } from "@/lib/actions/appointments";
 import { FiDownload } from "react-icons/fi";
 import ReportDownloadModal from "@/components/ReportDownloadModal";
@@ -39,13 +35,9 @@ const [page, setPage] = useState(1);
 const [total, setTotal] = useState(0);
 const pageSize = 10;
   const [selectedType, setSelectedType] = useState("all");
-<<<<<<< HEAD
   const [dateRange, setDateRange] = useState<
     [Dayjs | null, Dayjs | null] | null
   >(null);
-=======
- const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>([dayjs().startOf("day"), dayjs().endOf("day")]);
->>>>>>> a6fd5402b2281bd4e2a8aef604b81179456b7585
   const [reportClient, setReportClient] = useState<ClientRow | null>(null);
 
   const openReportModal = (client: ClientRow) => {
@@ -167,16 +159,15 @@ useEffect(() => {
       />
 
       <section className="content-card">
-<<<<<<< HEAD
         <DataTable
           columns={columns}
           data={clients}
           loading={loading}
-          pageSize={10}
-        />
-=======
-    <DataTable columns={columns} data={clients} loading={loading} pageSize={pageSize} total={total} currentPage={page} onPageChange={setPage} />
->>>>>>> a6fd5402b2281bd4e2a8aef604b81179456b7585
+           pageSize={pageSize}
+           total={total}
+           currentPage={page}
+           onPageChange={setPage}
+         />
       </section>
 
       <ReportDownloadModal
