@@ -63,6 +63,10 @@ export type Appointment = {
   status: Status;
   createdAt: string;
   clientId: string; // new — links to the client record
+<<<<<<< HEAD
+=======
+   scheduledDate?: string;
+>>>>>>> a6fd5402b2281bd4e2a8aef604b81179456b7585
 };
 
 export function ClientDetails({
@@ -884,7 +888,11 @@ export default function AppointmentsPage() {
     window.addEventListener("appointment-created", fetchAppointments);
     return () =>
       window.removeEventListener("appointment-created", fetchAppointments);
+<<<<<<< HEAD
   });
+=======
+  },[]);
+>>>>>>> a6fd5402b2281bd4e2a8aef604b81179456b7585
 
   const [searchInput, setSearchInput] = useState("");
   useEffect(() => {
@@ -1075,6 +1083,7 @@ export default function AppointmentsPage() {
                 countryCode: appointmentToEdit.countryCode,
                 phone: appointmentToEdit.phone,
                 clientType: appointmentToEdit.clientType,
+                 scheduledDate: appointmentToEdit.scheduledDate, 
               }
             : undefined
         }
