@@ -628,7 +628,7 @@ export function RepeatSection({
                           <textarea
                             className="min-h-18.5! w-full! resize-y! border-0! p-3!"
                             value={row.remediation_given}
-                            maxLength={600}
+                            // maxLength={600}
                             onChange={(e) =>
                               updateRow(
                                 index,
@@ -637,11 +637,11 @@ export function RepeatSection({
                               )
                             }
                           />
-                          {row.remediation_given.length >= 600 && (
+                          {/* {row.remediation_given.length >= 600 && (
                             <span className="bg-white px-3 pb-2 text-xs font-medium text-[#c9252d]">
                               Maximum 600 characters reached.
                             </span>
-                          )}
+                          )} */}
                         </label>
                         <label className="flex min-w-0 flex-col gap-2">
                           <span className="bg-[#f4f4f0] px-2 py-2 font-bold text-[#144229]">
@@ -650,7 +650,7 @@ export function RepeatSection({
                           <textarea
                             className="min-h-18.5! w-full! resize-y! border-0! p-3!"
                             value={row.improvement_seen}
-                            maxLength={600}
+                            // maxLength={600}
                             onChange={(e) =>
                               updateRow(
                                 index,
@@ -659,11 +659,11 @@ export function RepeatSection({
                               )
                             }
                           />
-                          {row.improvement_seen.length >= 600 && (
+                          {/* {row.improvement_seen.length >= 600 && (
                             <span className="bg-white px-3 pb-2 text-xs font-medium text-[#c9252d]">
                               Maximum 600 characters reached.
                             </span>
-                          )}
+                          )} */}
                         </label>
                       </div>
                     </div>
