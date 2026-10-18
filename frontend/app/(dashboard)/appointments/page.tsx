@@ -358,16 +358,16 @@ export function ClientDetails({
                   <span className="font-medium">Current problem</span>
                   <textarea
                     value={currentProblem}
-                    maxLength={600}
+                    // maxLength={600}
                     onChange={(e) => setCurrentProblem(e.target.value)}
                     disabled={!isEditing("Application Form")}
                     className="min-h-24 w-full rounded-md border border-[#c1c9c0] bg-white p-3 text-sm text-[#1a1c1a] outline-none transition focus:border-[#2D5A3F] focus:ring-2 focus:ring-[#2D5A3F]/15 disabled:bg-[#f4f4f0] disabled:text-[#414942]"
                   />
-                  {currentProblem.length >= 600 && (
+                  {/* {currentProblem.length >= 600 && (
                     <span className="text-xs font-medium text-[#c9252d]">
                       Maximum 600 characters reached.
                     </span>
-                  )}
+                  )} */}
                 </label>
               </div>
             </FormSection>
