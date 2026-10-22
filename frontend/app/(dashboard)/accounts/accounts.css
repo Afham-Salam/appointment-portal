@@ -1,0 +1,145 @@
+.accounts-page .page-heading .ant-btn {
+  border-radius: 6px;
+}
+
+.accounts-page,
+.accounts-page .ant-tabs-content-holder,
+.accounts-page .ant-tabs-tabpane,
+.accounts-page .ant-card,
+.accounts-page .ant-card-body {
+  min-width: 0;
+}
+
+.accounts-page .ant-card-head-title {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.accounts-page .ant-statistic-content {
+  overflow-wrap: anywhere;
+}
+
+.accounts-page canvas,
+.accounts-page svg {
+  max-width: 100%;
+}
+
+.accounts-toolbar > *,
+.accounts-form .ant-form-item,
+.accounts-form .ant-form-item-control {
+  min-width: 0;
+}
+
+.accounts-details .ant-descriptions-item-content {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 639px) {
+  .accounts-page {
+    max-width: 100%;
+  }
+
+  .accounts-page .page-heading > div,
+  .accounts-page .page-heading > .ant-space {
+    width: 100%;
+  }
+
+  .accounts-page .page-heading > .ant-space {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .accounts-page .page-heading .ant-space-item .ant-btn {
+    width: 100%;
+    padding-inline: 8px;
+  }
+
+  .accounts-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 12px;
+  }
+
+  .accounts-toolbar > div:first-child {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .accounts-toolbar > div:first-child button {
+    justify-content: center;
+    min-height: 36px;
+  }
+
+  .accounts-toolbar .accounts-date-range {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 38px;
+  }
+
+  .accounts-toolbar .ant-segmented-group {
+    display: flex;
+  }
+
+  .accounts-toolbar .ant-segmented-item {
+    flex: 1;
+  }
+
+  .accounts-toolbar .ant-segmented-item-label {
+    justify-content: center;
+  }
+
+  .accounts-page .ant-card-body {
+    padding: 16px;
+  }
+
+  .accounts-page .ant-card-head {
+    padding-inline: 16px;
+  }
+
+  .accounts-page .ant-card-body > .flex.flex-wrap.gap-3 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 16px;
+  }
+
+  .accounts-page .ant-card-body > .flex.flex-wrap.gap-3 > * {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  .accounts-page .ant-card-body > .flex.flex-wrap.gap-3 > .ant-input-search {
+    grid-column: 1 / -1;
+  }
+
+  /* Keep both calendars accessible inside narrow mobile viewports. */
+  .accounts-date-popup .ant-picker-panels {
+    flex-direction: column;
+  }
+
+  .accounts-date-popup .ant-picker-panel-container {
+    max-width: calc(100vw - 16px);
+    max-height: 70dvh;
+    overflow: auto;
+  }
+
+  .accounts-form {
+    top: 20px;
+    margin-inline: auto;
+    padding-bottom: 20px;
+  }
+
+  .accounts-details .ant-drawer-body {
+    padding: 16px;
+  }
+
+  .accounts-details .ant-descriptions-item-label {
+    width: 100px;
+    padding: 10px !important;
+  }
+
+  .accounts-details .ant-descriptions-item-content {
+    padding: 10px !important;
+  }
+}

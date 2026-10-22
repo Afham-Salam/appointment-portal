@@ -13,6 +13,8 @@ import {
   FiSettings,
   FiUser,
   FiUsers,
+  FiDollarSign,
+  FiFileText,
 } from "react-icons/fi";
 import { logout } from "@/lib/actions/auth";
 import AddAppointmentModal, {
@@ -31,6 +33,8 @@ const navigation:NavItem[] = [
   { href: "/dashboard", icon: FiGrid, label: "Dashboard", roles: ["admin", "staff"] },
   { href: "/appointments", icon: FiCalendar, label: "Appointments", roles: ["admin", "staff"] },
   { href: "/clients", icon: FiUsers, label: "Clients List", roles: ["admin"] },
+  { href: "/accounts", icon: FiDollarSign, label: "Accounts", roles: ["admin"] },
+  { href: "/letters", icon: FiFileText, label: "Letters", roles: ["admin"] },
   // { href: "/notification", icon: FiBell, label: "Notifications", roles: ["admin"] },
   // { href: "/profile", icon: FiUser, label: "My profile", roles: ["admin"] },
   { href: "/settings", icon: FiSettings, label: "Settings", roles: ["admin"] },

@@ -1,0 +1,81 @@
+.letter-fields label { min-width: 0; }
+.letter-actions .ant-btn,
+.letter-actions .ant-segmented,
+.letter-actions .ant-segmented-item,
+.letter-actions .ant-segmented-thumb { border-radius: 6px; }
+.letter-fields label > span { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 600; color: #53634e; }
+.letter-editor { overflow: hidden; border: 1px solid #e0e7dc; border-radius: 16px; background: white; }
+.letter-editor-history { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; color: #2d5a3f; }
+.letter-editor-heading { display: flex; align-items: center; gap: 12px; }
+.letter-editor-heading-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; background: #edf3e9; font-size: 18px; }
+.letter-editor-heading h2 { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.5; }
+.letter-editor-heading p { margin: 2px 0 0; font-size: 11px; color: #788471; }
+.letter-editor-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; min-width: 0; }
+.letter-editor-controls .letter-fields { width: auto; max-width: none; }
+.letter-editor-controls .letter-fields label { display: flex; align-items: center; gap: 10px; }
+.letter-editor-controls .letter-fields label > span { margin: 0; font-size: 12px; color: #69775f; }
+.letter-editor-controls .ant-picker { width: 160px; background: #f8faf6; }
+.letter-editor-undo { display: flex; gap: 2px; padding-left: 12px; border-left: 1px solid #e0e7dc; }
+.letter-editor-undo .ant-btn { color: #426047; font-size: 12px; }
+.letter-editor .ql-toolbar.ql-snow { border-inline: 0; border-color: #e0e7dc; background: #f6f8f2; line-height: 2; }
+.letter-editor .ql-container.ql-snow { border: 0; font-family: inherit; font-size: 15px; }
+.letter-editor .ql-editor { min-height: 300px; padding: 24px; line-height: 1.7; }
+.letter-preview-scroll { max-width: 100%; overflow-x: auto; padding: 20px; border-radius: 16px; background: #e9ece5; }
+.letter-paper { box-sizing: border-box; display: flex; flex-direction: column; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 6mm 10mm 10mm; background: white; color: #26392e; box-shadow: 0 6px 30px #203c2a14; font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.65; }
+.letterhead { display: flex; justify-content: space-between; gap: 24px; align-items: center; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 2px solid #a17e3f; break-inside: avoid; }
+.letterhead-brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.letterhead-brand > div { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.letterhead-logo { display: block; width: 66px; height: 76px; flex-shrink: 0; object-fit: contain; }
+.letterhead h2 { margin: 0; color: #866126; font-family: Georgia, serif; font-size: 29px; letter-spacing: .15em; line-height: 1.2; }
+.letterhead strong { display: block; color: #174c35; font-size: 10px; letter-spacing: .06em; line-height: 1.4; }
+.letterhead p { margin: 0; color: #345243; font-size: 10px; font-weight: 700; line-height: 1.45; }
+.letterhead-contact { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 4px; flex-shrink: 0; text-align: right; font-size: 11px; line-height: 1.4; }
+.letterhead-contact span { margin-bottom: 2px; font-size: 9px; font-weight: 700; letter-spacing: .1em; color: #866126; }
+.letterhead-contact a { display: block; color: #254f39; text-decoration: none; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+.letter-metadata { display: flex; justify-content: flex-end; gap: 20px; font-size: 10pt; overflow-wrap: anywhere; }
+.letter-body.ql-editor { overflow: visible; padding: 24px 0; min-height: 130mm; font-size: 11pt; line-height: 1.7; overflow-wrap: anywhere; white-space: pre-wrap; }
+.letter-body p { margin-bottom: 8px; }
+.letter-body a { color: #2d5a3f; text-decoration: underline; }
+.letter-body.ql-editor ol { list-style-type: decimal; padding-left: 1.5em; }
+.letter-body.ql-editor ul { list-style-type: disc; padding-left: 1.5em; }
+.letter-body.ql-editor li { display: list-item; padding-left: .25em; list-style-type: inherit; }
+/* Quill's semantic HTML uses native lists, not the editor's data-list markers. */
+.letter-body.ql-editor li:not([data-list])::before { content: none; }
+.letter-body.ql-editor ul ul { list-style-type: circle; }
+.letter-body.ql-editor ul ul ul { list-style-type: square; }
+.letter-body.ql-editor ol ol { list-style-type: lower-alpha; }
+.letter-body.ql-editor ol ol ol { list-style-type: lower-roman; }
+.letter-body h1 { font-size: 2em; }.letter-body h2 { font-size: 1.5em; }.letter-body h3 { font-size: 1.17em; }
+.letter-footer { margin-top: auto; padding-top: 28px; font-size: 8px; color: #7a846e; text-align: center; }
+.letter-footer span { margin-inline: 8px; color: #a17e3f; }
+@media(max-width: 639px) {
+  .letter-editor-history { padding: 14px 16px; gap: 14px; }
+  .letter-editor-controls { width: 100%; justify-content: space-between; gap: 10px; }
+  .letter-editor-controls .ant-picker { width: 145px; }
+  .letter-editor-undo { padding-left: 0; border-left: 0; }
+  .letter-editor-undo .ant-btn { padding-inline: 6px; }
+  .letter-editor .ql-editor { padding: 16px; }
+  .letter-preview-scroll { padding: 12px; }
+  .letters-page section > .flex { flex-wrap: wrap; gap: 8px; }
+}
+.letter-pages { display: flex; flex-direction: column; gap: 24px; }
+.letter-pages .letter-paper { height: 297mm; min-height: 297mm; flex-shrink: 0; }
+.letter-pages .letter-paper { padding-bottom: 5mm; }
+.letter-pages .letterhead, .letter-pages .letter-metadata, .letter-pages .letter-footer { flex-shrink: 0; }
+.letter-pages .letter-body { flex: 1; min-height: 0; overflow: hidden; padding: 16px 0 4px; }
+.letter-pages .letter-footer { margin-top: 0; padding-top: 4px; }
+.letter-page-number { margin-top: 4px; font-size: 8px; }
+.letter-measurement { position: fixed; left: -20000px; top: 0; visibility: hidden; pointer-events: none; }
+.letter-measurement .letter-footer::after { content: 'Page 1 of 1'; display: block; margin-top: 4px; font-size: 8px; }
+@page { size: A4; margin: 0; }
+@media print {
+  html, body.letter-print-document { margin: 0 !important; padding: 0 !important; background: white !important; }
+  .letter-print-document .letter-pages { display: block; }
+  .letter-print-document .letter-measurement { display: none; }
+  .letter-print-document .letter-paper { display: flex; width: 210mm; height: 297mm; min-height: 297mm; margin: 0; padding: 6mm 10mm 5mm; box-shadow: none; break-after: page; }
+  .letter-print-document .letter-paper:last-child { break-after: auto; }
+  .letter-print-document .letter-body { min-height: 0; }
+  .letter-print-document .letter-body p { orphans: 3; widows: 3; }
+  .letter-print-document .letter-footer { margin-top: 0; }
+  .letter-print-document * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

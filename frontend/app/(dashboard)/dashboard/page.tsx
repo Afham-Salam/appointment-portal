@@ -15,6 +15,7 @@ import type { IconType } from "react-icons";
 import { DataTable, type Column } from "@/components/DataTable";
 import { getDashboardStats, getLatestAppointments } from "@/lib/actions/appointments";
 import { useRole } from "@/components/RoleContext";
+import DashboardStatCard from "@/components/DashboardStatCard";
 
 type StatCard = {
   label: string;
@@ -45,10 +46,10 @@ export default function DashboardPage() {
 ]);
 
       setStats([
+        { label: "Today's Appointments", value: statsData.todayAppointments, icon: FiClock },
         { label: "Total Appointments", value: statsData.totalAppointments, icon: FiCalendar },
         { label: "Pending Appointments", value: statsData.pendingAppointments, icon: FiEdit3 },
         { label: "Accepted Appointments", value: statsData.acceptedAppointments, icon: FiCheckCircle },
-        { label: "Today's Appointments", value: statsData.todayAppointments, icon: FiClock },
         { label: "Total Clients", value: statsData.totalClients, icon: FiUsers },
         { label: "Student Clients", value: statsData.studentClients, icon: FiUserCheck },
         { label: "Regular Clients", value: statsData.normalClients, icon: FiUser },
@@ -100,7 +101,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="page-heading flex items-center justify-between">
+      <div className="page-heading flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1>Dashboard</h1>
           <p>Here is what is happening with your practice today.</p>
@@ -113,29 +114,14 @@ export default function DashboardPage() {
           ? Array.from({ length: 7 }).map((_, i) => (
               <article
                 key={i}
-                className="animate-pulse rounded-md border border-[#c1c9c0] bg-white p-5 shadow-[0_5px_20px_rgba(23,32,42,0.03)]"
+                className="min-h-44 animate-pulse rounded-2xl border border-[#e0e7dc] bg-white p-5 shadow-[0_5px_20px_rgba(23,32,42,0.03)]"
               >
                 <div className="mb-4 h-5 w-32 rounded bg-gray-100" />
                 <div className="h-9 w-16 rounded bg-gray-100" />
               </article>
             ))
-          : stats.map(({ label, value, icon: Icon }) => (
-              <article
-                key={label}
-                className="rounded-md border border-[#c1c9c0] bg-white p-5 shadow-[0_5px_20px_rgba(23,32,42,0.03)]"
-              >
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <span className="text-sm font-medium text-[#414942]">
-                    {label}
-                  </span>
-                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#2D5A3F] text-[#ffffff]">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                </div>
-                <p className="m-0 text-3xl font-semibold text-[#1a1c1a]">
-                  {value}
-                </p>
-              </article>
+          : stats.map((stat) => (
+              <DashboardStatCard key={stat.label} {...stat} highlighted={stat.label === "Today's Appointments"} />
             ))}
       </div>
 
