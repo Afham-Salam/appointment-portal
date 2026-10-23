@@ -1,6 +1,6 @@
 "use client";
 import { Button, Popconfirm, Space, Tag } from "antd";
-import { DataTable, type Column } from "@/components/DataTable";
+import { DataTable, type Column } from "@/components/ui/DataTable";
 import { money } from "@/lib/accounts/formatters";
 import type { Transaction } from "@/lib/accounts/types";
 

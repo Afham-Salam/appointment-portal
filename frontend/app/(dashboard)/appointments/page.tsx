@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { DataTable, type Column } from "@/components/DataTable";
-import { FilterHeader } from "@/components/FilterHeader";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { FilterHeader } from "@/components/ui/FilterHeader";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { Checkbox, DatePicker } from "antd";
@@ -19,10 +19,10 @@ import {
 } from "react-icons/fi";
 import AddAppointmentModal, {
   type AppointmentFormValues,
-} from "@/components/AddAppointmentModal";
-import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
-import ReportDownloadModal from "@/components/ReportDownloadModal";
-import { downloadApplicationPdf } from "@/components/ApplicationPdf";
+} from "@/components/appointment/AddAppointmentModal";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
+import { downloadApplicationPdf } from "@/components/clientDetails/ApplicationPdf";
 import {
   getAppointments,
   createAppointment,
@@ -38,7 +38,7 @@ import {
   TextGrid,
   AssessmentReportForm,
   type RemediationRow,
-} from "@/components/ClientDetailSections";
+} from "@/components/clientDetails/ClientDetailSections";
 import {
   saveClientInfo,
   saveApplicationForm,
@@ -47,7 +47,7 @@ import {
   saveAssessmentReport,
   saveMentalStatusExam,
 } from "@/lib/actions/appointments";
-import { useRole } from "@/components/RoleContext";
+import { useRole } from "@/components/context/RoleContext";
 
 type Status = "Pending" | "Accepted" | "Rejected";
 export type ClientType = "Student" | "Client";
@@ -1011,7 +1011,7 @@ export default function AppointmentsPage() {
 
           {/* Edit & Delete — both roles */}
           <button
-            className="border-[#333936]! bg-[#333936]! flex items-center justify-center text-white! w-[34px] px-0!"
+            className="border-[#333936]! bg-[#333936]! flex items-center justify-center text-white! w-8.5 px-0!"
             title="Edit appointment"
             aria-label={`Edit appointment for ${row.name}`}
             onClick={() => setAppointmentToEdit(row)}
@@ -1019,7 +1019,7 @@ export default function AppointmentsPage() {
             <FiEdit2 />
           </button>
           <button
-            className="border-[#c9252d]! bg-[#c9252d]! flex items-center justify-center text-white! w-[34px] px-0!"
+            className="border-[#c9252d]! bg-[#c9252d]! flex items-center justify-center text-white! w-8.5 px-0!"
             title="Delete appointment"
             aria-label={`Delete appointment for ${row.name}`}
             onClick={() => setAppointmentToDelete(row)}

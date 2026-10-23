@@ -4,7 +4,7 @@ import { Button, Checkbox, ConfigProvider, Modal } from "antd";
 import {
   downloadApplicationPdf,
   type ApplicationPdfPage,
-} from "@/components/ApplicationPdf";
+} from "@/components/clientDetails/ApplicationPdf";
 import { useState, useEffect } from "react";
 import { getClientDetails  } from "@/lib/actions/appointments";
 

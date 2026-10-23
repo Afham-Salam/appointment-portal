@@ -1,7 +1,7 @@
 // app/(dashboard)/layout.tsx
 import { getCurrentUser } from "@/lib/actions/user";
 import { redirect } from "next/navigation";
-import DashboardShell from "@/components/DashboardShell";
+import DashboardShell from "@/components/dashboard/DashboardShell";
 
 export default async function DashboardLayout({
   children,

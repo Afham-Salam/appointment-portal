@@ -12,10 +12,10 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import type { IconType } from "react-icons";
-import { DataTable, type Column } from "@/components/DataTable";
+import { DataTable, type Column } from "@/components/ui/DataTable";
 import { getDashboardStats, getLatestAppointments } from "@/lib/actions/appointments";
-import { useRole } from "@/components/RoleContext";
-import DashboardStatCard from "@/components/DashboardStatCard";
+import { useRole } from "@/components/context/RoleContext";
+import DashboardStatCard from "@/components/dashboard/DashboardStatCard";
 
 type StatCard = {
   label: string;

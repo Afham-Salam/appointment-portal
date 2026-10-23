@@ -1,13 +1,13 @@
 import type {
   ApplicationPdfData,
   ApplicationPdfPage,
-} from "@/components/ApplicationPdf";
-import { StudentIntakePdfPage } from "./report-pages/StudentIntakePdfPage";
-import { ParentsDetailsPdfPage } from "./report-pages/ParentsDetailsPdfPage";
-import { AssessmentReportPdfPage } from "./report-pages/AssessmentReportPdfPage";
-import { RemediationPdfPage } from "./report-pages/RemediationPdfPage";
-import { MentalStatusPdfPage } from "./report-pages/MentalStatusPdfPage";
-import { PlansPdfPage } from "./report-pages/PlansPdfPage";
+} from "@/components/clientDetails/ApplicationPdf";
+import { StudentIntakePdfPage } from "../report-pages/StudentIntakePdfPage";
+import { ParentsDetailsPdfPage } from "../report-pages/ParentsDetailsPdfPage";
+import { AssessmentReportPdfPage } from "../report-pages/AssessmentReportPdfPage";
+import { RemediationPdfPage } from "../report-pages/RemediationPdfPage";
+import { MentalStatusPdfPage } from "../report-pages/MentalStatusPdfPage";
+import { PlansPdfPage } from "../report-pages/PlansPdfPage";
 
 export {
   StudentIntakePdfPage,

@@ -1,4 +1,4 @@
-import StorageManager from "@/components/StorageManager";
+import StorageManager from "@/components/settings/StorageManager";
 
 export default function SettingsPage() {
   return (

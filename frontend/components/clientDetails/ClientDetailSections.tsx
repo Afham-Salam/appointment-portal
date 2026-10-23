@@ -15,7 +15,7 @@ import {
   updateRemediationEntry,
   deleteRemediationEntry,
 } from "@/lib/actions/appointments";
-import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 /* ─── Field ─── */
 export function Field({
