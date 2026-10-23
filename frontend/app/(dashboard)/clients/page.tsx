@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DataTable, type Column } from "@/components/DataTable";
-import { FilterHeader } from "@/components/FilterHeader";
+import { DataTable, type Column } from "@/components/ui/DataTable";
+import { FilterHeader } from "@/components/ui/FilterHeader";
 import type { Dayjs } from "dayjs";
 import { getApprovedClients } from "@/lib/actions/appointments";
 import { FiDownload } from "react-icons/fi";
-import ReportDownloadModal from "@/components/ReportDownloadModal";
+import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
 
 type ClientRow = {
   id: string;

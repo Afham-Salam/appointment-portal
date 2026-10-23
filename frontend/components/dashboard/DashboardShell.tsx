@@ -3,11 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { FiMenu } from "react-icons/fi";
-import Sidebar from "@/components/Sidebar";
-// import NotificationMenu from "@/components/NotificationMenu";
-import ProfileMenu from "@/components/ProfileMenu";
-import { NotificationsProvider } from "@/components/NotificationsProvider";
-import { RoleProvider } from "./RoleContext";
+import Sidebar from "@/components/ui/Sidebar";
+import ProfileMenu from "@/components/ui/ProfileMenu";
+import { RoleProvider } from "@/components/context/RoleContext";
 
 type Props = {
 children: React.ReactNode;
@@ -43,7 +41,6 @@ export default function DashboardShell({ children, role,email }: Props) {
 
   return (
      <RoleProvider role={role}>
-    <NotificationsProvider>
       <div className="flex h-dvh overflow-hidden bg-[#faf9f6]">
         <Sidebar
           role={role}              // ← add this
@@ -79,7 +76,6 @@ export default function DashboardShell({ children, role,email }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* <NotificationMenu /> */}
               <ProfileMenu email={email} role={role} />
             </div>
           </header>
@@ -97,7 +93,6 @@ export default function DashboardShell({ children, role,email }: Props) {
           </main>
         </div>
       </div>
-    </NotificationsProvider>
     </RoleProvider>
   );
 }

@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  FiBell,
   FiCalendar,
   FiGrid,
   FiLogOut,
@@ -19,7 +18,7 @@ import {
 import { logout } from "@/lib/actions/auth";
 import AddAppointmentModal, {
   type AppointmentFormValues,
-} from "@/components/AddAppointmentModal";
+} from "@/components/appointment/AddAppointmentModal";
 import { createAppointment } from "@/lib/actions/appointments";
 
 type UserRole = "admin" | "staff";
@@ -35,7 +34,6 @@ const navigation:NavItem[] = [
   { href: "/clients", icon: FiUsers, label: "Clients List", roles: ["admin"] },
   { href: "/accounts", icon: FiDollarSign, label: "Accounts", roles: ["admin"] },
   { href: "/letters", icon: FiFileText, label: "Letters", roles: ["admin"] },
-  // { href: "/notification", icon: FiBell, label: "Notifications", roles: ["admin"] },
   // { href: "/profile", icon: FiUser, label: "My profile", roles: ["admin"] },
   { href: "/settings", icon: FiSettings, label: "Settings", roles: ["admin"] },
 ] as const;

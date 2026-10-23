@@ -12,7 +12,7 @@ import {
   Circle,
   pdf,
 } from "@react-pdf/renderer";
-import { ReportPdfPage } from "@/components/ReportPdfPages";
+import { ReportPdfPage } from "@/components/clientDetails/ReportPdfPages";
 
 const GREEN = "#064C2E";
 const GOLD = "#C99532";

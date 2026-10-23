@@ -1,6 +1,6 @@
 import { Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
-import type { ApplicationPdfData } from "@/components/ApplicationPdf";
+import type { ApplicationPdfData } from "@/components/clientDetails/ApplicationPdf";
 
 type PageProps = {
   data: ApplicationPdfData;
