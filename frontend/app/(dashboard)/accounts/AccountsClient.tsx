@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState,useEffect } from "react";
 import "./accounts.css";
 import dynamic from "next/dynamic";
 import dayjs from "dayjs";
@@ -26,7 +26,13 @@ import TransactionHistoryTable from "@/components/accounts/TransactionHistoryTab
 import TransactionDetailsDrawer from "@/components/accounts/TransactionDetailsDrawer";
 import MonthlyYearlyReport from "@/components/accounts/MonthlyYearlyReport";
 import { categories, paymentMethods } from "@/lib/accounts/constants";
-import { createDemoTransactions, initialAudit } from "@/lib/accounts/demo-data";
+import {
+  getTransactions,
+  createTransaction,
+  updateTransaction,
+  voidTransaction,
+  getTransactionAudit,
+} from "@/lib/actions/finance";
 import { monthlyReport, summarize } from "@/lib/accounts/formatters";
 import { exportFinance } from "@/lib/accounts/export";
 import type {
@@ -56,9 +62,8 @@ const CategoryBreakdownChart = dynamic(
 
 function AccountsContent() {
   const { message } = App.useApp();
-  const [transactions, setTransactions] = useState(() =>
-    createDemoTransactions(dayjs().year()),
-  );
+ const [transactions, setTransactions] = useState<Transaction[]>([]);
+ const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>(() => ({
     mode: "Monthly",
     from: dayjs().startOf("month").format("YYYY-MM-DD"),
@@ -69,13 +74,29 @@ function AccountsContent() {
     transaction?: Transaction;
   } | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const [audit, setAudit] = useState<Record<string, AuditEntry[]>>({});
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [search, setSearch] = useState("");
   const [type, setType] = useState("all");
   const [category, setCategory] = useState("all");
   const [method, setMethod] = useState("all");
   const [status, setStatus] = useState("all");
   const [exporting, setExporting] = useState(false);
+  const fetchTransactions = async () => {
+    const { transactions: data } = await getTransactions();
+    setTransactions(data);
+    setLoading(false);
+  };
+ useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  useEffect(() => {
+    if (detailId) {
+      getTransactionAudit(detailId).then(({ entries }) => {
+        setAuditEntries(entries);
+      });
+    }
+  }, [detailId]);
 
   const rows = useMemo(
     () =>
@@ -126,64 +147,41 @@ function AccountsContent() {
   }));
   const detail = transactions.find((row) => row.id === detailId);
 
-  const recordAudit = (
-    after: Transaction,
-    before: Transaction | null,
-    action: string,
-  ) => {
-    setAudit((current) => ({
-      ...current,
-      [after.id]: [
-        {
-          id: Date.now(),
-          action,
-          actor: "Demo administrator",
-          occurred_at: new Date().toISOString(),
-          before_data: before,
-          after_data: after,
-        },
-        ...(current[after.id] || (before ? [initialAudit(before)] : [])),
-      ],
-    }));
-  };
-  const save = (input: TransactionInput) => {
+   const save = async (input: TransactionInput) => {
     const before = form?.transaction || null;
     const { amount, ...fields } = input;
-    const now = new Date().toISOString();
-    const after: Transaction = {
-      ...fields,
-      amount_paise: Math.round(amount * 100),
-      id: before?.id || crypto.randomUUID(),
-      status: "active",
-      created_at: before?.created_at || now,
-      updated_at: now,
-      created_by: "Demo administrator",
-      version: (before?.version || 0) + 1,
-    };
-    setTransactions((current) =>
-      before
-        ? current.map((row) => (row.id === before.id ? after : row))
-        : [after, ...current],
-    );
-    recordAudit(after, before, before ? "Edited" : "Created");
+
+    if (before) {
+      const result = await updateTransaction(before.id, {
+        ...fields,
+        amount_paise: Math.round(amount * 100),
+      });
+      if (result.error) {
+        message.error(result.error);
+        return;
+      }
+    } else {
+      const result = await createTransaction({
+        ...fields,
+        amount_paise: Math.round(amount * 100),
+      });
+      if (result.error) {
+        message.error(result.error);
+        return;
+      }
+    }
+
     setForm(null);
-    message.success(
-      after.date < period.from || after.date > period.to
-        ? "Saved in demo. Select its payment period to see it."
-        : "Transaction saved in demo.",
-    );
+    fetchTransactions();
+    message.success(before ? "Transaction updated." : "Transaction saved.");
   };
-  const voidRow = async (before: Transaction) => {
-    const after: Transaction = {
-      ...before,
-      status: "void",
-      version: before.version + 1,
-      updated_at: new Date().toISOString(),
-    };
-    setTransactions((current) =>
-      current.map((row) => (row.id === before.id ? after : row)),
-    );
-    recordAudit(after, before, "Voided");
+   const voidRow = async (before: Transaction) => {
+    const result = await voidTransaction(before.id);
+    if (result.error) {
+      message.error(result.error);
+      return;
+    }
+    fetchTransactions();
     message.success("Transaction voided. Totals have been updated.");
   };
   const download = async () => {
@@ -387,13 +385,13 @@ function AccountsContent() {
         />
       )}
       {detail && (
-        <TransactionDetailsDrawer
-          key={detail.id}
-          transaction={detail}
-          entries={audit[detail.id] || [initialAudit(detail)]}
-          onClose={() => setDetailId(null)}
-        />
-      )}
+    <TransactionDetailsDrawer
+      key={detail.id}
+      transaction={detail}
+      entries={auditEntries}
+      onClose={() => setDetailId(null)}
+    />
+  )}
     </div>
   );
 }

@@ -3,9 +3,9 @@ import { useState } from "react";
 import { Alert, DatePicker, Form, Input, InputNumber, Modal, Select } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { categories, paymentMethods } from "@/lib/accounts/constants";
-import { demoClients } from "@/lib/accounts/demo-data";
 import { validateTransaction } from "@/lib/accounts/validation";
 import type { Transaction, TransactionInput, TransactionType } from "@/lib/accounts/types";
+import { searchClientsForDropdown } from "@/lib/actions/finance";
 
 type Fields = Omit<TransactionInput, "date"> & { date: Dayjs };
 export default function TransactionFormModal({ type, transaction, onClose, onSaved }: {
@@ -14,8 +14,21 @@ export default function TransactionFormModal({ type, transaction, onClose, onSav
   const [form] = Form.useForm<Fields>();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const clients = demoClients;
+  const [clients, setClients] = useState<{ id: string; name: string; phone: string }[]>([]);
+  const [searching, setSearching] = useState(false);
   const source = Form.useWatch("source", form);
+
+  const handleClientSearch = async (value: string) => {
+    if (value.length < 2) {
+      setClients([]);
+      return;
+    }
+    setSearching(true);
+    const results = await searchClientsForDropdown(value);
+    setClients(results);
+    setSearching(false);
+  };
+
   const submit = async (values: Fields) => {
     setSaving(true); setError("");
     try {
@@ -36,7 +49,7 @@ export default function TransactionFormModal({ type, transaction, onClose, onSav
         <Form.Item name="amount" label="Amount (₹)" rules={[{ required: true, type: "number", min: 0.01, max: 100000000 }]}><InputNumber min={0.01} max={100000000} precision={2} className="!w-full" /></Form.Item>
       </div>
       {type === "income" && <Form.Item name="source" label="Income source"><Select options={[{ value: "client", label: "Client payment" }, { value: "other", label: "Other income" }]} /></Form.Item>}
-      {type === "income" && source === "client" && <Form.Item name="client_id" label="Link sample client (optional)"><Select showSearch optionFilterProp="label" allowClear placeholder="Search client name" options={[
+      {type === "income" && source === "client" && <Form.Item name="client_id" label="Received from client"><Select showSearch allowClear placeholder="Type 2+ letters to search" filterOption={false} onSearch={handleClientSearch} loading={searching} notFoundContent={searching ? "Searching..." : "Type to search"} options={[
         ...(transaction?.client_id && !clients.some(c => c.id === transaction.client_id) ? [{ value: transaction.client_id, label: transaction.payee }] : []),
         ...clients.map(c => ({ value: c.id, label: `${c.name} · ${c.phone}` })),
       ]} onChange={id => { const client = clients.find(c => c.id === id); if (client) form.setFieldValue("payee", client.name); }} /></Form.Item>}
