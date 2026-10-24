@@ -18,9 +18,15 @@ import {
   FiTrash2,
   FiX,
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import AddAppointmentModal, {
   type AppointmentFormValues,
 } from "@/components/appointment/AddAppointmentModal";
+import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
+import {
+  toNotifyDetails,
+  type AppointmentNotifyDetails,
+} from "@/components/appointment/AppointmentConfirmationPdf";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
 import ClientPaymentModal, {
@@ -878,6 +884,8 @@ export default function AppointmentsPage() {
     useState<Appointment | null>(null);
   const [appointmentToReject, setAppointmentToReject] =
     useState<Appointment | null>(null);
+  const [notifyDetails, setNotifyDetails] =
+    useState<AppointmentNotifyDetails | null>(null);
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [dateRange, setDateRange] = useState<
@@ -984,14 +992,14 @@ export default function AppointmentsPage() {
       title: "Status",
       key: "status",
       render: (row) => (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap">
           <span className={`status ${row.status.toLowerCase()}`}>
             {row.status}
           </span>
           {role === "admin" && row.status === "Pending" && (
             <>
               <button
-                className="cursor-pointer flex items-center justify-center gap-1.5 rounded-md! border-[#4f8d63]! bg-[#b9e3c4]! px-2.5! py-1.5! text-xs! font-semibold text-[#174d2b]!"
+                className="cursor-pointer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md! border-[#4f8d63]! bg-[#b9e3c4]! px-2.5! py-1.5! text-xs! font-semibold text-[#174d2b]!"
                 title="Accept"
                 aria-label={`Accept appointment for ${row.name}`}
                 onClick={() => handleStatusChange(row.id, "Accepted")}
@@ -1000,7 +1008,7 @@ export default function AppointmentsPage() {
                 <span>Accept</span>
               </button>
               <button
-                className="cursor-pointer flex items-center justify-center gap-1.5 rounded-md! border-[#d45a61]! bg-[#f3b9bd]! px-2.5! py-1.5! text-xs! font-semibold text-[#7b2027]!"
+                className="cursor-pointer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md! border-[#d45a61]! bg-[#f3b9bd]! px-2.5! py-1.5! text-xs! font-semibold text-[#7b2027]!"
                 title="Reject"
                 aria-label={`Reject appointment for ${row.name}`}
                 onClick={() => setAppointmentToReject(row)}
@@ -1033,6 +1041,18 @@ export default function AppointmentsPage() {
               </button>
             )}
           </span>
+
+          {row.status !== "Rejected" && (
+            <button
+              className="border-[#25D366]! bg-[#25D366]! inline-flex items-center justify-center gap-1.5 px-2.5! text-xs! font-bold text-white!"
+              title="Notify on WhatsApp"
+              aria-label={`Notify ${row.name} on WhatsApp`}
+              onClick={() => setNotifyDetails(toNotifyDetails(row))}
+            >
+              <FaWhatsapp />
+              Notify
+            </button>
+          )}
 
           {/* Edit & Delete — both roles */}
           <button
@@ -1067,7 +1087,8 @@ export default function AppointmentsPage() {
     }
 
     setShowAdd(false);
-    fetchAppointments(); // refresh the list
+    fetchAppointments();
+    setNotifyDetails(toNotifyDetails(form));
   };
   return (
     <>
@@ -1152,6 +1173,11 @@ export default function AppointmentsPage() {
           setAppointmentToEdit(null);
         }}
         loading={submitting}
+      />
+      <AppointmentNotifyModal
+        open={notifyDetails !== null}
+        details={notifyDetails}
+        onClose={() => setNotifyDetails(null)}
       />
       <DeleteConfirmationModal
         open={appointmentToDelete !== null}

@@ -8,6 +8,7 @@ export interface Column<T> {
   title: string;
   key: string;
   render?: (row: T, index: number) => React.ReactNode;
+  className?: string;
 }
 
 interface DataTableProps<T> {
@@ -78,7 +79,7 @@ export function DataTable<T extends Record<string, any>>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="whitespace-nowrap border-b border-[#c1c9c0] px-3 py-3 font-semibold text-[#1a1c1a] sm:px-4 sm:py-3.5"
+                  className={`whitespace-nowrap border-b border-[#c1c9c0] px-3 py-3 font-semibold text-[#1a1c1a] sm:px-4 sm:py-3.5 ${col.className || ""}`}
                 >
                   {col.title}
                 </th>
@@ -102,7 +103,7 @@ export function DataTable<T extends Record<string, any>>({
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className="border-b border-[#c1c9c0] px-3 py-3 text-[#1a1c1a] sm:px-4 sm:py-3.5"
+                      className={`border-b border-[#c1c9c0] px-3 py-3 text-[#1a1c1a] sm:px-4 sm:py-3.5 ${col.className || ""}`}
                     >
                       {col.render
                         ? col.render(

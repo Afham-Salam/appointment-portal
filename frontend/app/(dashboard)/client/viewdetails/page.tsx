@@ -43,8 +43,18 @@ function ClientDetailsRoute() {
   const [loading, setLoading] = useState(true);
 
   const from = params.get("from");
-  const backHref = from === "clients" ? "/clients" : "/appointments";
-  const backLabel = from === "clients" ? "Clients" : "Appointments";
+  const backHref =
+    from === "clients"
+      ? "/clients"
+      : from === "students"
+        ? "/students"
+        : "/appointments";
+  const backLabel =
+    from === "clients"
+      ? "Clients"
+      : from === "students"
+        ? "Students"
+        : "Appointments";
 
   useEffect(() => {
     async function fetch() {

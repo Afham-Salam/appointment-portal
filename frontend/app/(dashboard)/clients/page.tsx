@@ -63,12 +63,44 @@ export default function ClientsPage() {
         dateFrom: dateRange?.[0]?.format("YYYY-MM-DD") || undefined,
         dateTo: dateRange?.[1]?.format("YYYY-MM-DD") || undefined,
       });
-      setClients(
-        data.map((c) => ({
-          ...c,
-          phone: `${c.countryCode} ${c.phone}`.trim(),
-        })),
-      );
+      const mapped = data.map((c) => ({
+        ...c,
+        phone: `${c.countryCode} ${c.phone}`.trim(),
+      }));
+      setClients(mapped);
+      if (mapped[0]?.id) {
+        setPaymentConfigs((prev) =>
+          prev[mapped[0].id]
+            ? prev
+            : {
+                ...prev,
+                [mapped[0].id]: {
+                  totalAmount: 5000,
+                  notes: "5-session counselling package",
+                  payments: [
+                    {
+                      id: "sample-client-pay-1",
+                      date: "2026-10-18",
+                      amount: 2000,
+                      category: "Consultation",
+                      payment_method: "UPI",
+                      reference: "UPI-409221",
+                      notes: "First installment",
+                    },
+                    {
+                      id: "sample-client-pay-2",
+                      date: "2026-10-22",
+                      amount: 1500,
+                      category: "Session fee",
+                      payment_method: "Cash",
+                      reference: "RCP-208",
+                      notes: "Second installment",
+                    },
+                  ],
+                },
+              },
+        );
+      }
       setTotal(count);
       setLoading(false);
     }

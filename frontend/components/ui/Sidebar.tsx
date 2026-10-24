@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  FiBookOpen,
   FiCalendar,
   FiGrid,
   FiLogOut,
@@ -19,6 +20,11 @@ import { logout } from "@/lib/actions/auth";
 import AddAppointmentModal, {
   type AppointmentFormValues,
 } from "@/components/appointment/AddAppointmentModal";
+import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
+import {
+  toNotifyDetails,
+  type AppointmentNotifyDetails,
+} from "@/components/appointment/AppointmentConfirmationPdf";
 import { createAppointment } from "@/lib/actions/appointments";
 
 type UserRole = "admin" | "staff";
@@ -32,6 +38,7 @@ const navigation:NavItem[] = [
   { href: "/dashboard", icon: FiGrid, label: "Dashboard", roles: ["admin", "staff"] },
   { href: "/appointments", icon: FiCalendar, label: "Appointments", roles: ["admin", "staff"] },
   { href: "/clients", icon: FiUsers, label: "Clients List", roles: ["admin"] },
+  { href: "/students", icon: FiBookOpen, label: "Students", roles: ["admin"] },
   { href: "/accounts", icon: FiDollarSign, label: "Accounts", roles: ["admin"] },
   { href: "/letters", icon: FiFileText, label: "Letters", roles: ["admin"] },
   // { href: "/profile", icon: FiUser, label: "My profile", roles: ["admin"] },
@@ -56,6 +63,8 @@ export default function Sidebar({
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [notifyDetails, setNotifyDetails] =
+    useState<AppointmentNotifyDetails | null>(null);
 
   const visibleNav = navigation.filter((item) => item.roles.includes(role));
 
@@ -74,6 +83,7 @@ export default function Sidebar({
     }
 
     setShowAdd(false);
+    setNotifyDetails(toNotifyDetails(values));
     window.dispatchEvent(new Event("appointment-created"));
     if (pathname !== "/appointments") router.push("/appointments");
   };
@@ -152,6 +162,11 @@ export default function Sidebar({
         onCancel={() => setShowAdd(false)}
         onSubmit={handleCreateAppointment}
         loading={submitting}
+      />
+      <AppointmentNotifyModal
+        open={notifyDetails !== null}
+        details={notifyDetails}
+        onClose={() => setNotifyDetails(null)}
       />
     </>
   );
