@@ -2,6 +2,47 @@
   border-radius: 6px;
 }
 
+.accounts-page .table-actions {
+  justify-content: flex-start;
+}
+
+.accounts-page .table-actions > button.accounts-action-edit,
+.accounts-page .table-actions > button.accounts-action-void,
+.accounts-page .accounts-action-slot {
+  width: 58px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.accounts-page .accounts-action-slot {
+  display: inline-block;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.accounts-page .table-actions > button.accounts-action-edit {
+  background: var(--green-container);
+  color: #fff;
+  cursor: pointer;
+}
+
+.accounts-page .table-actions > button.accounts-action-void {
+  background: #c9252d;
+  color: #fff;
+  cursor: pointer;
+}
+
+.accounts-page .table-actions > button.accounts-action-edit:disabled,
+.accounts-page .table-actions > button.accounts-action-void:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .accounts-page,
 .accounts-page .ant-tabs-content-holder,
 .accounts-page .ant-tabs-tabpane,

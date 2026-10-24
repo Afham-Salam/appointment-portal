@@ -6,8 +6,11 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { FilterHeader } from "@/components/ui/FilterHeader";
 import type { Dayjs } from "dayjs";
 import { getApprovedClients } from "@/lib/actions/appointments";
-import { FiDownload } from "react-icons/fi";
+import { FiCreditCard, FiDownload } from "react-icons/fi";
 import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
+import ClientPaymentModal, {
+  type ClientPaymentConfig,
+} from "@/components/clientDetails/ClientPaymentModal";
 
 type ClientRow = {
   id: string;
@@ -40,6 +43,10 @@ export default function ClientsPage() {
     [Dayjs | null, Dayjs | null] | null
   >(null);
   const [reportClient, setReportClient] = useState<ClientRow | null>(null);
+  const [paymentClient, setPaymentClient] = useState<ClientRow | null>(null);
+  const [paymentConfigs, setPaymentConfigs] = useState<
+    Record<string, ClientPaymentConfig>
+  >({});
 
   const openReportModal = (client: ClientRow) => {
     setReportClient(client);
@@ -152,6 +159,14 @@ export default function ClientsPage() {
            >
              <FiDownload aria-hidden="true" /> Report
            </button>
+           <button
+             type="button"
+             className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
+             onClick={() => setPaymentClient(row)}
+           >
+             <FiCreditCard aria-hidden="true" />
+             {paymentConfigs[row.id] ? "View History" : "Set Payment"}
+           </button>
         </div>
       ),
     },
@@ -204,6 +219,20 @@ export default function ClientsPage() {
         client={reportClient}
         open={Boolean(reportClient)}
         onClose={() => setReportClient(null)}
+      />
+
+      <ClientPaymentModal
+        open={Boolean(paymentClient)}
+        client={paymentClient}
+        config={paymentClient ? paymentConfigs[paymentClient.id] : undefined}
+        onClose={() => setPaymentClient(null)}
+        onSaveConfig={(next) => {
+          if (!paymentClient) return;
+          setPaymentConfigs((prev) => ({
+            ...prev,
+            [paymentClient.id]: next,
+          }));
+        }}
       />
     </>
   );

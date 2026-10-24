@@ -11,6 +11,7 @@ import { Checkbox, DatePicker } from "antd";
 import {
   FiArrowLeft,
   FiCheck,
+  FiCreditCard,
   FiDownload,
   FiEdit2,
   FiPlus,
@@ -22,6 +23,9 @@ import AddAppointmentModal, {
 } from "@/components/appointment/AddAppointmentModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
+import ClientPaymentModal, {
+  type ClientPaymentConfig,
+} from "@/components/clientDetails/ClientPaymentModal";
 import { downloadApplicationPdf } from "@/components/clientDetails/ApplicationPdf";
 import {
   getAppointments,
@@ -95,6 +99,9 @@ export function ClientDetails({
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showReportDownload, setShowReportDownload] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentConfig, setPaymentConfig] =
+    useState<ClientPaymentConfig | undefined>(undefined);
 
   // TextGrid values for each section
   const [studentIntakeValues, setStudentIntakeValues] = useState<
@@ -277,7 +284,15 @@ export function ClientDetails({
                 {data.clientType} · Age {data.age}
               </p>
             </div>
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <div className="client-title-actions">
+              <button
+                type="button"
+                className="paymentbtn"
+                onClick={() => setShowPaymentModal(true)}
+              >
+                <FiCreditCard aria-hidden="true" />
+                {paymentConfig ? "View History" : "Set Payment"}
+              </button>
               <button
                 type="button"
                 className="reportbtn"
@@ -286,7 +301,6 @@ export function ClientDetails({
                 <FiDownload aria-hidden="true" />
                 Report
               </button>
-              {/* <span className="status accepted">Accepted</span> */}
             </div>
           </div>
 
@@ -832,6 +846,17 @@ export function ClientDetails({
         }}
         open={showReportDownload}
         onClose={() => setShowReportDownload(false)}
+      />
+      <ClientPaymentModal
+        open={showPaymentModal}
+        client={{
+          id: appointment.clientId,
+          name: data.name,
+          phone: `${data.countryCode} ${data.phone}`.trim(),
+        }}
+        config={paymentConfig}
+        onClose={() => setShowPaymentModal(false)}
+        onSaveConfig={(next) => setPaymentConfig(next)}
       />
     </div>
   );

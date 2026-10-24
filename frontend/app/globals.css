@@ -433,6 +433,7 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 18px;
   border: 1px solid var(--line);
   border-top: 0;
@@ -446,13 +447,33 @@ h6 {
   margin: 4px 0 0;
   color: var(--muted);
 }
-.client-title .reportbtn {
+.client-title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.client-title .reportbtn,
+.client-title .paymentbtn {
   height: 38px;
   padding: 0 16px !important;
   gap: 7px;
   border-radius: 6px !important;
   font-weight: 600;
   line-height: 1;
+}
+.client-title .paymentbtn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #2d5a3f;
+  background: #fff;
+  color: #144229;
+  font-size: 12px;
+  cursor: pointer;
+}
+.client-title .paymentbtn:hover {
+  background: #e8f7ee;
 }
 .status {
   display: inline-block;
@@ -471,9 +492,14 @@ h6 {
   color: var(--green);
 }
 .status.rejected,
-.status.inactive {
+.status.inactive,
+.status.void {
   background: #ffe1dc;
   color: #9b3022;
+}
+.status.active {
+  background: var(--mint);
+  color: var(--green);
 }
 .text-grid {
   display: grid;
@@ -729,8 +755,26 @@ h6 {
   .print-header span {
     font-size: 9px;
   }
+  .client-title {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px;
+  }
   .client-title h1 {
     font-size: 21px;
+  }
+  .client-title-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+  }
+  .client-title .reportbtn,
+  .client-title .paymentbtn {
+    width: 100%;
+    justify-content: center;
+    padding: 0 10px !important;
+    font-size: 12px;
   }
   .stats-grid {
     grid-template-columns: 1fr;

@@ -21,20 +21,21 @@
 .letter-editor .ql-container.ql-snow { border: 0; font-family: inherit; font-size: 15px; }
 .letter-editor .ql-editor { min-height: 300px; padding: 24px; line-height: 1.7; }
 .letter-preview-scroll { max-width: 100%; overflow-x: auto; padding: 20px; border-radius: 16px; background: #e9ece5; }
-.letter-paper { box-sizing: border-box; display: flex; flex-direction: column; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 6mm 10mm 10mm; background: white; color: #26392e; box-shadow: 0 6px 30px #203c2a14; font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.65; }
+.letter-paper { box-sizing: border-box; display: flex; flex-direction: column; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 6mm 10mm 4mm; background: white; color: #26392e; box-shadow: 0 6px 30px #203c2a14; font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.65; }
 .letterhead { display: flex; justify-content: space-between; gap: 24px; align-items: center; padding-bottom: 14px; margin-bottom: 16px; border-bottom: 2px solid #a17e3f; break-inside: avoid; }
 .letterhead-brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.letterhead-brand > div { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.letterhead-brand > div { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .letterhead-logo { display: block; width: 66px; height: 76px; flex-shrink: 0; object-fit: contain; }
 .letterhead h2 { margin: 0; color: #866126; font-family: Georgia, serif; font-size: 29px; letter-spacing: .15em; line-height: 1.2; }
 .letterhead strong { display: block; color: #174c35; font-size: 10px; letter-spacing: .06em; line-height: 1.4; }
-.letterhead p { margin: 0; color: #345243; font-size: 10px; font-weight: 700; line-height: 1.45; }
+.letterhead address { margin: 0; color: #345243; font-size: 9px; font-style: normal; font-weight: 600; line-height: 1.45; }
 .letterhead-contact { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 4px; flex-shrink: 0; text-align: right; font-size: 11px; line-height: 1.4; }
 .letterhead-contact span { margin-bottom: 2px; font-size: 9px; font-weight: 700; letter-spacing: .1em; color: #866126; }
 .letterhead-contact a { display: block; color: #254f39; text-decoration: none; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .03em; }
 .letter-metadata { display: flex; justify-content: flex-end; gap: 20px; font-size: 10pt; overflow-wrap: anywhere; }
 .letter-body.ql-editor { overflow: visible; padding: 24px 0; min-height: 130mm; font-size: 11pt; line-height: 1.7; overflow-wrap: anywhere; white-space: pre-wrap; }
 .letter-body p { margin-bottom: 8px; }
+.letter-body p:last-child { margin-bottom: 0; }
 .letter-body a { color: #2d5a3f; text-decoration: underline; }
 .letter-body.ql-editor ol { list-style-type: decimal; padding-left: 1.5em; }
 .letter-body.ql-editor ul { list-style-type: disc; padding-left: 1.5em; }
@@ -48,6 +49,13 @@
 .letter-body h1 { font-size: 2em; }.letter-body h2 { font-size: 1.5em; }.letter-body h3 { font-size: 1.17em; }
 .letter-footer { margin-top: auto; padding-top: 28px; font-size: 8px; color: #7a846e; text-align: center; }
 .letter-footer span { margin-inline: 8px; color: #a17e3f; }
+.letter-closing { flex-shrink: 0; min-height: 18mm; padding-top: 4px; }
+.letter-signoff { display: flex; justify-content: flex-end; align-items: center; gap: 10px; min-height: 16mm; break-inside: avoid; }
+.letter-seal { display: block; width: 96px; height: 96px; object-fit: contain; }
+.letter-signature { display: flex; flex-direction: column; align-items: flex-start; max-width: 220px; color: #254f39; }
+.letter-signature-mark { font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-style: italic; line-height: 1; color: #866126; }
+.letter-signature strong { margin-top: 6px; font-size: 12px; letter-spacing: .03em; }
+.letter-signature span { font-size: 10px; color: #345243; line-height: 1.35; }
 @media(max-width: 639px) {
   .letter-editor-history { padding: 14px 16px; gap: 14px; }
   .letter-editor-controls { width: 100%; justify-content: space-between; gap: 10px; }
@@ -60,9 +68,10 @@
 }
 .letter-pages { display: flex; flex-direction: column; gap: 24px; }
 .letter-pages .letter-paper { height: 297mm; min-height: 297mm; flex-shrink: 0; }
-.letter-pages .letter-paper { padding-bottom: 5mm; }
-.letter-pages .letterhead, .letter-pages .letter-metadata, .letter-pages .letter-footer { flex-shrink: 0; }
-.letter-pages .letter-body { flex: 1; min-height: 0; overflow: hidden; padding: 16px 0 4px; }
+.letter-pages .letter-paper { padding-bottom: 2mm; }
+.letter-pages .letterhead, .letter-pages .letter-metadata, .letter-pages .letter-footer, .letter-pages .letter-closing { flex-shrink: 0; }
+.letter-pages .letter-body { min-height: 0; overflow: hidden; padding: 16px 0 0; }
+.letter-measurement .letter-body { flex: 1; }
 .letter-pages .letter-footer { margin-top: 0; padding-top: 4px; }
 .letter-page-number { margin-top: 4px; font-size: 8px; }
 .letter-measurement { position: fixed; left: -20000px; top: 0; visibility: hidden; pointer-events: none; }
@@ -72,10 +81,11 @@
   html, body.letter-print-document { margin: 0 !important; padding: 0 !important; background: white !important; }
   .letter-print-document .letter-pages { display: block; }
   .letter-print-document .letter-measurement { display: none; }
-  .letter-print-document .letter-paper { display: flex; width: 210mm; height: 297mm; min-height: 297mm; margin: 0; padding: 6mm 10mm 5mm; box-shadow: none; break-after: page; }
+  .letter-print-document .letter-paper { display: flex; width: 210mm; height: 297mm; min-height: 297mm; margin: 0; padding: 6mm 10mm 2mm; box-shadow: none; break-after: page; }
   .letter-print-document .letter-paper:last-child { break-after: auto; }
   .letter-print-document .letter-body { min-height: 0; }
   .letter-print-document .letter-body p { orphans: 3; widows: 3; }
-  .letter-print-document .letter-footer { margin-top: 0; }
+  .letter-print-document .letter-footer, .letter-print-document .letter-closing { margin-top: 0; }
+  .letter-print-document .letter-signoff { break-inside: avoid; }
   .letter-print-document * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

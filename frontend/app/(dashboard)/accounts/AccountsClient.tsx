@@ -82,9 +82,13 @@ function AccountsContent() {
   const [status, setStatus] = useState("all");
   const [exporting, setExporting] = useState(false);
   const fetchTransactions = async () => {
-    const { transactions: data } = await getTransactions();
-    setTransactions(data);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const { transactions: data } = await getTransactions();
+      setTransactions(data);
+    } finally {
+      setLoading(false);
+    }
   };
  useEffect(() => {
     fetchTransactions();
@@ -368,7 +372,7 @@ function AccountsContent() {
         <TransactionHistoryTable
           key={`${period.from}-${period.to}-${type}-${category}-${method}-${status}-${search}`}
           rows={filteredRows}
-          busy={false}
+          busy={loading}
           onEdit={(transaction) =>
             setForm({ type: transaction.type, transaction })
           }

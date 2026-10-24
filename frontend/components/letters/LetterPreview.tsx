@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import Letterhead from "./Letterhead";
+import LetterSignoff from "./LetterSignoff";
 import type { LetterFieldsValue } from "./LetterFields";
 
 export default function LetterPreview({
@@ -119,6 +120,9 @@ export default function LetterPreview({
         className="letter-body ql-editor"
         dangerouslySetInnerHTML={measuring ? undefined : { __html: content }}
       />
+      <footer className="letter-closing">
+        {(measuring || index === pages.length - 1) && <LetterSignoff />}
+      </footer>
     </article>
   );
   return (

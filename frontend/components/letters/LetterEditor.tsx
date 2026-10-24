@@ -4,7 +4,7 @@ import type Quill from "quill";
 import { Alert, Button } from "antd";
 import "quill/dist/quill.snow.css";
 import LetterFields, { type LetterFieldsValue } from "./LetterFields";
-import { FiEdit3, FiRotateCcw, FiRotateCw } from "react-icons/fi";
+import { FiEdit3, FiRotateCcw } from "react-icons/fi";
 
 export default function LetterEditor({ onChange, fields, onFieldsChange }: { onChange: (html: string) => void; fields: LetterFieldsValue; onFieldsChange: (fields: LetterFieldsValue) => void }) {
   const host = useRef<HTMLDivElement>(null);
@@ -38,7 +38,7 @@ export default function LetterEditor({ onChange, fields, onFieldsChange }: { onC
     {error && <Alert type="error" title="The editor could not load. Please reload the page." />}
     <div className="letter-editor-history">
       <div className="letter-editor-heading"><span className="letter-editor-heading-icon"><FiEdit3 aria-hidden="true" /></span><div><h2>Letter body</h2><p>Compose your letter below</p></div></div>
-      <div className="letter-editor-controls"><LetterFields value={fields} onChange={onFieldsChange} /><div className="letter-editor-undo"><Button type="text" icon={<FiRotateCcw />} onClick={() => editor.current?.history.undo()}>Undo</Button><Button type="text" icon={<FiRotateCw />} onClick={() => editor.current?.history.redo()}>Redo</Button></div></div>
+      <div className="letter-editor-controls"><LetterFields value={fields} onChange={onFieldsChange} /><div className="letter-editor-undo"><Button type="text" icon={<FiRotateCcw />} onClick={() => editor.current?.history.undo()}>Undo</Button></div></div>
     </div>
     <div ref={host} />
   </div>;
