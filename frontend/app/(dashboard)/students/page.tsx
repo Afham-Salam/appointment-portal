@@ -11,10 +11,10 @@ import {
   FiCreditCard,
   FiDownload,
 } from "react-icons/fi";
-import { FaWhatsapp } from "react-icons/fa";
+// import { FaWhatsapp } from "react-icons/fa";
 import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
 import {
-  toNotifyDetails,
+  // toNotifyDetails,
   type AppointmentNotifyDetails,
 } from "@/components/appointment/AppointmentConfirmationPdf";
 import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
@@ -399,7 +399,7 @@ export default function StudentsPage() {
               View Details
             </button>
 
-            <button
+            {/* <button
               type="button"
               className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#25D366] bg-[#25D366] px-3 text-xs font-bold text-white hover:bg-[#1ebe5d]"
               title="Notify on WhatsApp"
@@ -408,7 +408,7 @@ export default function StudentsPage() {
             >
               <FaWhatsapp aria-hidden="true" />
               Notify
-            </button>
+            </button> */}
 
             <button
               type="button"

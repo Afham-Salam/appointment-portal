@@ -9,7 +9,9 @@ export default function Letterhead() {
           <h2>TREASURE</h2>
           <strong>COUNSELLING CENTER</strong>
           <address>
-            Kodinhi Cheruppara Achukuppa Road, Malappuram, Kerala &amp; Zara Shopping Complex, Malappuram, Kerala
+            Kodinhi Cheruppara Achukuppa Road, Malappuram, Kerala &amp;
+            <br />
+            Zara Shopping Complex Pathinarungal, Malappuram, Kerala
           </address>
         </div>
       </div>

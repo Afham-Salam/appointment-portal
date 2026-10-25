@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Alert,
   ConfigProvider,
@@ -20,8 +21,12 @@ import {
   FiLayers,
   FiPlus,
   FiDollarSign,
+  FiPrinter,
 } from "react-icons/fi";
 import { categories, paymentMethods } from "@/lib/accounts/constants";
+import PaymentStatement, {
+  printPaymentStatement,
+} from "@/components/clientDetails/PaymentStatement";
 
 export type ClientPaymentEntry = {
   id: string;
@@ -123,7 +128,12 @@ export default function ClientPaymentModal({
   onSaveConfig,
 }: {
   open: boolean;
-  client: { id: string; name: string; phone?: string } | null;
+  client: {
+    id: string;
+    name: string;
+    phone?: string;
+    clientType?: string;
+  } | null;
   config?: ClientPaymentConfig;
   onClose: () => void;
   onSaveConfig: (next: ClientPaymentConfig) => void;
@@ -132,7 +142,9 @@ export default function ClientPaymentModal({
   const [paymentForm] = Form.useForm<AddPaymentFormFields>();
   const [editingTotal, setEditingTotal] = useState(false);
   const [addingPayment, setAddingPayment] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [error, setError] = useState("");
+  const statementRef = useRef<HTMLDivElement>(null);
 
   const isConfigured = Boolean(config && config.totalAmount > 0);
   const showSetupForm = !isConfigured || editingTotal;
@@ -142,6 +154,10 @@ export default function ClientPaymentModal({
     setError("");
     setEditingTotal(false);
     setAddingPayment(false);
+  }, [open, client?.id]);
+
+  useEffect(() => {
+    if (!open || !showSetupForm) return;
 
     if (config && config.totalAmount > 0) {
       setupForm.setFieldsValue({
@@ -152,18 +168,22 @@ export default function ClientPaymentModal({
         reference: "",
         notes: config.notes || "",
       });
-    } else {
-      setupForm.setFieldsValue({
-        totalAmount: undefined,
-        paidAmount: undefined,
-        date: dayjs(),
-        category: categories.income[0],
-        payment_method: "Cash",
-        reference: "",
-        notes: "",
-      });
+      return;
     }
 
+    setupForm.setFieldsValue({
+      totalAmount: undefined,
+      paidAmount: undefined,
+      date: dayjs(),
+      category: categories.income[0],
+      payment_method: "Cash",
+      reference: "",
+      notes: "",
+    });
+  }, [open, showSetupForm, config, setupForm]);
+
+  useEffect(() => {
+    if (!open || !addingPayment) return;
     paymentForm.setFieldsValue({
       amount: undefined,
       date: dayjs(),
@@ -172,7 +192,7 @@ export default function ClientPaymentModal({
       reference: "",
       notes: "",
     });
-  }, [open, config, setupForm, paymentForm]);
+  }, [open, addingPayment, paymentForm]);
 
   const paidTotal = (config?.payments || []).reduce(
     (sum, item) => sum + item.amount,
@@ -250,6 +270,25 @@ export default function ClientPaymentModal({
       payment_method: "Cash",
     });
     setAddingPayment(false);
+  };
+
+  const handlePrintStatement = async () => {
+    const paper = statementRef.current?.querySelector<HTMLElement>(
+      ".payment-statement",
+    );
+    if (!paper || !client || !config) return;
+    setPrinting(true);
+    setError("");
+    try {
+      await printPaymentStatement(
+        paper,
+        `Payment Statement - ${client.name}`,
+      );
+    } catch {
+      setError("Could not open the payment PDF. Please try again.");
+    } finally {
+      setPrinting(false);
+    }
   };
 
   return (
@@ -521,6 +560,15 @@ export default function ClientPaymentModal({
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
+                  onClick={handlePrintStatement}
+                  disabled={printing}
+                  className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-[#c1c9c0] bg-white px-2.5 text-xs font-semibold text-[#144229] hover:border-[#2D5A3F] disabled:cursor-wait disabled:opacity-60"
+                >
+                  <FiPrinter className="h-3.5 w-3.5" />
+                  {printing ? "Preparing PDF…" : "Print PDF"}
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     setAddingPayment(false);
                     setEditingTotal(true);
@@ -689,6 +737,22 @@ export default function ClientPaymentModal({
           </div>
         )}
       </Modal>
+      {open &&
+      !showSetupForm &&
+      client &&
+      config &&
+      typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={statementRef}
+              className="payment-print-source"
+              aria-hidden="true"
+            >
+              <PaymentStatement client={client} config={config} />
+            </div>,
+            document.body,
+          )
+        : null}
     </ConfigProvider>
   );
 }
