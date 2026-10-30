@@ -9,7 +9,8 @@ import {
   Select,
   Alert,
   DatePicker,
-  TimePicker 
+  TimePicker,
+  Checkbox,
 } from "antd";
 import {
   getCountries,
@@ -35,13 +36,32 @@ export type AppointmentFormValues = {
   clientType: ClientType;
   scheduledDate?: string;
    scheduledTime?: string;
+   location?: string;
+  appointmentDays?: string[];
 };
 
 type ModalFormValues = Omit<AppointmentFormValues, "scheduledDate"> & {
   country: Country;
   scheduledDate?: dayjs.Dayjs | null;
   scheduledTime: any;
+   location: string;
+  appointmentDays: string[];
 };
+
+const LOCATIONS = [
+  { value: "Kodinhi Cheruppara, Malappuram", label: "Kodinhi Cheruppara, Malappuram" },
+  { value: "Zara Complex, Pantharangadi, Malappuram", label: "Zara Complex, Pantharangadi, Malappuram" },
+];
+
+const WEEK_DAYS = [
+  { value: "Monday", label: "Monday" },
+  { value: "Tuesday", label: "Tuesday" },
+  { value: "Wednesday", label: "Wednesday" },
+  { value: "Thursday", label: "Thursday" },
+  { value: "Friday", label: "Friday" },
+  { value: "Saturday", label: "Saturday" },
+  { value: "Sunday", label: "Sunday" },
+];
 
 const blankForm: ModalFormValues = {
   name: "",
@@ -54,6 +74,8 @@ const blankForm: ModalFormValues = {
   clientType: "Client",
   scheduledDate: dayjs(),
   scheduledTime: null as unknown as string,
+   location: "Kodinhi Cheruppara, Malappuram",
+  appointmentDays: [],
 };
 
 const themeConfig = {
@@ -135,6 +157,8 @@ export default function AddAppointmentModal({
   submitText = "Create Appointment",
 }: AddAppointmentModalProps) {
   const [form] = Form.useForm<ModalFormValues>();
+  // Add this line at the top of the component, after other Form.useWatch calls:
+const clientType = Form.useWatch("clientType", form) as ClientType | undefined;
   const selectedCountry = Form.useWatch("country", form) as Country | undefined;
   const [lookupStatus, setLookupStatus] = useState<
     "idle" | "searching" | "found" | "not_found"
@@ -173,6 +197,8 @@ export default function AddAppointmentModal({
         ? dayjs(initialValues.scheduledDate)
         : dayjs(),
          scheduledTime: initialValues.scheduledTime ? dayjs(initialValues.scheduledTime, "HH:mm") : null,
+         location: initialValues.location || "Kodinhi Cheruppara, Malappuram",
+  appointmentDays: initialValues.appointmentDays || [],
     });
   }, [open, form, initialValues]);
 
@@ -196,7 +222,11 @@ export default function AddAppointmentModal({
         age: result.client.age || "",
         relative: result.client.relative || "",
         address: result.client.address || "",
-        clientType: result.client.client_type as ClientType,
+         clientType: result.client.client_type as ClientType,
+      ...(result.latestAppointment && {
+        location: result.latestAppointment.location || "Kodinhi Cheruppara, Malappuram",
+        appointmentDays: result.latestAppointment.appointmentDays || [],
+      }),
       });
     } else {
       setLookupStatus("not_found");
@@ -470,6 +500,43 @@ export default function AddAppointmentModal({
                 className="min-h-24! rounded-md! resize-y!"
               />
             </Form.Item>
+                        {/* Location */}
+            <Form.Item
+              label="Location"
+              name="location"
+              className="sm:col-span-2"
+              rules={[{ required: true, message: "Location is required" }]}
+            >
+              <Select
+                className="w-full [&_.ant-select-selector]:rounded-md!"
+                classNames={{ popup: { root: selectPopupClassName } }}
+                options={LOCATIONS}
+              />
+            </Form.Item>
+
+            {/* Multi-day selection for Students */}
+       {clientType === "Student" && (
+  <Form.Item
+    label="Appointment Days"
+    name="appointmentDays"
+    className="sm:col-span-2"
+    rules={[
+      {
+        validator: async (_, value) => {
+          if (initialValues?.appointmentDays?.length) return;
+          if (!value || value.length === 0) {
+            return Promise.reject("Select at least one day");
+          }
+        },
+      },
+    ]}
+  >
+    <Checkbox.Group
+      className="flex! flex-wrap! gap-3!"
+      options={WEEK_DAYS}
+    />
+  </Form.Item>
+)}
             <div className="grid grid-cols-1 gap-x-4 sm:col-span-2 sm:grid-cols-2">
               <Form.Item
                 label="Appointment Date"

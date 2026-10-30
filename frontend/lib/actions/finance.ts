@@ -30,13 +30,24 @@ export async function createTransaction(input: {
   payment_method: string
   reference: string
   notes: string
+  client_id?: string | null
+  source?: string
 }) {
   const { supabase, user } = await getAuthenticatedUser()
 
   const { data, error } = await supabase
     .from('transactions')
     .insert({
-      ...input,
+      type: input.type,
+      date: input.date,
+      payee: input.payee,
+      category: input.category,
+      amount_paise: input.amount_paise,
+      payment_method: input.payment_method,
+      reference: input.reference,
+      notes: input.notes,
+      client_id: input.client_id || null,
+      source: input.source || 'other',
       status: 'active',
       version: 1,
       created_by: user.id,
@@ -46,7 +57,6 @@ export async function createTransaction(input: {
 
   if (error) return { error: error.message }
 
-  // Audit log
   await supabase.from('transaction_audit').insert({
     transaction_id: data.id,
     action: 'Created',
@@ -171,4 +181,44 @@ export async function searchClientsForDropdown(search: string) {
     name: c.name,
     phone: `${c.country_code || ''} ${c.phone}`.trim(),
   }))
+}
+
+export async function getPendingClientPayments() {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { data: configs } = await supabase
+    .from('client_payments')
+    .select('client_id, total_amount')
+
+  if (!configs || configs.length === 0) return { pending: 0, clientCount: 0 }
+
+  const clientIds = configs.map((c) => c.client_id)
+
+  const { data: payments } = await supabase
+    .from('transactions')
+    .select('client_id, amount_paise')
+    .eq('type', 'income')
+    .neq('status', 'void')
+    .in('client_id', clientIds)
+
+  // Sum paid in PAISE (don't divide)
+  const paidMap = new Map<string, number>()
+  for (const p of (payments || [])) {
+    paidMap.set(p.client_id, (paidMap.get(p.client_id) || 0) + Number(p.amount_paise))
+  }
+
+  let totalPending = 0
+  let clientCount = 0
+  for (const cfg of configs) {
+    // Convert total_amount from rupees to paise
+    const totalPaise = Number(cfg.total_amount) * 100
+    const paidPaise = paidMap.get(cfg.client_id) || 0
+    const balance = totalPaise - paidPaise
+    if (balance > 0) {
+      totalPending += balance
+      clientCount++
+    }
+  }
+
+  return { pending: totalPending, clientCount }
 }

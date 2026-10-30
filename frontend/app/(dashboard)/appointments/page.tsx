@@ -75,6 +75,8 @@ export type Appointment = {
   clientId: string; // new — links to the client record
    scheduledDate?: string;
    scheduledTime?: string;
+   location?: string;
+  appointmentDays?: string[];
 };
 
 export function ClientDetails({
@@ -888,9 +890,7 @@ export default function AppointmentsPage() {
     useState<AppointmentNotifyDetails | null>(null);
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [dateRange, setDateRange] = useState<
-    [Dayjs | null, Dayjs | null] | null
-  >(null);
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>([dayjs().startOf("day"), dayjs().endOf("day")]);
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -987,6 +987,18 @@ export default function AppointmentsPage() {
     const hour12 = hour % 12 || 12;
     return `${date}, ${hour12}:${m} ${ampm}`;
   },
+},
+{
+  title: "Location",
+  key: "location",
+  render: (row) => row.location === "Kodinhi Cheruppara, Malappuram" ? "Kodinhi" : row.location === "Zara Complex, Pantharangadi, Malappuram" ? "Zara Complex" : "—",
+},
+{
+  title: "Days",
+  key: "appointmentDays",
+  render: (row) => row.appointmentDays?.length
+    ? row.appointmentDays.map((d: string) => d.slice(0, 3)).join(", ")
+    : "—",
 },
     {
       title: "Status",
@@ -1143,6 +1155,8 @@ export default function AppointmentsPage() {
                 clientType: appointmentToEdit.clientType,
                  scheduledDate: appointmentToEdit.scheduledDate, 
                  scheduledTime: appointmentToEdit.scheduledTime,
+                 location: appointmentToEdit.location,              // ← add
+        appointmentDays: appointmentToEdit.appointmentDays,
               }
             : undefined
         }

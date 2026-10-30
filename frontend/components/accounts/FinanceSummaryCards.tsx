@@ -3,10 +3,12 @@ import { FiArrowDownLeft, FiArrowUpRight, FiBarChart2, FiCalendar, FiClock, FiLa
 import { money, summarize } from "@/lib/accounts/formatters";
 import type { Transaction } from "@/lib/accounts/types";
 
-export default function FinanceSummaryCards({ totals, previous, transactions }: {
+export default function FinanceSummaryCards({ totals, previous, transactions,pendingPayments }: {
   totals: ReturnType<typeof summarize>;
   previous: ReturnType<typeof summarize> | null;
   transactions: Transaction[];
+  // Add to FinanceSummaryCards props:
+pendingPayments?: { pending: number; clientCount: number };
 }) {
   const now = dayjs();
   const today = summarize(transactions.filter(row => row.date === now.format("YYYY-MM-DD")));
@@ -21,8 +23,19 @@ export default function FinanceSummaryCards({ totals, previous, transactions }: 
     { title: "Total income", value: totals.income, note: change("income"), Icon: FiArrowUpRight, color: "#144229", tint: "#e5eddf", dot: "#2D5A3F", label: "Selected period", highlighted: true },
     { title: "Total expenses", value: totals.expense, note: change("expense"), Icon: FiArrowDownLeft, color: "#8c4a27", tint: "#f7e6db", dot: "#b86439", label: "Selected period" },
     { title: "Net income", value: totals.net, note: change("net"), Icon: FiLayers, color: "#1f5a4c", tint: "#dff0ea", dot: "#2d7a67", label: "Selected period" },
-    { title: "Pending client payments", value: 2230000, note: "3 clients · Sample outstanding balance", Icon: FiClock, color: "#7a5a22", tint: "#f5ebd3", dot: "#a87e33", label: "Demo balance" },
-    { title: "Total refunds", value: 250000, note: "1 transaction · Sample refund", Icon: FiRotateCcw, color: "#65497a", tint: "#ede3f3", dot: "#85649c", label: "Demo balance" },
+    {
+  title: "Pending client payments",
+  value: pendingPayments?.pending || 0,
+  note: pendingPayments
+    ? `${pendingPayments.clientCount} client${pendingPayments.clientCount !== 1 ? "s" : ""} · Outstanding balance`
+    : "No pending payments",
+  Icon: FiClock,
+  color: "#847042",
+  tint: "#eee8d7",
+  background: "#fcfaf4",
+  label: "Outstanding",
+},
+    // { title: "Total refunds", value: 250000, note: "1 transaction · Sample refund", Icon: FiRotateCcw, color: "#65497a", tint: "#ede3f3", dot: "#85649c", label: "Demo balance" },
     { title: "Today's income", value: today.income, note: `Today's expenses: ${money(today.expense)}`, Icon: FiCalendar, color: "#2D5A3F", tint: "#e5eddf", dot: "#2D5A3F", label: now.format("DD MMM YYYY") },
     { title: "This month's income", value: month.income, note: `This month's expenses: ${money(month.expense)}`, Icon: FiBarChart2, color: "#1f5a4c", tint: "#dff0ea", dot: "#2d7a67", label: now.format("MMM YYYY") },
     { title: "This year's income", value: year.income, note: `This year's expenses: ${money(year.expense)}`, Icon: FiTrendingUp, color: "#7a5a22", tint: "#f3ead6", dot: "#9b7832", label: now.format("YYYY") },

@@ -32,6 +32,7 @@ import {
   updateTransaction,
   voidTransaction,
   getTransactionAudit,
+  getPendingClientPayments,
 } from "@/lib/actions/finance";
 import { monthlyReport, summarize } from "@/lib/accounts/formatters";
 import { exportFinance } from "@/lib/accounts/export";
@@ -81,6 +82,8 @@ function AccountsContent() {
   const [method, setMethod] = useState("all");
   const [status, setStatus] = useState("all");
   const [exporting, setExporting] = useState(false);
+  const [pendingPayments, setPendingPayments] = useState<{ pending: number; clientCount: number } | undefined>(undefined);
+
   const fetchTransactions = async () => {
     setLoading(true);
     try {
@@ -92,6 +95,7 @@ function AccountsContent() {
   };
  useEffect(() => {
     fetchTransactions();
+     getPendingClientPayments().then((data) => setPendingPayments(data));
   }, []);
 
   useEffect(() => {
@@ -242,6 +246,7 @@ function AccountsContent() {
         transactions={transactions}
         totals={totals}
         previous={previousRows.length ? summarize(previousRows) : null}
+        pendingPayments={pendingPayments}
       />
       <p className="text-xs text-gray-500">
         INR · January–December reporting year · {period.from} to {period.to} ·
