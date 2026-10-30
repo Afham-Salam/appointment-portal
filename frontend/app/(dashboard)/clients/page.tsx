@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { FilterHeader } from "@/components/ui/FilterHeader";
 import type { Dayjs } from "dayjs";
-import { getApprovedClients } from "@/lib/actions/appointments";
+import {
+  getApprovedClients,
+  getClientPaymentConfig,
+  saveClientPaymentConfig,
+  addPaymentEntry,
+} from "@/lib/actions/appointments";
 import { FiCreditCard, FiDownload } from "react-icons/fi";
 import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
 import ClientPaymentModal, {
@@ -22,6 +27,8 @@ type ClientRow = {
   totalAppointments: number;
   scheduledDate: string;
    scheduledTime: string;
+    hasPayment: boolean;
+     location: string;
 };
 
 const TYPE_OPTIONS = [
@@ -170,6 +177,16 @@ export default function ClientsPage() {
     return `${date}, ${hour12}:${m} ${ampm}`;
   },
 },
+{
+  title: "Location",
+  key: "location",
+  render: (row) =>
+    row.location === "Kodinhi Cheruppara, Malappuram"
+      ? "Kodinhi"
+      : row.location === "Zara Complex, Pantharangadi, Malappuram"
+        ? "Zara Complex"
+        : row.location || "—",
+},
     {
       title: "Actions",
       key: "actions",
@@ -194,10 +211,18 @@ export default function ClientsPage() {
            <button
              type="button"
              className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
-             onClick={() => setPaymentClient(row)}
+           onClick={async () => {
+  if (!paymentConfigs[row.id]) {
+    const { config } = await getClientPaymentConfig(row.id);
+    if (config) {
+      setPaymentConfigs((prev) => ({ ...prev, [row.id]: config }));
+    }
+  }
+  setPaymentClient(row);  // ← after fetch
+}}
            >
              <FiCreditCard aria-hidden="true" />
-             {paymentConfigs[row.id] ? "View History" : "Set Payment"}
+             {(paymentConfigs[row.id] || row.hasPayment) ? "View History" : "Set Payment"}
            </button>
         </div>
       ),
@@ -253,19 +278,40 @@ export default function ClientsPage() {
         onClose={() => setReportClient(null)}
       />
 
-      <ClientPaymentModal
-        open={Boolean(paymentClient)}
-        client={paymentClient}
-        config={paymentClient ? paymentConfigs[paymentClient.id] : undefined}
-        onClose={() => setPaymentClient(null)}
-        onSaveConfig={(next) => {
-          if (!paymentClient) return;
-          setPaymentConfigs((prev) => ({
-            ...prev,
-            [paymentClient.id]: next,
-          }));
-        }}
-      />
+    <ClientPaymentModal
+  open={Boolean(paymentClient)}
+  client={paymentClient}
+  config={paymentClient ? paymentConfigs[paymentClient.id] : undefined}
+  onClose={() => setPaymentClient(null)}
+ onSaveConfig={async (next) => {
+  if (!paymentClient) return;  // or paymentStudent for students page
+
+  const clientId = paymentClient.id;  // or paymentStudent.id
+
+  // Save total fee + notes
+  await saveClientPaymentConfig(clientId, next.totalAmount, next.notes || '');
+
+  // Find new payments (temporary IDs start with "pay-")
+  for (const payment of next.payments) {
+    if (payment.id.startsWith("pay-")) {
+      await addPaymentEntry(clientId, {
+        date: payment.date,
+        amount: payment.amount,
+        category: payment.category,
+        payment_method: payment.payment_method,
+        reference: payment.reference,
+        notes: payment.notes,
+      });
+    }
+  }
+
+  // Re-fetch fresh data from Supabase
+  const { config } = await getClientPaymentConfig(clientId);
+  if (config) {
+    setPaymentConfigs((prev) => ({ ...prev, [clientId]: config }));
+  }
+}}
+/>
     </>
   );
 }

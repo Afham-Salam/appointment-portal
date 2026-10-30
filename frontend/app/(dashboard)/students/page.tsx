@@ -5,7 +5,14 @@ import { useRouter } from "next/navigation";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { FilterHeader } from "@/components/ui/FilterHeader";
 import type { Dayjs } from "dayjs";
-import { getApprovedClients } from "@/lib/actions/appointments";
+import {
+  getApprovedClients,
+  getClientPaymentConfig,
+  saveClientPaymentConfig,
+  addPaymentEntry,
+  getStudentAttendance,
+  addStudentAttendance,
+} from "@/lib/actions/appointments";
 import {
   FiCheckSquare,
   FiCreditCard,
@@ -36,6 +43,9 @@ type StudentRow = {
   totalAppointments: number;
   scheduledDate: string;
   scheduledTime: string;
+  hasPayment: boolean;
+  paymentSummary: { totalAmount: number; totalPaid: number } | null;
+   attendanceCount: number;
 };
 
 const ATTENDANCE_FILTER_OPTIONS = [
@@ -44,154 +54,6 @@ const ATTENDANCE_FILTER_OPTIONS = [
   { value: "unmarked", label: "Not Marked Yet" },
 ];
 
-const SAMPLE_STUDENTS: StudentRow[] = [
-  {
-    id: "sample-student-1",
-    name: "Aisha Rahman",
-    phone: "+91 98470 11223",
-    countryCode: "+91",
-    clientType: "Student",
-    createdAt: "Oct 10, 2026",
-    age: "12",
-    totalAppointments: 4,
-    scheduledDate: "2026-10-24",
-    scheduledTime: "10:30",
-  },
-  {
-    id: "sample-student-2",
-    name: "Mohammed Farhan",
-    phone: "+91 97450 88991",
-    countryCode: "+91",
-    clientType: "Student",
-    createdAt: "Oct 14, 2026",
-    age: "15",
-    totalAppointments: 2,
-    scheduledDate: "2026-10-25",
-    scheduledTime: "14:00",
-  },
-  {
-    id: "sample-student-3",
-    name: "Neha Krishnan",
-    phone: "+91 94471 55320",
-    countryCode: "+91",
-    clientType: "Student",
-    createdAt: "Oct 18, 2026",
-    age: "10",
-    totalAppointments: 1,
-    scheduledDate: "2026-10-26",
-    scheduledTime: "11:15",
-  },
-  {
-    id: "sample-student-4",
-    name: "Adithya Menon",
-    phone: "+91 99952 44110",
-    countryCode: "+91",
-    clientType: "Student",
-    createdAt: "Oct 20, 2026",
-    age: "14",
-    totalAppointments: 3,
-    scheduledDate: "2026-10-27",
-    scheduledTime: "16:30",
-  },
-];
-
-const INITIAL_ATTENDANCE: Record<string, StudentAttendanceRecord[]> = {
-  "sample-student-1": [
-    {
-      id: "att-sample-103",
-      attendanceNo: 3,
-      date: "2026-10-24",
-      paidAmount: 1000,
-      paymentMethod: "UPI",
-      notes: "Reading comprehension & phonics drill",
-    },
-    {
-      id: "att-sample-102",
-      attendanceNo: 2,
-      date: "2026-10-18",
-      paidAmount: 0,
-      notes: "Memory & focus exercises",
-    },
-    {
-      id: "att-sample-101",
-      attendanceNo: 1,
-      date: "2026-10-12",
-      paidAmount: 1500,
-      paymentMethod: "Cash",
-      notes: "Initial student assessment & orientation",
-    },
-  ],
-  "sample-student-2": [
-    {
-      id: "att-sample-201",
-      attendanceNo: 1,
-      date: "2026-10-21",
-      paidAmount: 1200,
-      paymentMethod: "Cash",
-      notes: "Baseline evaluation session",
-    },
-  ],
-  "sample-student-4": [
-    {
-      id: "att-sample-402",
-      attendanceNo: 2,
-      date: "2026-10-23",
-      paidAmount: 800,
-      paymentMethod: "UPI",
-      notes: "Remediation follow-up",
-    },
-    {
-      id: "att-sample-401",
-      attendanceNo: 1,
-      date: "2026-10-16",
-      paidAmount: 1200,
-      paymentMethod: "Bank transfer",
-      notes: "First remediation session",
-    },
-  ],
-};
-
-const INITIAL_PAYMENTS: Record<string, ClientPaymentConfig> = {
-  "sample-student-1": {
-    totalAmount: 6000,
-    notes: "6-session student remediation package",
-    payments: [
-      {
-        id: "pay-sample-1",
-        date: "2026-10-12",
-        amount: 1500,
-        category: "Student assessment",
-        payment_method: "Cash",
-        reference: "RCP-1041",
-        notes: "Initial installment",
-      },
-      {
-        id: "pay-sample-2",
-        date: "2026-10-24",
-        amount: 1000,
-        category: "Session fee",
-        payment_method: "UPI",
-        reference: "UPI-883421",
-        notes: "3rd session payment",
-      },
-    ],
-  },
-  "sample-student-2": {
-    totalAmount: 4500,
-    notes: "Student counselling & study skill package",
-    payments: [
-      {
-        id: "pay-sample-3",
-        date: "2026-10-21",
-        amount: 1200,
-        category: "Session fee",
-        payment_method: "Cash",
-        reference: "RCP-1052",
-        notes: "First session",
-      },
-    ],
-  },
-};
 
 const rupee = (amount: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -220,42 +82,42 @@ export default function StudentsPage() {
   const [notifyDetails, setNotifyDetails] =
     useState<AppointmentNotifyDetails | null>(null);
 
-  const [paymentConfigs, setPaymentConfigs] = useState<
-    Record<string, ClientPaymentConfig>
-  >(INITIAL_PAYMENTS);
-  const [attendanceRecords, setAttendanceRecords] = useState<
-    Record<string, StudentAttendanceRecord[]>
-  >(INITIAL_ATTENDANCE);
+const [paymentConfigs, setPaymentConfigs] = useState<
+  Record<string, ClientPaymentConfig>
+>({});
+const [attendanceRecords, setAttendanceRecords] = useState<
+  Record<string, StudentAttendanceRecord[]>
+>({});
 
-  useEffect(() => {
-    async function fetchStudents() {
-      setLoading(true);
-      try {
-        const { clients: data, total: count } = await getApprovedClients({
-          page,
-          pageSize,
-          search: searchQuery || undefined,
-          clientType: "Student",
-          dateFrom: dateRange?.[0]?.format("YYYY-MM-DD") || undefined,
-          dateTo: dateRange?.[1]?.format("YYYY-MM-DD") || undefined,
-        });
-        const mapped = data.map((c) => ({
+useEffect(() => {
+  async function fetchStudents() {
+    setLoading(true);
+    try {
+      const { clients: data, total: count } = await getApprovedClients({
+        page,
+        pageSize,
+        search: searchQuery || undefined,
+        clientType: "Student",
+        dateFrom: dateRange?.[0]?.format("YYYY-MM-DD") || undefined,
+        dateTo: dateRange?.[1]?.format("YYYY-MM-DD") || undefined,
+      });
+      setStudents(
+        data.map((c) => ({
           ...c,
           age: c.age || "—",
           phone: `${c.countryCode} ${c.phone}`.trim(),
-        }));
-        const merged = [...SAMPLE_STUDENTS, ...mapped];
-        setStudents(merged);
-        setTotal(count + SAMPLE_STUDENTS.length);
-      } catch {
-        setStudents(SAMPLE_STUDENTS);
-        setTotal(SAMPLE_STUDENTS.length);
-      } finally {
-        setLoading(false);
-      }
+        }))
+      );
+      setTotal(count);
+    } catch {
+      setStudents([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
     }
-    fetchStudents();
-  }, [page, searchQuery, dateRange]);
+  }
+  fetchStudents();
+}, [page, searchQuery, dateRange]);
 
   const [searchInput, setSearchInput] = useState("");
   useEffect(() => {
@@ -304,64 +166,55 @@ export default function StudentsPage() {
         <span className="font-semibold text-[#1a1c1a]">{row.totalAppointments}</span>
       ),
     },
-    {
-      title: "Attendance",
-      key: "attendance",
-      render: (row) => {
-        const list = attendanceRecords[row.id] || [];
-        return list.length > 0 ? (
-          <span className="inline-flex items-center rounded bg-[#bceecb] px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-[#144229]">
-            {list.length} marked
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded bg-[#fff0c6] px-1.5 py-0.5 text-[11px] font-semibold leading-4 text-[#775a19]">
-            Not marked
-          </span>
-        );
-      },
-    },
-    {
-      title: "Payment Status",
-      key: "payment",
-      render: (row) => {
-        const cfg = paymentConfigs[row.id];
-        const sessionPaid = (attendanceRecords[row.id] || []).reduce(
-          (sum, r) => sum + (r.paidAmount || 0),
-          0,
-        );
-        const configPaid = (cfg?.payments || []).reduce(
-          (sum, p) => sum + p.amount,
-          0,
-        );
-        const totalPaid = sessionPaid + configPaid;
+   {
+  title: "Attendance",
+  key: "attendance",
+  render: (row) => {
+    const count = attendanceRecords[row.id]?.length ?? row.attendanceCount;
+    return count > 0 ? (
+      <span className="inline-block rounded-full bg-[#bceecb] px-2.5 py-0.5 text-xs font-bold text-[#144229]">
+        {count} marked
+      </span>
+    ) : (
+      <span className="text-xs text-[#667362]">Unmarked</span>
+    );
+  },
+},
+ {
+  title: "Payment Status",
+  key: "payment",
+  render: (row) => {
+    const cfg = paymentConfigs[row.id];
+    const summary = cfg
+      ? { totalAmount: cfg.totalAmount, totalPaid: cfg.payments.reduce((s, p) => s + p.amount, 0) }
+      : row.paymentSummary;
 
-        if (!cfg && totalPaid === 0) {
-          return <span className="text-xs text-[#667362]">Not configured</span>;
-        }
+    if (!summary) {
+      return <span className="text-xs text-[#667362]">Not configured</span>;
+    }
 
-        const totalFee = cfg?.totalAmount || 0;
-        const balance = Math.max(totalFee - totalPaid, 0);
+    const balance = Math.max(summary.totalAmount - summary.totalPaid, 0);
 
-        return (
-          <div className="flex min-w-28 flex-col gap-1 text-[11px] leading-4">
-            <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#e8f7ee] px-2 py-1 font-bold text-[#144229]">
-              <span className="font-semibold uppercase tracking-wide text-[#2D5A3F]">Paid</span>
-              {rupee(totalPaid)}
-            </span>
-            <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#eef1ec] px-2 py-1 font-bold text-[#1a1c1a]">
-              <span className="font-semibold uppercase tracking-wide text-[#536350]">Total</span>
-              {rupee(totalFee)}
-            </span>
-            <span className={`inline-flex items-center justify-between gap-2 rounded-md px-2 py-1 font-bold ${
-              balance === 0 ? "bg-[#bceecb] text-[#144229]" : "bg-[#fff0c6] text-[#775a19]"
-            }`}>
-              <span className="font-semibold uppercase tracking-wide">Bal</span>
-              {rupee(balance)}
-            </span>
-          </div>
-        );
-      },
-    },
+    return (
+      <div className="flex min-w-28 flex-col gap-1 text-[11px] leading-4">
+        <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#e8f7ee] px-2 py-1 font-bold text-[#144229]">
+          <span className="font-semibold uppercase tracking-wide text-[#2D5A3F]">Paid</span>
+          {rupee(summary.totalPaid)}
+        </span>
+        <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#eef1ec] px-2 py-1 font-bold text-[#1a1c1a]">
+          <span className="font-semibold uppercase tracking-wide text-[#536350]">Total</span>
+          {rupee(summary.totalAmount)}
+        </span>
+        <span className={`inline-flex items-center justify-between gap-2 rounded-md px-2 py-1 font-bold ${
+          balance === 0 ? "bg-[#bceecb] text-[#144229]" : "bg-[#fff0c6] text-[#775a19]"
+        }`}>
+          <span className="font-semibold uppercase tracking-wide">Bal</span>
+          {rupee(balance)}
+        </span>
+      </div>
+    );
+  },
+},
     { title: "Joined", key: "createdAt" },
     {
       title: "Appointment",
@@ -410,23 +263,39 @@ export default function StudentsPage() {
               Notify
             </button> */}
 
-            <button
-              type="button"
-              className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] bg-[#2D5A3F] px-3 text-xs font-bold text-white hover:bg-[#16482b]"
-              onClick={() => setAttendanceStudent(row)}
-            >
-              <FiCheckSquare aria-hidden="true" />
-              {count > 0 ? `Attendance (${count})` : "Mark Attendance"}
-            </button>
+         <button
+  type="button"
+  className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] bg-[#2D5A3F] px-3 text-xs font-bold text-white hover:bg-[#16482b]"
+  onClick={async () => {
+    if (!attendanceRecords[row.id]) {
+      const { records } = await getStudentAttendance(row.id);
+      setAttendanceRecords((prev) => ({ ...prev, [row.id]: records }));
+    }
+    setAttendanceStudent(row);
+  }}
+>
+  <FiCheckSquare aria-hidden="true" />
+  {(attendanceRecords[row.id]?.length ?? row.attendanceCount) > 0
+    ? `Attendance (${attendanceRecords[row.id]?.length ?? row.attendanceCount})`
+    : "Mark Attendance"}
+</button>
 
-            <button
-              type="button"
-              className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
-              onClick={() => setPaymentStudent(row)}
-            >
-              <FiCreditCard aria-hidden="true" />
-              {paymentConfigs[row.id] ? "View History" : "Set Payment"}
-            </button>
+           <button
+  type="button"
+  className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
+onClick={async () => {
+  if (!paymentConfigs[row.id]) {
+    const { config } = await getClientPaymentConfig(row.id);
+    if (config) {
+      setPaymentConfigs((prev) => ({ ...prev, [row.id]: config }));
+    }
+  }
+  setPaymentStudent(row);  // ← after fetch
+}}
+>
+  <FiCreditCard aria-hidden="true" />
+  {(paymentConfigs[row.id] || row.hasPayment) ? "View History" : "Set Payment"}
+</button>
 
             <button
               type="button"
@@ -488,38 +357,80 @@ export default function StudentsPage() {
         onClose={() => setNotifyDetails(null)}
       />
 
-      <StudentAttendanceModal
-        open={Boolean(attendanceStudent)}
-        student={attendanceStudent}
-        records={
-          attendanceStudent ? attendanceRecords[attendanceStudent.id] || [] : []
-        }
-        onClose={() => setAttendanceStudent(null)}
-        onSaveRecord={(nextRecord) => {
-          if (!attendanceStudent) return;
-          setAttendanceRecords((prev) => ({
-            ...prev,
-            [attendanceStudent.id]: [
-              nextRecord,
-              ...(prev[attendanceStudent.id] || []),
-            ],
-          }));
-        }}
-      />
+    <StudentAttendanceModal
+  open={Boolean(attendanceStudent)}
+  student={attendanceStudent}
+  records={
+    attendanceStudent ? attendanceRecords[attendanceStudent.id] || [] : []
+  }
+  onClose={() => setAttendanceStudent(null)}
+ onSaveRecord={async (nextRecord) => {
+  if (!attendanceStudent) return;
 
-      <ClientPaymentModal
-        open={Boolean(paymentStudent)}
-        client={paymentStudent}
-        config={paymentStudent ? paymentConfigs[paymentStudent.id] : undefined}
-        onClose={() => setPaymentStudent(null)}
-        onSaveConfig={(next) => {
-          if (!paymentStudent) return;
-          setPaymentConfigs((prev) => ({
-            ...prev,
-            [paymentStudent.id]: next,
-          }));
-        }}
-      />
+  const result = await addStudentAttendance(attendanceStudent.id, {
+    attendanceNo: nextRecord.attendanceNo,
+    date: nextRecord.date,
+    paidAmount: nextRecord.paidAmount,
+    paymentMethod: nextRecord.paymentMethod,
+    notes: nextRecord.notes,
+  });
+
+  if (result.error) {
+    alert(result.error);
+    return;
+  }
+
+  // Update attendance records
+  setAttendanceRecords((prev) => ({
+    ...prev,
+    [attendanceStudent.id]: [
+      { ...nextRecord, id: result.id! },
+      ...(prev[attendanceStudent.id] || []),
+    ],
+  }));
+
+  // If payment was made, clear cached payment config so it re-fetches
+  if (nextRecord.paidAmount > 0) {
+    setPaymentConfigs((prev) => {
+      const next = { ...prev };
+      delete next[attendanceStudent.id];
+      return next;
+    });
+  }
+}}
+/>
+
+    <ClientPaymentModal
+  open={Boolean(paymentStudent)}
+  client={paymentStudent}
+  config={paymentStudent ? paymentConfigs[paymentStudent.id] : undefined}
+  onClose={() => setPaymentStudent(null)}
+ onSaveConfig={async (next) => {
+  if (!paymentStudent) return;
+
+  const clientId = paymentStudent.id;
+
+  await saveClientPaymentConfig(clientId, next.totalAmount, next.notes || '');
+
+  for (const payment of next.payments) {
+    if (payment.id.startsWith("pay-")) {
+      await addPaymentEntry(clientId, {
+        date: payment.date,
+        amount: payment.amount,
+        category: payment.category,
+        payment_method: payment.payment_method,
+        reference: payment.reference,
+        notes: payment.notes,
+      });
+    }
+  }
+
+  const { config } = await getClientPaymentConfig(clientId);
+  if (config) {
+    setPaymentConfigs((prev) => ({ ...prev, [clientId]: config }));
+  }
+}}
+/>
 
       <ReportDownloadModal
         key={

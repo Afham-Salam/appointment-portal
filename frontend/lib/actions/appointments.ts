@@ -11,7 +11,7 @@ async function getAuthenticatedUser() {
 
 // Search client by phone number (for returning clients)
 export async function searchClientByPhone(phone: string) {
-   const { supabase } = await getAuthenticatedUser()
+  const { supabase } = await getAuthenticatedUser()
 
   const { data: client, error } = await supabase
     .from('clients')
@@ -21,17 +21,29 @@ export async function searchClientByPhone(phone: string) {
         id,
         status,
         scheduled_date,
+        scheduled_time,
+        location,
+        appointment_days,
         created_at
       )
     `)
     .eq('phone', phone)
+    .order('created_at', { referencedTable: 'appointments', ascending: false })
     .single()
 
-  if (error || !client) return { client: null, appointments: [] }
+  if (error || !client) return { client: null, appointments: [], latestAppointment: null }
+
+  const appointments = client.appointments || []
+  const latest = appointments[0] || null
 
   return {
     client,
-    appointments: client.appointments || [],
+    appointments,
+    latestAppointment: latest ? {
+      location: latest.location || '',
+      appointmentDays: latest.appointment_days || [],
+      scheduledTime: latest.scheduled_time || '',
+    } : null,
   }
 }
 
@@ -46,6 +58,8 @@ export async function createAppointment(values: {
   clientType: 'Student' | 'Client'
   scheduledDate?: string
    scheduledTime?: string 
+   location?: string           // ← add
+  appointmentDays?: string[]  
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -104,6 +118,8 @@ export async function createAppointment(values: {
       client_id: clientId,
       status: 'Pending',
       scheduled_date: values.scheduledDate || null,
+      location: values.location || 'Kodinhi Cheruppara, Malappuram',
+      appointment_days: values.appointmentDays || [],
       created_by: user.id,
       scheduled_time: values.scheduledTime || null,
     })
@@ -146,7 +162,7 @@ export async function getAppointments(params?: {
     .from('appointments')
     .select(
       `
-      id, status, scheduled_date,scheduled_time, notes, created_at,
+      id, status, scheduled_date,scheduled_time, location, appointment_days, notes, created_at,
       client:clients!inner (
         id, name, age, relative, address, country_code, phone, client_type
       )
@@ -208,6 +224,8 @@ if (search && search.trim()) {
       clientId: client.id || '',
       scheduledDate: apt.scheduled_date,
       scheduledTime: apt.scheduled_time || '',
+      location: apt.location || 'Kodinhi Cheruppara, Malappuram',
+appointmentDays: apt.appointment_days || [],
     }
   })
  
@@ -268,7 +286,7 @@ export async function getApprovedClients(params?: {
   // Step 1: Get client IDs with their latest scheduled date
   let appointmentQuery = supabase
     .from('appointments')
-    .select('client_id, scheduled_date,scheduled_time')
+    .select('client_id, scheduled_date,scheduled_time,location')
     .eq('status', 'Accepted')
     .order('scheduled_date', { ascending: false })
 
@@ -289,10 +307,12 @@ export async function getApprovedClients(params?: {
   const clientOrder: string[] = []
   const latestTimes = new Map<string, string>()
   const latestDates = new Map<string, string>()
+  const latestLocations = new Map<string, string>() 
   for (const apt of matchingAppointments) {
     if (!latestDates.has(apt.client_id)) {
       latestDates.set(apt.client_id, apt.scheduled_date || '')
        latestTimes.set(apt.client_id, apt.scheduled_time || '')
+        latestLocations.set(apt.client_id, apt.location || '')
       clientOrder.push(apt.client_id)
     }
   }
@@ -324,6 +344,38 @@ export async function getApprovedClients(params?: {
 
   if (error) return { error: error.message, clients: [], total: 0 }
 
+const { data: paymentData } = await supabase
+  .from('client_payments')
+  .select('client_id, total_amount')
+
+const { data: allPaymentEntries } = await supabase
+  .from('transactions')
+  .select('client_id, amount_paise')
+  .eq('type', 'income')
+  .neq('status', 'void')
+  .not('client_id', 'is', null)
+
+const paymentTotals = new Map<string, { totalAmount: number; totalPaid: number }>()
+const { data: attendanceData } = await supabase
+  .from('student_attendance')
+  .select('client_id')
+
+const attendanceCounts = new Map<string, number>()
+for (const a of (attendanceData || [])) {
+  attendanceCounts.set(a.client_id, (attendanceCounts.get(a.client_id) || 0) + 1)
+}
+for (const p of (paymentData || [])) {
+  paymentTotals.set(p.client_id, { totalAmount: Number(p.total_amount), totalPaid: 0 })
+}
+for (const e of (allPaymentEntries || [])) {
+  if (!e.client_id) continue
+  const existing = paymentTotals.get(e.client_id)
+  if (existing) {
+    existing.totalPaid += Number(e.amount_paise) / 100
+  }
+}
+
+const clientsWithPayment = new Set((paymentData || []).map((p: any) => p.client_id))
   const seen = new Set<string>()
   const clientsMap = new Map<string, any>()
 
@@ -354,6 +406,10 @@ export async function getApprovedClients(params?: {
       totalAppointments: appts.length,
       scheduledDate: latestDates.get(c.id) || '',
       scheduledTime: latestTimes.get(c.id) || '',
+      hasPayment: clientsWithPayment.has(c.id),
+  paymentSummary: paymentTotals.get(c.id) || null,
+   attendanceCount: attendanceCounts.get(c.id) || 0,
+   location: latestLocations.get(c.id) || '',
     })
   }
 
@@ -491,6 +547,18 @@ if (appointment) {
     planEntries = data || []
   }
 
+  const { data: paymentConfig } = await supabase
+  .from('client_payments')
+  .select('*')
+  .eq('client_id', clientId)
+  .single()
+
+const { data: paymentEntries } = await supabase
+  .from('payment_entries')
+  .select('*')
+  .eq('client_id', clientId)
+  .order('date', { ascending: true })
+
   return {
     error: null,
     data: {
@@ -503,6 +571,19 @@ if (appointment) {
       mentalStatusExam,
       remediationEntries: remediationEntries || [],
       planEntries: planEntries || [],
+          paymentConfig: paymentConfig ? {
+      totalAmount: Number(paymentConfig.total_amount),
+      notes: paymentConfig.notes || '',
+      payments: (paymentEntries || []).map((e: any) => ({
+        id: e.id,
+        date: e.date,
+        amount: Number(e.amount),
+        category: e.category || '',
+        payment_method: e.payment_method || '',
+        reference: e.reference || '',
+        notes: e.notes || '',
+      })),
+    } : null,
     },
   }
 }
@@ -776,6 +857,8 @@ export async function updateAppointmentDetails(
     clientType: 'Student' | 'Client'
     scheduledDate?: string
      scheduledTime?: string 
+      location?: string           // ← add
+  appointmentDays?: string[]
   }
 ) {
    const { supabase } = await getAuthenticatedUser()
@@ -796,15 +879,18 @@ export async function updateAppointmentDetails(
 
   if (clientError) return { error: clientError.message }
 
-  // Update appointment date if provided
-  if (values.scheduledDate) {
-    const { error: aptError } = await supabase
-      .from('appointments')
-      .update({ scheduled_date: values.scheduledDate, scheduled_time: values.scheduledTime || undefined })
-      .eq('id', appointmentId)
+  // / NEW — always update appointment fields
+const { error: aptError } = await supabase
+  .from('appointments')
+  .update({
+    scheduled_date: values.scheduledDate || undefined,
+    scheduled_time: values.scheduledTime || undefined,
+    location: values.location || 'Kodinhi Cheruppara, Malappuram',
+    appointment_days: values.appointmentDays || [],
+  })
+  .eq('id', appointmentId)
 
-    if (aptError) return { error: aptError.message }
-  }
+if (aptError) return { error: aptError.message }
 
   return { success: true }
 }
@@ -882,7 +968,7 @@ export async function getAllDataForExport() {
     return rows
   }
 
-  const [clients, appointments, applicationForms, studentIntake, parentsDetails, assessmentReports, mentalStatusExams, remediationEntries] = await Promise.all([
+  const [clients, appointments, applicationForms, studentIntake, parentsDetails, assessmentReports, mentalStatusExams, remediationEntries, transactions, studentAttendance] = await Promise.all([
     fetchAll('clients'),
     fetchAll('appointments'),
     fetchAll('application_forms', 'appointment_id'),
@@ -891,10 +977,206 @@ export async function getAllDataForExport() {
     fetchAll('assessment_reports', 'client_id'),
     fetchAll('mental_status_exams', 'appointment_id'),
     fetchAll('remediation_entries', 'sort_order'),
+    fetchAll('transactions'),
+    fetchAll('student_attendance', 'attendance_no'),
   ])
 
   return {
     error: null,
-    data: { clients, appointments, applicationForms, studentIntake, parentsDetails, assessmentReports, mentalStatusExams, remediationEntries },
+    data: { clients, appointments, applicationForms, studentIntake, parentsDetails, assessmentReports, mentalStatusExams, remediationEntries, transactions, studentAttendance },
   }
+}
+
+// Get payment config for a client
+export async function getClientPaymentConfig(clientId: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { data: config } = await supabase
+    .from('client_payments')
+    .select('*')
+    .eq('client_id', clientId)
+    .single()
+
+  // Read payments from transactions table
+  const { data: entries } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('client_id', clientId)
+    .eq('type', 'income')
+    .neq('status', 'void')
+    .order('date', { ascending: true })
+
+  const payments = (entries || []).map((e) => ({
+    id: e.id,
+    date: e.date,
+    amount: Number(e.amount_paise) / 100,
+    category: e.category || '',
+    payment_method: e.payment_method || '',
+    reference: e.reference || '',
+    notes: e.notes || '',
+  }))
+
+  // Return config even if total fee not set — payments may exist from attendance
+  if (!config && payments.length === 0) return { config: null }
+
+  return {
+    config: {
+      totalAmount: config ? Number(config.total_amount) : 0,
+      notes: config?.notes || '',
+      payments,
+    },
+  }
+}
+
+// Save payment config (total fee + notes)
+export async function saveClientPaymentConfig(clientId: string, totalAmount: number, notes: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { error } = await supabase
+    .from('client_payments')
+    .upsert(
+      { client_id: clientId, total_amount: totalAmount, notes, updated_at: new Date().toISOString() },
+      { onConflict: 'client_id' }
+    )
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+// Add a payment entry
+export async function addPaymentEntry(clientId: string, entry: {
+  date: string
+  amount: number
+  category: string
+  payment_method: string
+  reference: string
+  notes: string
+}) {
+  const { supabase, user } = await getAuthenticatedUser()
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({
+      type: 'income',
+      date: entry.date,
+      payee: '', // will be filled with client name below
+      category: entry.category,
+      amount_paise: Math.round(entry.amount * 100),
+      payment_method: entry.payment_method,
+      reference: entry.reference,
+      notes: entry.notes,
+      client_id: clientId,
+      status: 'active',
+      version: 1,
+      created_by: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+
+  // Set payee to client name
+  const { data: client } = await supabase
+    .from('clients')
+    .select('name')
+    .eq('id', clientId)
+    .single()
+
+  if (client) {
+    await supabase
+      .from('transactions')
+      .update({ payee: client.name })
+      .eq('id', data.id)
+  }
+
+  // Audit log
+  await supabase.from('transaction_audit').insert({
+    transaction_id: data.id,
+    action: 'Created',
+    actor: user.email || '',
+    after_data: { type: 'income', amount: entry.amount, client_id: clientId },
+  })
+
+  return { success: true, id: data.id }
+}
+
+// Get attendance records for a student
+export async function getStudentAttendance(clientId: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { data, error } = await supabase
+    .from('student_attendance')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('attendance_no', { ascending: false })
+
+  if (error) return { records: [], error: error.message }
+
+  return {
+    records: (data || []).map((r) => ({
+      id: r.id,
+      attendanceNo: r.attendance_no,
+      date: r.date,
+      paidAmount: Number(r.paid_amount || 0),
+      paymentMethod: r.payment_method || '',
+      notes: r.notes || '',
+    })),
+    error: null,
+  }
+}
+
+// Add attendance record
+export async function addStudentAttendance(clientId: string, record: {
+  attendanceNo: number
+  date: string
+  paidAmount: number
+  paymentMethod?: string
+  notes?: string
+}) {
+  const { supabase, user } = await getAuthenticatedUser()
+
+  // Save attendance record
+  const { data, error } = await supabase
+    .from('student_attendance')
+    .insert({
+      client_id: clientId,
+      attendance_no: record.attendanceNo,
+      date: record.date,
+      paid_amount: record.paidAmount,
+      payment_method: record.paymentMethod || '',
+      notes: record.notes || '',
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+
+  // If payment was made, save to transactions table
+  if (record.paidAmount > 0) {
+    // Get client name
+    const { data: client } = await supabase
+      .from('clients')
+      .select('name')
+      .eq('id', clientId)
+      .single()
+
+    await supabase
+      .from('transactions')
+      .insert({
+        type: 'income',
+        date: record.date,
+        payee: client?.name || '',
+        category: 'Session fee',
+        amount_paise: Math.round(record.paidAmount * 100),
+        payment_method: record.paymentMethod || 'Cash',
+        reference: `Attendance #${record.attendanceNo}`,
+        notes: record.notes || '',
+        client_id: clientId,
+        status: 'active',
+        version: 1,
+        created_by: user.id,
+      })
+  }
+
+  return { success: true, id: data.id }
 }
