@@ -26,6 +26,9 @@ import TransactionFormModal from "@/components/accounts/TransactionFormModal";
 import TransactionHistoryTable from "@/components/accounts/TransactionHistoryTable";
 import TransactionDetailsDrawer from "@/components/accounts/TransactionDetailsDrawer";
 import MonthlyYearlyReport from "@/components/accounts/MonthlyYearlyReport";
+import PendingPaymentsTable, {
+  type PendingPaymentClient,
+} from "@/components/accounts/PendingPaymentsTable";
 import { categories, paymentMethods } from "@/lib/accounts/constants";
 import {
   getTransactions,
@@ -123,7 +126,26 @@ function AccountsContent() {
   const [method, setMethod] = useState("all");
   const [status, setStatus] = useState("all");
   const [exporting, setExporting] = useState(false);
-  const [pendingPayments, setPendingPayments] = useState<{ pending: number; clientCount: number } | undefined>(undefined);
+  const [pendingPayments, setPendingPayments] = useState<{
+    pending: number;
+    clientCount: number;
+    clients: PendingPaymentClient[];
+  } | undefined>(undefined);
+  const [pendingPaymentsLoading, setPendingPaymentsLoading] = useState(true);
+
+  const fetchPendingPayments = async () => {
+    setPendingPaymentsLoading(true);
+    try {
+      const data = await getPendingClientPayments();
+      if (data.error) {
+        message.error("Could not load pending client payments.");
+        return;
+      }
+      setPendingPayments(data);
+    } finally {
+      setPendingPaymentsLoading(false);
+    }
+  };
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -136,8 +158,8 @@ function AccountsContent() {
   };
  useEffect(() => {
     fetchTransactions();
-     getPendingClientPayments().then((data) => setPendingPayments(data));
-  }, []);
+    fetchPendingPayments();
+  }, [message]);
 
   useEffect(() => {
     if (detailId) {
@@ -222,6 +244,7 @@ function AccountsContent() {
 
     setForm(null);
     fetchTransactions();
+    fetchPendingPayments();
     message.success(before ? "Transaction updated." : "Transaction saved.");
   };
    const voidRow = async (before: Transaction) => {
@@ -231,6 +254,7 @@ function AccountsContent() {
       return;
     }
     fetchTransactions();
+    fetchPendingPayments();
     message.success("Transaction voided. Totals have been updated.");
   };
   const download = async () => {
@@ -334,6 +358,27 @@ function AccountsContent() {
                   The Daily / Monthly toggle controls the breakdown. Amounts are in INR.
                 </p>
                 <MonthlyYearlyReport rows={report} grouping={period.mode} />
+              </Card>
+            ),
+          },
+          {
+            key: "pending-payments",
+            label: "Pending payments",
+            children: (
+              <Card
+                title="Pending client payments"
+                extra={
+                  pendingPayments ? (
+                    <Tag>{pendingPayments.clientCount} clients</Tag>
+                  ) : undefined
+                }
+                styles={{ body: { padding: 0 } }}
+              >
+                <PendingPaymentsTable
+                  rows={pendingPayments?.clients || []}
+                  loading={pendingPaymentsLoading}
+                  onUpdated={fetchPendingPayments}
+                />
               </Card>
             ),
           },

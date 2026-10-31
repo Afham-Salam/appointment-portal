@@ -125,6 +125,7 @@ export default function ClientPaymentModal({
   open,
   client,
   config,
+  historyOnly = false,
   onClose,
   onSaveConfig,
 }: {
@@ -136,6 +137,7 @@ export default function ClientPaymentModal({
     clientType?: string;
   } | null;
   config?: ClientPaymentConfig;
+  historyOnly?: boolean;
   onClose: () => void;
   onSaveConfig: (next: ClientPaymentConfig) => void;
 }) {
@@ -148,7 +150,7 @@ export default function ClientPaymentModal({
   const statementRef = useRef<HTMLDivElement>(null);
 
   const isConfigured = Boolean(config && config.totalAmount > 0);
-  const showSetupForm = !isConfigured || editingTotal;
+  const showSetupForm = !historyOnly && (!isConfigured || editingTotal);
 
   useEffect(() => {
     if (!open) return;
@@ -568,25 +570,29 @@ export default function ClientPaymentModal({
                   <FiPrinter className="h-3.5 w-3.5" />
                   {printing ? "Preparing PDF…" : "Print PDF"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddingPayment(false);
-                    setEditingTotal(true);
-                  }}
-                  className="cursor-pointer inline-flex h-8 items-center gap-1.5 rounded-md border border-[#c1c9c0] bg-white px-2.5 text-xs font-semibold text-[#144229] hover:border-[#2D5A3F]"
-                >
-                  <FiEdit2 className="h-3.5 w-3.5" />
-                  Edit Total Fee
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAddingPayment((prev) => !prev)}
-                  className="cursor-pointer inline-flex h-8 items-center gap-1.5 rounded-md bg-[#2D5A3F] px-3 text-xs font-semibold text-white hover:bg-[#16482b]"
-                >
-                  <FiPlus className="h-3.5 w-3.5" />
-                  {addingPayment ? "Hide Form" : "Add Payment"}
-                </button>
+                {!historyOnly && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddingPayment(false);
+                        setEditingTotal(true);
+                      }}
+                      className="cursor-pointer inline-flex h-8 items-center gap-1.5 rounded-md border border-[#c1c9c0] bg-white px-2.5 text-xs font-semibold text-[#144229] hover:border-[#2D5A3F]"
+                    >
+                      <FiEdit2 className="h-3.5 w-3.5" />
+                      Edit Total Fee
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddingPayment((prev) => !prev)}
+                      className="cursor-pointer inline-flex h-8 items-center gap-1.5 rounded-md bg-[#2D5A3F] px-3 text-xs font-semibold text-white hover:bg-[#16482b]"
+                    >
+                      <FiPlus className="h-3.5 w-3.5" />
+                      {addingPayment ? "Hide Form" : "Add Payment"}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 

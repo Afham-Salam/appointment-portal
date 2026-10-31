@@ -186,20 +186,31 @@ export async function searchClientsForDropdown(search: string) {
 export async function getPendingClientPayments() {
   const { supabase } = await getAuthenticatedUser()
 
-  const { data: configs } = await supabase
+  const { data: configs, error: configError } = await supabase
     .from('client_payments')
     .select('client_id, total_amount')
 
-  if (!configs || configs.length === 0) return { pending: 0, clientCount: 0 }
+  if (configError) return { error: configError.message, pending: 0, clientCount: 0, clients: [] }
+  if (!configs || configs.length === 0) return { error: null, pending: 0, clientCount: 0, clients: [] }
 
   const clientIds = configs.map((c) => c.client_id)
 
-  const { data: payments } = await supabase
+  const [{ data: payments, error: paymentError }, { data: clients, error: clientError }] =
+    await Promise.all([
+      supabase
     .from('transactions')
     .select('client_id, amount_paise')
     .eq('type', 'income')
     .neq('status', 'void')
-    .in('client_id', clientIds)
+    .in('client_id', clientIds),
+      supabase
+        .from('clients')
+        .select('id, name, phone, country_code')
+        .in('id', clientIds),
+    ])
+
+  if (paymentError) return { error: paymentError.message, pending: 0, clientCount: 0, clients: [] }
+  if (clientError) return { error: clientError.message, pending: 0, clientCount: 0, clients: [] }
 
   // Sum paid in PAISE (don't divide)
   const paidMap = new Map<string, number>()
@@ -209,6 +220,16 @@ export async function getPendingClientPayments() {
 
   let totalPending = 0
   let clientCount = 0
+  const clientMap = new Map((clients || []).map((client) => [client.id, client]))
+  const pendingClients: {
+    id: string
+    name: string
+    phone: string
+    totalPaise: number
+    paidPaise: number
+    pendingPaise: number
+  }[] = []
+
   for (const cfg of configs) {
     // Convert total_amount from rupees to paise
     const totalPaise = Number(cfg.total_amount) * 100
@@ -217,8 +238,18 @@ export async function getPendingClientPayments() {
     if (balance > 0) {
       totalPending += balance
       clientCount++
+      const client = clientMap.get(cfg.client_id)
+      pendingClients.push({
+        id: cfg.client_id,
+        name: client?.name || 'Unknown client',
+        phone: client ? `${client.country_code || ''} ${client.phone || ''}`.trim() : '',
+        totalPaise,
+        paidPaise,
+        pendingPaise: balance,
+      })
     }
   }
 
-  return { pending: totalPending, clientCount }
+  pendingClients.sort((a, b) => b.pendingPaise - a.pendingPaise || a.name.localeCompare(b.name))
+  return { error: null, pending: totalPending, clientCount, clients: pendingClients }
 }
