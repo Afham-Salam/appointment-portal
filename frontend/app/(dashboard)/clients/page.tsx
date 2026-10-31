@@ -83,39 +83,6 @@ export default function ClientsPage() {
         phone: `${c.countryCode} ${c.phone}`.trim(),
       }));
       setClients(mapped);
-      if (mapped[0]?.id) {
-        setPaymentConfigs((prev) =>
-          prev[mapped[0].id]
-            ? prev
-            : {
-                ...prev,
-                [mapped[0].id]: {
-                  totalAmount: 5000,
-                  notes: "5-session counselling package",
-                  payments: [
-                    {
-                      id: "sample-client-pay-1",
-                      date: "2026-10-18",
-                      amount: 2000,
-                      category: "Consultation",
-                      payment_method: "UPI",
-                      reference: "UPI-409221",
-                      notes: "First installment",
-                    },
-                    {
-                      id: "sample-client-pay-2",
-                      date: "2026-10-22",
-                      amount: 1500,
-                      category: "Session fee",
-                      payment_method: "Cash",
-                      reference: "RCP-208",
-                      notes: "Second installment",
-                    },
-                  ],
-                },
-              },
-        );
-      }
       setTotal(count);
       setLoading(false);
     }
@@ -169,47 +136,45 @@ export default function ClientsPage() {
         <span className="font-medium">{row.totalAppointments}</span>
       ),
     },
-    {
-      title: "Payment Status",
-      key: "payment",
-      render: (row) => {
-        const cfg = paymentConfigs[row.id];
-        const summary = cfg
-          ? {
-              totalAmount: cfg.totalAmount,
-              totalPaid: cfg.payments.reduce((sum, payment) => sum + payment.amount, 0),
-            }
-          : row.paymentSummary || { totalAmount: 0, totalPaid: 0 };
-        const balance = Math.max(summary.totalAmount - summary.totalPaid, 0);
+   {
+  title: "Payment Status",
+  key: "payment",
+  render: (row) => {
+    const cfg = paymentConfigs[row.id];
+    const summary = cfg
+      ? { totalAmount: cfg.totalAmount, totalPaid: cfg.payments.reduce((s, p) => s + p.amount, 0) }
+      : row.paymentSummary;
 
-        return (
-          <div className="flex min-w-28 flex-col gap-1 text-[11px] leading-4">
-            <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#e8f7ee] px-2 py-1 font-bold text-[#144229]">
-              <span className="font-semibold uppercase tracking-wide text-[#2D5A3F]">
-                Paid
-              </span>
-              {rupee(summary.totalPaid)}
-            </span>
+    if (!summary || (summary.totalAmount === 0 && summary.totalPaid === 0)) {
+      return <span className="text-xs text-[#667362]">Not configured</span>;
+    }
+
+    const balance = Math.max(summary.totalAmount - summary.totalPaid, 0);
+
+    return (
+      <div className="flex min-w-28 flex-col gap-1 text-[11px] leading-4">
+        <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#e8f7ee] px-2 py-1 font-bold text-[#144229]">
+          <span className="font-semibold uppercase tracking-wide text-[#2D5A3F]">Paid</span>
+          {rupee(summary.totalPaid)}
+        </span>
+        {summary.totalAmount > 0 && (
+          <>
             <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#eef1ec] px-2 py-1 font-bold text-[#1a1c1a]">
-              <span className="font-semibold uppercase tracking-wide text-[#536350]">
-                Total
-              </span>
+              <span className="font-semibold uppercase tracking-wide text-[#536350]">Total</span>
               {rupee(summary.totalAmount)}
             </span>
-            <span
-              className={`inline-flex items-center justify-between gap-2 rounded-md px-2 py-1 font-bold ${
-                balance === 0
-                  ? "bg-[#bceecb] text-[#144229]"
-                  : "bg-[#fff0c6] text-[#775a19]"
-              }`}
-            >
+            <span className={`inline-flex items-center justify-between gap-2 rounded-md px-2 py-1 font-bold ${
+              balance === 0 ? "bg-[#bceecb] text-[#144229]" : "bg-[#fff0c6] text-[#775a19]"
+            }`}>
               <span className="font-semibold uppercase tracking-wide">Bal</span>
               {rupee(balance)}
             </span>
-          </div>
-        );
-      },
-    },
+          </>
+        )}
+      </div>
+    );
+  },
+},
     { title: "Joined", key: "createdAt" },
 {
   title: "Appointment",

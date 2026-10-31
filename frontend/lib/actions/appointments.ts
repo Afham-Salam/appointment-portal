@@ -286,7 +286,7 @@ export async function getApprovedClients(params?: {
   // Step 1: Get client IDs with their latest scheduled date
   let appointmentQuery = supabase
     .from('appointments')
-    .select('client_id, scheduled_date,scheduled_time,location')
+    .select('client_id, scheduled_date,scheduled_time,location,appointment_days')
     .eq('status', 'Accepted')
     .order('scheduled_date', { ascending: false })
 
@@ -308,11 +308,13 @@ export async function getApprovedClients(params?: {
   const latestTimes = new Map<string, string>()
   const latestDates = new Map<string, string>()
   const latestLocations = new Map<string, string>() 
+  const latestDays = new Map<string, string[]>()
   for (const apt of matchingAppointments) {
     if (!latestDates.has(apt.client_id)) {
       latestDates.set(apt.client_id, apt.scheduled_date || '')
        latestTimes.set(apt.client_id, apt.scheduled_time || '')
         latestLocations.set(apt.client_id, apt.location || '')
+         latestDays.set(apt.client_id, apt.appointment_days || []) 
       clientOrder.push(apt.client_id)
     }
   }
@@ -372,10 +374,12 @@ for (const e of (allPaymentEntries || [])) {
   const existing = paymentTotals.get(e.client_id)
   if (existing) {
     existing.totalPaid += Number(e.amount_paise) / 100
+  } else {
+    paymentTotals.set(e.client_id, { totalAmount: 0, totalPaid: Number(e.amount_paise) / 100 })
   }
 }
 
-const clientsWithPayment = new Set((paymentData || []).map((p: any) => p.client_id))
+const clientsWithPayment = new Set(paymentTotals.keys())
   const seen = new Set<string>()
   const clientsMap = new Map<string, any>()
 
@@ -410,6 +414,7 @@ const clientsWithPayment = new Set((paymentData || []).map((p: any) => p.client_
   paymentSummary: paymentTotals.get(c.id) || null,
    attendanceCount: attendanceCounts.get(c.id) || 0,
    location: latestLocations.get(c.id) || '',
+   appointmentDays: latestDays.get(c.id) || [],
     })
   }
 
