@@ -46,6 +46,7 @@ type StudentRow = {
   hasPayment: boolean;
   paymentSummary: { totalAmount: number; totalPaid: number } | null;
    attendanceCount: number;
+   appointmentDays: string[];
 };
 
 const ATTENDANCE_FILTER_OPTIONS = [
@@ -180,7 +181,7 @@ useEffect(() => {
     );
   },
 },
- {
+{
   title: "Payment Status",
   key: "payment",
   render: (row) => {
@@ -189,7 +190,7 @@ useEffect(() => {
       ? { totalAmount: cfg.totalAmount, totalPaid: cfg.payments.reduce((s, p) => s + p.amount, 0) }
       : row.paymentSummary;
 
-    if (!summary) {
+    if (!summary || (summary.totalAmount === 0 && summary.totalPaid === 0)) {
       return <span className="text-xs text-[#667362]">Not configured</span>;
     }
 
@@ -201,16 +202,20 @@ useEffect(() => {
           <span className="font-semibold uppercase tracking-wide text-[#2D5A3F]">Paid</span>
           {rupee(summary.totalPaid)}
         </span>
-        <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#eef1ec] px-2 py-1 font-bold text-[#1a1c1a]">
-          <span className="font-semibold uppercase tracking-wide text-[#536350]">Total</span>
-          {rupee(summary.totalAmount)}
-        </span>
-        <span className={`inline-flex items-center justify-between gap-2 rounded-md px-2 py-1 font-bold ${
-          balance === 0 ? "bg-[#bceecb] text-[#144229]" : "bg-[#fff0c6] text-[#775a19]"
-        }`}>
-          <span className="font-semibold uppercase tracking-wide">Bal</span>
-          {rupee(balance)}
-        </span>
+        {summary.totalAmount > 0 && (
+          <>
+            <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#eef1ec] px-2 py-1 font-bold text-[#1a1c1a]">
+              <span className="font-semibold uppercase tracking-wide text-[#536350]">Total</span>
+              {rupee(summary.totalAmount)}
+            </span>
+            <span className={`inline-flex items-center justify-between gap-2 rounded-md px-2 py-1 font-bold ${
+              balance === 0 ? "bg-[#bceecb] text-[#144229]" : "bg-[#fff0c6] text-[#775a19]"
+            }`}>
+              <span className="font-semibold uppercase tracking-wide">Bal</span>
+              {rupee(balance)}
+            </span>
+          </>
+        )}
       </div>
     );
   },
@@ -235,6 +240,14 @@ useEffect(() => {
         return `${date}, ${hour12}:${m} ${ampm}`;
       },
     },
+    {
+  title: "Days",
+  key: "appointmentDays",
+  render: (row) =>
+    row.appointmentDays?.length
+      ? row.appointmentDays.map((d: string) => d.slice(0, 3)).join(", ")
+      : "—",
+},
     {
       title: "Actions",
       key: "actions",
@@ -364,7 +377,7 @@ onClick={async () => {
     attendanceStudent ? attendanceRecords[attendanceStudent.id] || [] : []
   }
   onClose={() => setAttendanceStudent(null)}
- onSaveRecord={async (nextRecord) => {
+onSaveRecord={async (nextRecord) => {
   if (!attendanceStudent) return;
 
   const result = await addStudentAttendance(attendanceStudent.id, {
@@ -380,7 +393,6 @@ onClick={async () => {
     return;
   }
 
-  // Update attendance records
   setAttendanceRecords((prev) => ({
     ...prev,
     [attendanceStudent.id]: [
@@ -389,13 +401,12 @@ onClick={async () => {
     ],
   }));
 
-  // If payment was made, clear cached payment config so it re-fetches
+  // If payment was made, re-fetch fresh payment config
   if (nextRecord.paidAmount > 0) {
-    setPaymentConfigs((prev) => {
-      const next = { ...prev };
-      delete next[attendanceStudent.id];
-      return next;
-    });
+    const { config } = await getClientPaymentConfig(attendanceStudent.id);
+    if (config) {
+      setPaymentConfigs((prev) => ({ ...prev, [attendanceStudent.id]: config }));
+    }
   }
 }}
 />
