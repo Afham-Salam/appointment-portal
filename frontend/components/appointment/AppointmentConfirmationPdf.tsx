@@ -1,17 +1,22 @@
 "use client";
 
 import {
+  Defs,
   Document,
   Font,
+  G,
   Image,
+  LinearGradient,
   Page,
   Path,
+  Stop,
   Svg,
   Text,
   View,
   StyleSheet,
   pdf,
 } from "@react-pdf/renderer";
+import { toTitleCase } from "../helper/titlecase";
 
 export type ConfirmationDetails = {
   name: string;
@@ -26,8 +31,7 @@ export type AppointmentNotifyDetails = ConfirmationDetails & {
 };
 
 export const CLINIC_NAME = "Treasure Counseling Center";
-export const CLINIC_LOCATION =
-  "Treasure Counseling Center, Malappuram, Kerala";
+export const CLINIC_LOCATION = "Treasure Counseling Center, Malappuram, Kerala";
 
 const green = "#003e2b";
 const gold = "#b58a44";
@@ -119,10 +123,11 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    gap: 30,
     marginHorizontal: 37,
     marginTop: "auto",
-    alignItems: "flex-end",
   },
   thanks: { fontFamily: "Times-Italic", fontSize: 22, marginBottom: 4 },
   clinic: { fontFamily: "Helvetica-Bold", fontSize: 10 },
@@ -135,12 +140,62 @@ const styles = StyleSheet.create({
   },
 });
 
+/* ---------- LEAVES (changed section) ---------- */
+
+type LeafProps = {
+  x: number;
+  y: number;
+  rotation: number; // 0 = pointing right, 90 = pointing down
+  scale?: number;
+  variant?: "green" | "gold";
+};
+
+const LEAF_COLORS = {
+  green: { top: "#4f7a45", bottom: "#2c5232", vein: "#9db98a", mid: "#c9d8a8" },
+  gold: { top: "#f0cf8a", bottom: "#d9a95a", vein: "#fff1cc", mid: "#f7e2ae" },
+};
+
+const LEAF_UPPER = "M0 0 C18 -26 62 -30 100 0 Z";
+const LEAF_LOWER = "M0 0 C18 26 62 30 100 0 Z";
+const LEAF_VEINS =
+  "M18 0 L36 -13 M34 0 L56 -15 M52 0 L76 -13 M18 0 L36 13 M34 0 L56 15 M52 0 L76 13";
+
+function Leaf({ x, y, rotation, scale = 1, variant = "green" }: LeafProps) {
+  const c = LEAF_COLORS[variant];
+  return (
+    <G transform={`translate(${x}, ${y}) rotate(${rotation}) scale(${scale})`}>
+      <Path d={LEAF_UPPER} fill={c.top} />
+      <Path d={LEAF_LOWER} fill={c.bottom} />
+      <Path
+        d={LEAF_VEINS}
+        stroke={c.vein}
+        strokeWidth={0.8}
+        strokeOpacity={0.7}
+        fill="none"
+      />
+      <Path d="M0 0 L100 0" stroke={c.mid} strokeWidth={1.2} fill="none" />
+    </G>
+  );
+}
+
+// gold leaves first so green ones overlap them
+const LEAVES: LeafProps[] = [
+  { x: 70, y: 95, rotation: 25, scale: 0.6, variant: "gold" },
+  { x: 72, y: 115, rotation: 95, scale: 0.5, variant: "gold" },
+  { x: 78, y: 120, rotation: 60, scale: 0.6, variant: "gold" },
+  { x: 86, y: 150, rotation: 75, scale: 0.55, variant: "gold" },
+  { x: 22, y: 14, rotation: 10, scale: 1.1 },
+  { x: 12, y: 24, rotation: 75, scale: 0.85 },
+  { x: 38, y: 48, rotation: 30, scale: 0.95 },
+  { x: 55, y: 72, rotation: 95, scale: 0.85 },
+];
+
 function Leaves({ bottom = false }: { bottom?: boolean }) {
   return (
     <Svg
-      width={115}
-      height={156}
-      viewBox="0 0 115 156"
+      width={141}
+      height={248}
+      viewBox="0 0 141 248"
       style={
         bottom
           ? {
@@ -152,34 +207,30 @@ function Leaves({ bottom = false }: { bottom?: boolean }) {
           : { position: "absolute", top: 0, left: 0 }
       }
     >
+      <Defs>
+        <LinearGradient id="branch" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor="#8a5a2b" />
+          <Stop offset="1" stopColor="#c8923f" />
+        </LinearGradient>
+      </Defs>
+
+      {/* branch */}
       <Path
-        d="M0 0 C35 35 49 84 79 149 M9 10 C49 13 76 25 102 36 M21 32 C12 65 11 86 15 108 M36 59 C66 56 83 65 103 86"
+        d="M0 6 C28 24 52 52 70 92 C82 118 90 150 96 190"
+        stroke="url(#branch)"
+        strokeWidth={2}
+        strokeLinecap="round"
         fill="none"
-        stroke="#a47b37"
-        strokeWidth={1}
       />
-      {[
-        { x: 8, y: 7, r: -65, c: "#405537" },
-        { x: 20, y: 26, r: -30, c: "#294b34" },
-        { x: 32, y: 48, r: -70, c: "#52633b" },
-        { x: 40, y: 70, r: -20, c: "#304d31" },
-        { x: 55, y: 98, r: -45, c: "#c69c55" },
-        { x: 66, y: 121, r: -10, c: "#d7b578" },
-      ].map((leaf, index) => (
-        <Path
-          key={index}
-          d="M0 0 C-20 17 -15 42 0 60 C16 38 19 15 0 0 Z M0 2 L0 56 M0 14 L-7 24 M0 26 L8 35 M0 38 L-6 45"
-          style={{
-            transform: `translate(${leaf.x}px, ${leaf.y}px) rotate(${leaf.r}deg)`,
-          }}
-          fill={leaf.c}
-          stroke="#bfa975"
-          strokeWidth={0.5}
-        />
+
+      {LEAVES.map((leaf, i) => (
+        <Leaf key={i} {...leaf} />
       ))}
     </Svg>
   );
 }
+
+/* ---------- END LEAVES ---------- */
 
 function Icon({ type }: { type: "client" | "date" | "time" | "location" }) {
   const paths = {
@@ -219,7 +270,11 @@ export function AppointmentConfirmationPdf({
   logoSrc?: string | null;
 }) {
   const rows = [
-    { label: "CLIENT NAME:", value: details.name, type: "client" as const },
+    {
+      label: "CLIENT NAME:",
+      value: toTitleCase(details.name),
+      type: "client" as const,
+    },
     { label: "DATE:", value: details.date, type: "date" as const },
     { label: "TIME:", value: details.time, type: "time" as const },
     { label: "LOCATION:", value: details.location, type: "location" as const },
@@ -287,9 +342,7 @@ export function AppointmentConfirmationPdf({
             <Text style={styles.thanks}>Thanks,</Text>
             <Text style={styles.clinic}>{CLINIC_NAME}</Text>
           </View>
-          <Text style={styles.signature}>
-            Treasure{"\n"}Counseling Center
-          </Text>
+          <Text style={styles.signature}>Treasure{"\n"}Counseling Center</Text>
         </View>
       </Page>
     </Document>
@@ -378,20 +431,22 @@ export function getWhatsAppNumber(details: AppointmentNotifyDetails) {
 
 export function confirmationFileName(name: string) {
   const safeName =
-    name.trim().replace(/[^a-zA-Z0-9-_ ]/g, "").replace(/\s+/g, "-") ||
-    "client";
+    name
+      .trim()
+      .replace(/[^a-zA-Z0-9-_ ]/g, "")
+      .replace(/\s+/g, "-") || "client";
   return `appointment-confirmation-${safeName}.pdf`;
 }
 
 export function buildWhatsAppMessage(details: AppointmentNotifyDetails) {
   return [
-    `Hello ${details.name},`,
+    `Hello ${toTitleCase(details.name)},`,
     "",
     `Greetings from ${CLINIC_NAME}.`,
     "",
     "Your appointment has been scheduled.",
     "",
-    `Client name: ${details.name}`,
+    `Client name: ${toTitleCase(details.name)}`,
     `Date: ${details.date}`,
     `Time: ${details.time}`,
     `Location: ${details.location}`,
@@ -440,9 +495,7 @@ export function openWhatsAppNotify(details: AppointmentNotifyDetails) {
 
 export async function shareOrNotifyConfirmation(
   details: AppointmentNotifyDetails,
-  blob: Blob,
 ) {
-  triggerPdfDownload(blob, details.name);
   openWhatsAppNotify(details);
   return "whatsapp";
 }

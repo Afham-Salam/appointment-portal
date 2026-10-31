@@ -27,8 +27,9 @@ type ClientRow = {
   totalAppointments: number;
   scheduledDate: string;
    scheduledTime: string;
-    hasPayment: boolean;
-     location: string;
+   hasPayment: boolean;
+   paymentSummary: { totalAmount: number; totalPaid: number } | null;
+   location: string;
 };
 
 const TYPE_OPTIONS = [
@@ -54,6 +55,13 @@ export default function ClientsPage() {
   const [paymentConfigs, setPaymentConfigs] = useState<
     Record<string, ClientPaymentConfig>
   >({});
+
+  const rupee = (amount: number) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
 
   const openReportModal = (client: ClientRow) => {
     setReportClient(client);
@@ -160,6 +168,47 @@ export default function ClientsPage() {
       render: (row) => (
         <span className="font-medium">{row.totalAppointments}</span>
       ),
+    },
+    {
+      title: "Payment Status",
+      key: "payment",
+      render: (row) => {
+        const cfg = paymentConfigs[row.id];
+        const summary = cfg
+          ? {
+              totalAmount: cfg.totalAmount,
+              totalPaid: cfg.payments.reduce((sum, payment) => sum + payment.amount, 0),
+            }
+          : row.paymentSummary || { totalAmount: 0, totalPaid: 0 };
+        const balance = Math.max(summary.totalAmount - summary.totalPaid, 0);
+
+        return (
+          <div className="flex min-w-28 flex-col gap-1 text-[11px] leading-4">
+            <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#e8f7ee] px-2 py-1 font-bold text-[#144229]">
+              <span className="font-semibold uppercase tracking-wide text-[#2D5A3F]">
+                Paid
+              </span>
+              {rupee(summary.totalPaid)}
+            </span>
+            <span className="inline-flex items-center justify-between gap-2 rounded-md bg-[#eef1ec] px-2 py-1 font-bold text-[#1a1c1a]">
+              <span className="font-semibold uppercase tracking-wide text-[#536350]">
+                Total
+              </span>
+              {rupee(summary.totalAmount)}
+            </span>
+            <span
+              className={`inline-flex items-center justify-between gap-2 rounded-md px-2 py-1 font-bold ${
+                balance === 0
+                  ? "bg-[#bceecb] text-[#144229]"
+                  : "bg-[#fff0c6] text-[#775a19]"
+              }`}
+            >
+              <span className="font-semibold uppercase tracking-wide">Bal</span>
+              {rupee(balance)}
+            </span>
+          </div>
+        );
+      },
     },
     { title: "Joined", key: "createdAt" },
 {

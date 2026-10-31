@@ -11,6 +11,7 @@ import {
   triggerPdfDownload,
   type AppointmentNotifyDetails,
 } from "@/components/appointment/AppointmentConfirmationPdf";
+import { toTitleCase } from "../helper/titlecase";
 
 const themeConfig = {
   token: {
@@ -62,7 +63,9 @@ export default function AppointmentNotifyModal({
       } catch (err) {
         console.error(err);
         if (!cancelled) {
-          setError("Could not generate the confirmation PDF. Please try again.");
+          setError(
+            "Could not generate the confirmation PDF. Please try again.",
+          );
         }
       } finally {
         if (!cancelled) setBusy(false);
@@ -84,7 +87,7 @@ export default function AppointmentNotifyModal({
 
   const handleWhatsApp = async () => {
     if (!details || !pdfBlob) return;
-    await shareOrNotifyConfirmation(details, pdfBlob);
+    await shareOrNotifyConfirmation(details);
   };
 
   return (
@@ -101,13 +104,18 @@ export default function AppointmentNotifyModal({
         width="100%"
         style={{ maxWidth: 880, top: 8, paddingBottom: 0 }}
         className="px-3 sm:px-0"
-        styles={{ body: { maxHeight: "88vh", overflowY: "auto", paddingBottom: 16 } }}
+        styles={{
+          body: { maxHeight: "88vh", overflowY: "auto", paddingBottom: 16 },
+        }}
         destroyOnHidden
       >
         {details ? (
           <div className="space-y-4 pt-1">
             <p className="m-0 text-sm text-[#414942]">
-              Confirmation for <strong className="text-[#144229]">{details.name}</strong>{" "}
+              Confirmation for{" "}
+              <strong className="text-[#144229]">
+                {toTitleCase(details.name)}
+              </strong>{" "}
               at {details.time} on {details.date}. Notify opens WhatsApp chat
               with this number even if it is not saved. Attach the downloaded
               PDF before sending.
@@ -122,12 +130,16 @@ export default function AppointmentNotifyModal({
                 />
               ) : (
                 <div className="flex h-[280px] items-center justify-center text-sm text-[#667362]">
-                  {busy ? "Preparing confirmation PDF…" : "PDF preview unavailable"}
+                  {busy
+                    ? "Preparing confirmation PDF…"
+                    : "PDF preview unavailable"}
                 </div>
               )}
             </div>
 
-            {error ? <p className="m-0 text-sm text-[#7b2027]">{error}</p> : null}
+            {error ? (
+              <p className="m-0 text-sm text-[#7b2027]">{error}</p>
+            ) : null}
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <button

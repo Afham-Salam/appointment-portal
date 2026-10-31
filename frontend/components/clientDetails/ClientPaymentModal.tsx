@@ -27,6 +27,7 @@ import { categories, paymentMethods } from "@/lib/accounts/constants";
 import PaymentStatement, {
   printPaymentStatement,
 } from "@/components/clientDetails/PaymentStatement";
+import { toTitleCase } from "../helper/titlecase";
 
 export type ClientPaymentEntry = {
   id: string;
@@ -273,17 +274,13 @@ export default function ClientPaymentModal({
   };
 
   const handlePrintStatement = async () => {
-    const paper = statementRef.current?.querySelector<HTMLElement>(
-      ".payment-statement",
-    );
+    const paper =
+      statementRef.current?.querySelector<HTMLElement>(".payment-statement");
     if (!paper || !client || !config) return;
     setPrinting(true);
     setError("");
     try {
-      await printPaymentStatement(
-        paper,
-        `Payment Statement - ${client.name}`,
-      );
+      await printPaymentStatement(paper, `Payment Statement - ${client.name}`);
     } catch {
       setError("Could not open the payment PDF. Please try again.");
     } finally {
@@ -299,7 +296,11 @@ export default function ClientPaymentModal({
         width="100%"
         style={{ maxWidth: 740, top: 16, paddingBottom: 0 }}
         styles={{
-          body: { maxHeight: "74vh", overflowY: "auto", padding: "10px 16px 6px" },
+          body: {
+            maxHeight: "74vh",
+            overflowY: "auto",
+            padding: "10px 16px 6px",
+          },
         }}
         title={
           <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
@@ -311,7 +312,7 @@ export default function ClientPaymentModal({
               </span>
               {client && (
                 <p className="m-0 text-xs font-medium text-[#667362]">
-                  {client.name}
+                  {toTitleCase(client.name)}
                   {client.phone ? ` · ${client.phone}` : ""}
                 </p>
               )}
@@ -689,9 +690,13 @@ export default function ClientPaymentModal({
                     <thead>
                       <tr className="border-b border-[#c1c9c0] bg-[#fafafa] text-[#1a1c1a]">
                         <th className="px-3.5 py-2.5 font-semibold">Date</th>
-                        <th className="px-3.5 py-2.5 font-semibold">Category</th>
+                        <th className="px-3.5 py-2.5 font-semibold">
+                          Category
+                        </th>
                         <th className="px-3.5 py-2.5 font-semibold">Method</th>
-                        <th className="px-3.5 py-2.5 font-semibold">Reference</th>
+                        <th className="px-3.5 py-2.5 font-semibold">
+                          Reference
+                        </th>
                         <th className="px-3.5 py-2.5 text-right font-semibold">
                           Paid Amount
                         </th>

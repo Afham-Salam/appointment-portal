@@ -11,6 +11,7 @@ import {
   ConfigProvider,
   Input,
   Select,
+  Skeleton,
   Space,
   Spin,
   Tabs,
@@ -60,6 +61,46 @@ const CategoryBreakdownChart = dynamic(
   () => import("@/components/accounts/charts/CategoryBreakdownChart"),
   { ssr: false, loading: chartLoading },
 );
+
+function AccountsSkeleton() {
+  return (
+    <div className="accounts-page min-w-0 space-y-6 pb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton.Input active size="large" />
+          <Skeleton.Input active size="small" />
+        </div>
+        <Skeleton.Button active size="large" />
+      </div>
+
+      <Card>
+        <Skeleton active paragraph={{ rows: 1 }} title={false} />
+      </Card>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Card key={index}>
+            <Skeleton active paragraph={{ rows: 2 }} title />
+          </Card>
+        ))}
+      </div>
+
+      <Skeleton active paragraph={{ rows: 1 }} title={false} />
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Card key={index}>
+            <Skeleton active paragraph={{ rows: 7 }} title />
+          </Card>
+        ))}
+      </div>
+
+      <Card title={<Skeleton.Input active size="small" />}>
+        <Skeleton active paragraph={{ rows: 8 }} title={false} />
+      </Card>
+    </div>
+  );
+}
 
 function AccountsContent() {
   const { message } = App.useApp();
@@ -202,6 +243,10 @@ function AccountsContent() {
       setExporting(false);
     }
   };
+
+  if (loading) {
+    return <AccountsSkeleton />;
+  }
 
   return (
     <div className="accounts-page min-w-0 space-y-6 pb-8">

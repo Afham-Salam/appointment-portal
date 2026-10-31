@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import Letterhead from "@/components/letters/Letterhead";
 import "@/app/(dashboard)/letters/letters.css";
 import "./payment-statement.css";
+import { toTitleCase } from "../helper/titlecase";
 
 type PaymentStatementConfig = {
   totalAmount: number;
@@ -50,14 +51,14 @@ export default function PaymentStatement({
       <div className="letter-metadata">
         <span>Date: {dayjs().format("DD MMM YYYY")}</span>
       </div>
-      <p className="payment-statement-kicker">Accounts</p>
+      {/* <p className="payment-statement-kicker">Accounts</p> */}
       <h1 className="payment-statement-title">Payment Statement</h1>
       <div className="payment-statement-rule" />
 
       <div className="payment-party">
         <div>
           <span>{label}</span>
-          <strong>{client.name}</strong>
+          <strong>{toTitleCase(client.name)}</strong>
           {client.phone ? <em>{client.phone}</em> : null}
         </div>
         <div>
@@ -81,7 +82,9 @@ export default function PaymentStatement({
         <article>
           <span>Balance</span>
           <strong>{rupee(balanceAmount)}</strong>
-          <span className={`payment-status ${balanceAmount === 0 ? "settled" : "pending"}`}>
+          <span
+            className={`payment-status ${balanceAmount === 0 ? "settled" : "pending"}`}
+          >
             {balanceAmount === 0 ? "Settled" : "Pending"}
           </span>
         </article>

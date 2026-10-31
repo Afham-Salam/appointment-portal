@@ -22,6 +22,7 @@ import {
   FiPlus,
 } from "react-icons/fi";
 import { paymentMethods } from "@/lib/accounts/constants";
+import { toTitleCase } from "../helper/titlecase";
 
 export type StudentAttendanceRecord = {
   id: string;
@@ -113,7 +114,10 @@ export default function StudentAttendanceModal({
   const [showForm, setShowForm] = useState(true);
 
   const nextAttendanceNo = records.length + 1;
-  const totalPaid = records.reduce((sum, item) => sum + (item.paidAmount || 0), 0);
+  const totalPaid = records.reduce(
+    (sum, item) => sum + (item.paidAmount || 0),
+    0,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -159,7 +163,11 @@ export default function StudentAttendanceModal({
         width="100%"
         style={{ maxWidth: 760, top: 14, paddingBottom: 0 }}
         styles={{
-          body: { maxHeight: "76vh", overflowY: "auto", padding: "10px 16px 8px" },
+          body: {
+            maxHeight: "76vh",
+            overflowY: "auto",
+            padding: "10px 16px 8px",
+          },
         }}
         title={
           <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
@@ -169,7 +177,7 @@ export default function StudentAttendanceModal({
               </span>
               {student && (
                 <p className="m-0 text-xs font-medium text-[#667362]">
-                  {student.name}
+                  {toTitleCase(student.name)}
                   {student.phone ? ` · ${student.phone}` : ""}
                 </p>
               )}
@@ -230,7 +238,9 @@ export default function StudentAttendanceModal({
                 </span>
               </div>
               <span className="mt-2 inline-block rounded-full bg-[#e5eddf] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#144229]">
-                {records[0] ? `Session #${records[0].attendanceNo}` : "New Student"}
+                {records[0]
+                  ? `Session #${records[0].attendanceNo}`
+                  : "New Student"}
               </span>
             </article>
 
@@ -250,7 +260,9 @@ export default function StudentAttendanceModal({
               </div>
               <span className="mt-2 inline-block rounded-full bg-[#f5ebd3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#7a5a22]">
                 {records.filter((r) => r.paidAmount > 0).length} Paid Session
-                {records.filter((r) => r.paidAmount > 0).length === 1 ? "" : "s"}
+                {records.filter((r) => r.paidAmount > 0).length === 1
+                  ? ""
+                  : "s"}
               </span>
             </article>
           </div>
@@ -300,7 +312,10 @@ export default function StudentAttendanceModal({
                   label="Attendance Date"
                   rules={[{ required: true, message: "Select date" }]}
                 >
-                  <DatePicker format="DD MMM YYYY" className="w-full! rounded-md!" />
+                  <DatePicker
+                    format="DD MMM YYYY"
+                    className="w-full! rounded-md!"
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -329,7 +344,11 @@ export default function StudentAttendanceModal({
                 </Form.Item>
               </div>
 
-              <Form.Item name="notes" label="Session / Remarks (optional)" className="mb-0!">
+              <Form.Item
+                name="notes"
+                label="Session / Remarks (optional)"
+                className="mb-0!"
+              >
                 <Input
                   maxLength={200}
                   placeholder="Optional topic covered or session note"
@@ -356,7 +375,9 @@ export default function StudentAttendanceModal({
                     <tr className="border-b border-[#c1c9c0] bg-[#fafafa] text-[#1a1c1a]">
                       <th className="px-3.5 py-2.5 font-semibold">Att. No</th>
                       <th className="px-3.5 py-2.5 font-semibold">Date</th>
-                      <th className="px-3.5 py-2.5 font-semibold">Paid Amount</th>
+                      <th className="px-3.5 py-2.5 font-semibold">
+                        Paid Amount
+                      </th>
                       <th className="px-3.5 py-2.5 font-semibold">Sign</th>
                       <th className="px-3.5 py-2.5 font-semibold">Remarks</th>
                     </tr>
