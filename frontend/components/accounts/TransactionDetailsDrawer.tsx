@@ -9,7 +9,7 @@ export default function TransactionDetailsDrawer({ transaction, entries, onClose
       { key: "id", label: "Transaction ID", children: transaction.id },
       { key: "date", label: "Payment date", children: transaction.date },
       { key: "amount", label: "Amount", children: money(transaction.amount_paise) },
-      { key: "type", label: "Type / status", children: `${transaction.type} / ${transaction.status}` },
+      { key: "type", label: "Type / status", children: `${transaction.type} / ${transaction.status === "void" ? "deleted" : transaction.status}` },
       { key: "payee", label: "Client / payee", children: transaction.payee },
       { key: "category", label: "Category", children: transaction.category },
       { key: "method", label: "Payment method", children: transaction.payment_method },

@@ -177,12 +177,12 @@ export async function getAppointments(params?: {
     query = query.eq('status', status)
   }
  
-  // Filter by date range
+  // Filter by appointed date range (scheduled_date)
   if (dateFrom) {
-    query = query.gte('created_at', `${dateFrom}T00:00:00`)
+    query = query.gte('scheduled_date', dateFrom)
   }
   if (dateTo) {
-    query = query.lte('created_at', `${dateTo}T23:59:59`)
+    query = query.lte('scheduled_date', dateTo)
   }
  
   // Search by client name or phone

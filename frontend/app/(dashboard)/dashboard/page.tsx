@@ -121,7 +121,16 @@ export default function DashboardPage() {
               </article>
             ))
           : stats.map((stat) => (
-              <DashboardStatCard key={stat.label} {...stat} highlighted={stat.label === "Today's Appointments"} />
+              <DashboardStatCard
+                key={stat.label}
+                {...stat}
+                highlighted={stat.label === "Today's Appointments"}
+                href={
+                  stat.label === "Today's Appointments"
+                    ? "/appointments"
+                    : undefined
+                }
+              />
             ))}
       </div>
 

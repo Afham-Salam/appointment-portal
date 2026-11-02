@@ -184,7 +184,7 @@ export function DataTable<T extends Record<string, any>>({
               <button
                 onClick={() => handlePageChange(activePage - 1)}
                 disabled={activePage === 1}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#c1c9c0] bg-white text-[#414942] transition-colors hover:bg-neutral-50 disabled:pointer-events-none disabled:opacity-40"
+                className="cursor-pointer inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#c1c9c0] bg-white text-[#414942] transition-colors hover:bg-neutral-50 disabled:pointer-events-none disabled:opacity-40"
                 aria-label="Previous Page"
               >
                 <FiChevronLeft className="h-4 w-4" />
@@ -194,7 +194,7 @@ export function DataTable<T extends Record<string, any>>({
                 <button
                   key={pg}
                   onClick={() => handlePageChange(pg)}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
+                  className={`cursor-pointer inline-flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold transition-colors ${
                     activePage === pg
                       ? "bg-[#144229] text-white"
                       : "border border-[#c1c9c0] bg-white text-[#414942] hover:bg-neutral-50"

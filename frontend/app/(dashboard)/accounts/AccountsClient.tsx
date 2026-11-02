@@ -48,7 +48,7 @@ import type {
 } from "@/lib/accounts/types";
 
 const chartLoading = () => (
-  <div className="flex h-[300px] items-center justify-center">
+  <div className="flex h-75 items-center justify-center">
     <Spin />
   </div>
 );
@@ -255,7 +255,7 @@ function AccountsContent() {
     }
     fetchTransactions();
     fetchPendingPayments();
-    message.success("Transaction voided. Totals have been updated.");
+    message.success("Transaction deleted. Totals have been updated.");
   };
   const download = async () => {
     setExporting(true);
@@ -385,7 +385,7 @@ function AccountsContent() {
         ]}
       />
       <Card
-        className="!mt-6"
+        className="mt-6!"
         title="Transaction history"
         extra={<Tag>{filteredRows.length} transactions</Tag>}
         styles={{ body: { padding: 0 } }}
@@ -444,7 +444,7 @@ function AccountsContent() {
             options={[
               { value: "all", label: "All statuses" },
               { value: "active", label: "Active" },
-              { value: "void", label: "Voided" },
+              { value: "void", label: "Deleted" },
             ]}
           />
           <Button

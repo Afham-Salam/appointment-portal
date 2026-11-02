@@ -974,7 +974,7 @@ export default function AppointmentsPage() {
         </span>
       ),
     },
-    { title: "Date", key: "createdAt" },
+    { title: "Joined", key: "createdAt" },
     {
       title: "Scheduled",
       key: "scheduledDate",
@@ -1115,15 +1115,24 @@ export default function AppointmentsPage() {
     fetchAppointments();
     setNotifyDetails(toNotifyDetails(form));
   };
+  const isToday = Boolean(
+    dateRange?.[0] &&
+      dateRange?.[1] &&
+      dateRange[0].isSame(dayjs(), "day") &&
+      dateRange[1].isSame(dayjs(), "day"),
+  );
+
   return (
     <>
       <div className="mb-5 mt-4 flex flex-col gap-4 sm:mb-6 sm:mt-7 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="m-0 font-(--font-source-serif) text-[1.6rem] tracking-[-.03em] sm:text-[30px]">
-            Latest appointments
+            {isToday ? "Today's Appointments" : "Appointments"}
           </h1>
           <p className="mt-1 mb-0 text-sm text-[#414942] sm:text-base">
-            Review and manage your upcoming schedule.
+            {isToday
+              ? "Review and manage your appointments scheduled for today."
+              : "Review and manage your scheduled appointments."}
           </p>
         </div>
         <button

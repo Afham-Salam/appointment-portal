@@ -59,7 +59,6 @@ export default function AppointmentNotifyModal({
         revoked = url;
         setPdfBlob(blob);
         setPreviewUrl(url);
-        triggerPdfDownload(blob, details.name);
       } catch (err) {
         console.error(err);
         if (!cancelled) {
@@ -87,6 +86,7 @@ export default function AppointmentNotifyModal({
 
   const handleWhatsApp = async () => {
     if (!details || !pdfBlob) return;
+    triggerPdfDownload(pdfBlob, details.name);
     await shareOrNotifyConfirmation(details);
   };
 
@@ -129,7 +129,7 @@ export default function AppointmentNotifyModal({
                   className="h-[min(72vh,760px)] w-full bg-[#faf7ee]"
                 />
               ) : (
-                <div className="flex h-[280px] items-center justify-center text-sm text-[#667362]">
+                <div className="flex h-70 items-center justify-center text-sm text-[#667362]">
                   {busy
                     ? "Preparing confirmation PDF…"
                     : "PDF preview unavailable"}

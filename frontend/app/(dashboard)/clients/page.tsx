@@ -12,6 +12,12 @@ import {
   addPaymentEntry,
 } from "@/lib/actions/appointments";
 import { FiCreditCard, FiDownload } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
+import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
+import {
+  toNotifyDetails,
+  type AppointmentNotifyDetails,
+} from "@/components/appointment/AppointmentConfirmationPdf";
 import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
 import ClientPaymentModal, {
   type ClientPaymentConfig,
@@ -30,6 +36,7 @@ type ClientRow = {
   hasPayment: boolean;
   paymentSummary: { totalAmount: number; totalPaid: number } | null;
   location: string;
+  appointmentDays?: string[];
 };
 
 const TYPE_OPTIONS = [
@@ -52,6 +59,8 @@ export default function ClientsPage() {
   >(null);
   const [reportClient, setReportClient] = useState<ClientRow | null>(null);
   const [paymentClient, setPaymentClient] = useState<ClientRow | null>(null);
+  const [notifyDetails, setNotifyDetails] =
+    useState<AppointmentNotifyDetails | null>(null);
   const [paymentConfigs, setPaymentConfigs] = useState<
     Record<string, ClientPaymentConfig>
   >({});
@@ -222,6 +231,14 @@ export default function ClientsPage() {
             : row.location || "—",
     },
     {
+      title: "Days",
+      key: "appointmentDays",
+      render: (row) =>
+        row.appointmentDays?.length
+          ? row.appointmentDays.map((d: string) => d.slice(0, 3)).join(", ")
+          : "—",
+    },
+    {
       title: "Actions",
       key: "actions",
       render: (row) => (
@@ -236,6 +253,15 @@ export default function ClientsPage() {
             View Details
           </button>
           <button
+            className="border-[#25D366]! bg-[#25D366]! inline-flex items-center justify-center gap-1.5 px-2.5! text-xs! font-bold text-white!"
+            title="Notify on WhatsApp"
+            aria-label={`Notify ${row.name} on WhatsApp`}
+            onClick={() => setNotifyDetails(toNotifyDetails(row))}
+          >
+            <FaWhatsapp />
+            Notify
+          </button>
+          <button
             type="button"
             className="reportbtn"
             onClick={() => openReportModal(row)}
@@ -244,7 +270,7 @@ export default function ClientsPage() {
           </button>
           <button
             type="button"
-            className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
+            className="cursor-pointer inline-flex h-8.5 items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
             onClick={async () => {
               if (!paymentConfigs[row.id]) {
                 const { config } = await getClientPaymentConfig(row.id);
@@ -351,6 +377,12 @@ export default function ClientsPage() {
             setPaymentConfigs((prev) => ({ ...prev, [clientId]: config }));
           }
         }}
+      />
+
+      <AppointmentNotifyModal
+        open={notifyDetails !== null}
+        details={notifyDetails}
+        onClose={() => setNotifyDetails(null)}
       />
     </>
   );

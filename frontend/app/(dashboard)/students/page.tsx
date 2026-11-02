@@ -14,10 +14,10 @@ import {
   addStudentAttendance,
 } from "@/lib/actions/appointments";
 import { FiCheckSquare, FiCreditCard, FiDownload } from "react-icons/fi";
-// import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp } from "react-icons/fa";
 import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
 import {
-  // toNotifyDetails,
+  toNotifyDetails,
   type AppointmentNotifyDetails,
 } from "@/components/appointment/AppointmentConfirmationPdf";
 import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal";
@@ -143,7 +143,7 @@ export default function StudentsPage() {
       key: "name",
       className: "min-w-[100px]",
       render: (row) => (
-        <span className="block min-w-[100px]">
+        <span className="block min-w-25">
           <strong className="whitespace-nowrap">{row.name}</strong>
           <small className="table-sub whitespace-nowrap">{row.phone}</small>
         </span>
@@ -279,20 +279,19 @@ export default function StudentsPage() {
               View Details
             </button>
 
-            {/* <button
-              type="button"
-              className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#25D366] bg-[#25D366] px-3 text-xs font-bold text-white hover:bg-[#1ebe5d]"
+            <button
+              className="border-[#25D366]! bg-[#25D366]! inline-flex items-center justify-center gap-1.5 px-2.5! text-xs! font-bold text-white!"
               title="Notify on WhatsApp"
               aria-label={`Notify ${row.name} on WhatsApp`}
               onClick={() => setNotifyDetails(toNotifyDetails(row))}
             >
-              <FaWhatsapp aria-hidden="true" />
+              <FaWhatsapp />
               Notify
-            </button> */}
+            </button>
 
             <button
               type="button"
-              className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] bg-[#2D5A3F] px-3 text-xs font-bold text-white hover:bg-[#16482b]"
+              className="cursor-pointer inline-flex h-8.5 items-center gap-1.5 whitespace-nowrap rounded-[5px] bg-[#2D5A3F] px-3 text-xs font-bold text-white hover:bg-[#16482b]"
               onClick={async () => {
                 if (!attendanceRecords[row.id]) {
                   const { records } = await getStudentAttendance(row.id);
@@ -312,7 +311,7 @@ export default function StudentsPage() {
 
             <button
               type="button"
-              className="cursor-pointer inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
+              className="cursor-pointer inline-flex h-8.5 items-center gap-1.5 whitespace-nowrap rounded-[5px] border border-[#2d5a3f] bg-white px-3 text-xs font-bold text-[#144229] hover:bg-[#e8f7ee]"
               onClick={async () => {
                 if (!paymentConfigs[row.id]) {
                   const { config } = await getClientPaymentConfig(row.id);
@@ -483,6 +482,12 @@ export default function StudentsPage() {
         client={reportStudent}
         open={Boolean(reportStudent)}
         onClose={() => setReportStudent(null)}
+      />
+
+      <AppointmentNotifyModal
+        open={notifyDetails !== null}
+        details={notifyDetails}
+        onClose={() => setNotifyDetails(null)}
       />
     </>
   );
