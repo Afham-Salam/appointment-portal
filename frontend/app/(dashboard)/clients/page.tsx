@@ -10,9 +10,10 @@ import {
   getClientPaymentConfig,
   saveClientPaymentConfig,
   addPaymentEntry,
-  deletePaymentEntry, 
+  deletePaymentEntry,
+  softDeleteClient, 
 } from "@/lib/actions/appointments";
-import { FiCreditCard, FiDownload } from "react-icons/fi";
+import { FiCreditCard, FiDownload,FiTrash2  } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
 import {
@@ -23,6 +24,7 @@ import ReportDownloadModal from "@/components/clientDetails/ReportDownloadModal"
 import ClientPaymentModal, {
   type ClientPaymentConfig,
 } from "@/components/clientDetails/ClientPaymentModal";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 type ClientRow = {
   id: string;
@@ -65,7 +67,7 @@ export default function ClientsPage() {
   const [paymentConfigs, setPaymentConfigs] = useState<
     Record<string, ClientPaymentConfig>
   >({});
-
+const [deleteClient, setDeleteClient] = useState<ClientRow | null>(null);
   const rupee = (amount: number) =>
     new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -287,6 +289,14 @@ export default function ClientsPage() {
               ? "Payment History"
               : "Set Payment"}
           </button>
+          <button
+  type="button"
+  className="cursor-pointer rounded-md border border-red-200 bg-white p-1.5 text-red-500 hover:bg-red-50"
+  title="Delete client"
+  onClick={() => setDeleteClient(row)}
+>
+  <FiTrash2 className="h-3.5 w-3.5" />
+</button>
         </div>
       ),
     },
@@ -397,6 +407,24 @@ export default function ClientsPage() {
         details={notifyDetails}
         onClose={() => setNotifyDetails(null)}
       />
+      <DeleteConfirmationModal
+  open={!!deleteClient}
+  title="Delete this client?"
+  itemName={deleteClient?.name}
+  actionDescription="Client will be hidden from all lists. Their data is preserved and can be restored."
+  onCancel={() => setDeleteClient(null)}
+  onConfirm={async () => {
+    if (!deleteClient) return;
+    const result = await softDeleteClient(deleteClient.id);
+    if (result.error) {
+      alert(result.error);
+    } else {
+      setClients((prev) => prev.filter((c) => c.id !== deleteClient.id));
+      setTotal((prev) => prev - 1);
+    }
+    setDeleteClient(null);
+  }}
+/>
     </>
   );
 }

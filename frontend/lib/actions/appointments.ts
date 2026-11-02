@@ -28,6 +28,7 @@ export async function searchClientByPhone(phone: string) {
       )
     `)
     .eq('phone', phone)
+     .eq('is_deleted', false)
     .order('created_at', { referencedTable: 'appointments', ascending: false })
     .single()
 
@@ -332,6 +333,7 @@ export async function getApprovedClients(params?: {
       { count: 'exact' },
     )
     .eq('appointments.status', 'Accepted')
+    .eq('is_deleted', false)
     .in('id', clientOrder)
 
   if (clientType && clientType !== 'all') {
@@ -1227,6 +1229,30 @@ export async function deletePaymentEntry(transactionId: string) {
     .from('transactions')
     .update({ status: 'void', updated_at: new Date().toISOString() })
     .eq('id', transactionId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function softDeleteClient(clientId: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { error } = await supabase
+    .from('clients')
+    .update({ is_deleted: true })
+    .eq('id', clientId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function restoreClient(clientId: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { error } = await supabase
+    .from('clients')
+    .update({ is_deleted: false })
+    .eq('id', clientId)
 
   if (error) return { error: error.message }
   return { success: true }

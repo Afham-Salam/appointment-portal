@@ -14,8 +14,9 @@ import {
   addStudentAttendance,
    deleteStudentAttendance,
    deletePaymentEntry,
+   softDeleteClient,
 } from "@/lib/actions/appointments";
-import { FiCheckSquare, FiCreditCard, FiDownload } from "react-icons/fi";
+import { FiCheckSquare, FiCreditCard, FiDownload, FiTrash2 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
 import {
@@ -30,6 +31,7 @@ import StudentAttendanceModal, {
   type StudentAttendanceRecord,
 } from "@/components/students/StudentAttendanceModal";
 import { Select,ConfigProvider } from "antd";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 type StudentRow = {
   id: string;
@@ -90,7 +92,7 @@ export default function StudentsPage() {
   >({});
 
 const [selectedDays, setSelectedDays] = useState<string[]>([]);
-
+const [deleteStudent, setDeleteStudent] = useState<StudentRow | null>(null);
 const DAY_OPTIONS = [
   { value: "Monday", label: "Mon" },
   { value: "Tuesday", label: "Tue" },
@@ -356,6 +358,14 @@ const visibleStudents = students.filter((student) => {
             >
               <FiDownload aria-hidden="true" /> Report
             </button>
+            <button
+  type="button"
+  className="cursor-pointer rounded-md border border-red-200 bg-white p-1.5 text-red-500 hover:bg-red-50"
+  title="Delete student"
+  onClick={() => setDeleteStudent(row)}
+>
+  <FiTrash2 className="h-3.5 w-3.5" />
+</button>
           </div>
         );
       },
@@ -555,6 +565,24 @@ const visibleStudents = students.filter((student) => {
         details={notifyDetails}
         onClose={() => setNotifyDetails(null)}
       />
+      <DeleteConfirmationModal
+  open={!!deleteStudent}
+  title="Delete this student?"
+  itemName={deleteStudent?.name}
+  actionDescription="Student will be hidden from all lists. Their data is preserved and can be restored."
+  onCancel={() => setDeleteStudent(null)}
+  onConfirm={async () => {
+    if (!deleteStudent) return;
+    const result = await softDeleteClient(deleteStudent.id);
+    if (result.error) {
+      alert(result.error);
+    } else {
+      setStudents((prev) => prev.filter((s) => s.id !== deleteStudent.id));
+      setTotal((prev) => prev - 1);
+    }
+    setDeleteStudent(null);
+  }}
+/>
     </>
   );
 }
