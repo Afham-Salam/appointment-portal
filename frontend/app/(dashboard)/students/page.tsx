@@ -16,7 +16,7 @@ import {
    deletePaymentEntry,
    softDeleteClient,
 } from "@/lib/actions/appointments";
-import { FiCheckSquare, FiCreditCard, FiDownload, FiTrash2 } from "react-icons/fi";
+import { FiCheckSquare, FiCreditCard, FiDownload,FiTrash2  } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import AppointmentNotifyModal from "@/components/appointment/AppointmentNotifyModal";
 import {
@@ -558,12 +558,6 @@ const visibleStudents = students.filter((student) => {
         client={reportStudent}
         open={Boolean(reportStudent)}
         onClose={() => setReportStudent(null)}
-      />
-
-      <AppointmentNotifyModal
-        open={notifyDetails !== null}
-        details={notifyDetails}
-        onClose={() => setNotifyDetails(null)}
       />
       <DeleteConfirmationModal
   open={!!deleteStudent}

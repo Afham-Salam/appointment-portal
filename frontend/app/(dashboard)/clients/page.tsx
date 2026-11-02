@@ -425,6 +425,7 @@ const [deleteClient, setDeleteClient] = useState<ClientRow | null>(null);
     setDeleteClient(null);
   }}
 />
+
     </>
   );
 }
