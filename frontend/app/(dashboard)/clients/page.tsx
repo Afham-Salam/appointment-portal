@@ -10,6 +10,7 @@ import {
   getClientPaymentConfig,
   saveClientPaymentConfig,
   addPaymentEntry,
+  deletePaymentEntry, 
 } from "@/lib/actions/appointments";
 import { FiCreditCard, FiDownload } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
@@ -377,6 +378,18 @@ export default function ClientsPage() {
             setPaymentConfigs((prev) => ({ ...prev, [clientId]: config }));
           }
         }}
+    onDeletePayment={async (paymentId) => {
+  if (!paymentClient) return;
+  const result = await deletePaymentEntry(paymentId);
+  if (result.error) {
+    alert(result.error);
+    return;
+  }
+  const { config } = await getClientPaymentConfig(paymentClient.id);
+  if (config) {
+    setPaymentConfigs((prev) => ({ ...prev, [paymentClient.id]: config }));
+  }
+}}
       />
 
       <AppointmentNotifyModal

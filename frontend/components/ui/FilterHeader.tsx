@@ -46,6 +46,7 @@ interface FilterHeaderProps {
   statusOptions: StatusOption[];
   dateRange: [Dayjs | null, Dayjs | null] | null;
   onDateRangeChange: (range: [Dayjs | null, Dayjs | null] | null) => void;
+  children?: React.ReactNode;
 }
 
 export function FilterHeader({
@@ -57,6 +58,7 @@ export function FilterHeader({
   statusOptions,
   dateRange,
   onDateRangeChange,
+  children,
 }: FilterHeaderProps) {
   return (
     <ConfigProvider theme={themeConfig}>
@@ -85,7 +87,7 @@ export function FilterHeader({
               },
             }}
           />
-
+   {children}
           <RangePicker
             value={dateRange}
             onChange={onDateRangeChange}

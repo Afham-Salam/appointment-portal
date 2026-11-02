@@ -23,6 +23,7 @@ import {
   FiPlus,
   FiDollarSign,
   FiPrinter,
+  FiTrash2,
 } from "react-icons/fi";
 import { categories, paymentMethods } from "@/lib/accounts/constants";
 import PaymentStatement, {
@@ -130,6 +131,7 @@ export default function ClientPaymentModal({
   loading = false,
   onClose,
   onSaveConfig,
+   onDeletePayment,
 }: {
   open: boolean;
   client: {
@@ -144,6 +146,7 @@ export default function ClientPaymentModal({
   historyOnly?: boolean;
   onClose: () => void;
   onSaveConfig: (next: ClientPaymentConfig) => void;
+   onDeletePayment?: (paymentId: string) => void;
 }) {
   const [setupForm] = Form.useForm<SetupFormFields>();
   const [paymentForm] = Form.useForm<AddPaymentFormFields>();
@@ -153,8 +156,9 @@ export default function ClientPaymentModal({
   const [error, setError] = useState("");
   const statementRef = useRef<HTMLDivElement>(null);
 
-  const isConfigured = Boolean(config && config.totalAmount > 0);
-  const showSetupForm = !historyOnly && (!isConfigured || editingTotal);
+  const isStudent = client?.clientType?.toLowerCase() === "student";
+const isConfigured = Boolean(config && (config.totalAmount > 0 || config.payments.length > 0));
+const showSetupForm = !historyOnly && isStudent && (!isConfigured || editingTotal);
 
   useEffect(() => {
     if (!open) return;
@@ -247,37 +251,37 @@ export default function ClientPaymentModal({
     setEditingTotal(false);
   };
 
-  const handleAddPayment = (values: AddPaymentFormFields) => {
-    if (!config) return;
-    setError("");
+  const handleAddPayment = async (values: AddPaymentFormFields) => {
+  const currentConfig = config || { totalAmount: 0, notes: "", payments: [] };
+  setError("");
 
-    if (!values.amount || values.amount <= 0) {
-      setError("Enter a valid payment amount.");
-      return;
-    }
+  if (!values.amount || values.amount <= 0) {
+    setError("Enter a valid payment amount.");
+    return;
+  }
 
-    const nextEntry: ClientPaymentEntry = {
-      id: `pay-${Date.now()}`,
-      date: values.date.format("YYYY-MM-DD"),
-      amount: Number(values.amount),
-      category: values.category,
-      payment_method: values.payment_method,
-      reference: values.reference?.trim() || "—",
-      notes: values.notes?.trim() || "",
-    };
-
-    onSaveConfig({
-      ...config,
-      payments: [nextEntry, ...config.payments],
-    });
-    paymentForm.resetFields();
-    paymentForm.setFieldsValue({
-      date: dayjs(),
-      category: categories.income[0],
-      payment_method: "Cash",
-    });
-    setAddingPayment(false);
+  const nextEntry: ClientPaymentEntry = {
+    id: `pay-${Date.now()}`,
+    date: values.date.format("YYYY-MM-DD"),
+    amount: Number(values.amount),
+    category: values.category,
+    payment_method: values.payment_method,
+    reference: values.reference?.trim() || "—",
+    notes: values.notes?.trim() || "",
   };
+
+  await onSaveConfig({
+    ...currentConfig,
+    payments: [nextEntry, ...currentConfig.payments],
+  });
+  paymentForm.resetFields();
+  paymentForm.setFieldsValue({
+    date: dayjs(),
+    category: categories.income[0],
+    payment_method: "Cash",
+  });
+  setAddingPayment(false);
+};
 
   const handlePrintStatement = async () => {
     const paper =
@@ -497,71 +501,67 @@ export default function ClientPaymentModal({
         ) : (
           <div className="space-y-4">
             {/* Summary Cards: Total Amount, Paid Amount, Balance Amount */}
-            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
-              <article className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#34694a] via-[#2D5A3F] to-[#193d2a] p-4 text-white shadow-[0_6px_20px_rgba(45,90,63,0.18)]">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="m-0 text-xs font-semibold text-[#e3efdf]">
-                      Total Amount
-                    </p>
-                    <p className="m-0 mt-1.5 text-xl font-bold tabular-nums">
-                      {rupee(totalFee)}
-                    </p>
-                  </div>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-[#f0dfb4]">
-                    <FiLayers className="h-4 w-4" />
-                  </span>
-                </div>
-                <span className="mt-2.5 inline-block rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#f0dfb4]">
-                  Configured Fee
-                </span>
-              </article>
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
+  {/* Total Amount card */}
+  <article className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#34694a] via-[#2D5A3F] to-[#193d2a] p-3.5 text-white shadow-[0_6px_18px_rgba(45,90,63,0.18)]">
+    <div className="flex items-start justify-between gap-2">
+      <div>
+        <p className="m-0 text-xs font-semibold text-[#e3efdf]">Total Amount</p>
+        <p className="m-0 mt-1 text-xl font-bold tabular-nums">
+          {totalFee > 0 ? rupee(totalFee) : "Not set"}
+        </p>
+      </div>
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white">
+        <FiLayers className="h-4 w-4" />
+      </span>
+    </div>
+    <span className="mt-2.5 inline-block rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+      {totalFee > 0 ? "Configured Fee" : "Fee not configured"}
+    </span>
+  </article>
 
-              <article className="relative overflow-hidden rounded-2xl border border-[#dce4d8] bg-linear-to-br from-white to-[#f4f7f1] p-4 shadow-[0_3px_12px_rgba(20,66,41,0.05)]">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="m-0 text-xs font-semibold text-[#536350]">
-                      Paid Amount
-                    </p>
-                    <p className="m-0 mt-1.5 text-xl font-bold tabular-nums text-[#144229]">
-                      {rupee(paidTotal)}
-                    </p>
-                  </div>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#e5eddf] text-[#2D5A3F]">
-                    <FiCheckCircle className="h-4 w-4" />
-                  </span>
-                </div>
-                <span className="mt-2.5 inline-block rounded-full bg-[#e5eddf] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#144229]">
-                  {config?.payments.length || 0} Payment
-                  {(config?.payments.length || 0) === 1 ? "" : "s"}
-                </span>
-              </article>
+  {/* Paid Amount card */}
+  <article className="relative overflow-hidden rounded-2xl border border-[#dce4d8] bg-linear-to-br from-white to-[#f5faf3] p-3.5 shadow-[0_3px_12px_rgba(20,66,41,0.05)]">
+    <div className="flex items-start justify-between gap-2">
+      <div>
+        <p className="m-0 text-xs font-semibold text-[#536350]">Paid Amount</p>
+        <p className="m-0 mt-1 text-xl font-bold tabular-nums text-[#144229]">
+          {rupee(paidTotal)}
+        </p>
+      </div>
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#e5eddf] text-[#2D5A3F]">
+        <FiCheckCircle className="h-4 w-4" />
+      </span>
+    </div>
+    <span className="mt-2.5 inline-block rounded-full bg-[#e5eddf] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#144229]">
+      {config?.payments.length || 0} payment{(config?.payments.length || 0) === 1 ? "" : "s"}
+    </span>
+  </article>
 
-              <article className="relative overflow-hidden rounded-2xl border border-[#dce4d8] bg-linear-to-br from-white to-[#fcfaf4] p-4 shadow-[0_3px_12px_rgba(20,66,41,0.05)]">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="m-0 text-xs font-semibold text-[#536350]">
-                      Balance Amount
-                    </p>
-                    <p className="m-0 mt-1.5 text-xl font-bold tabular-nums text-[#7a5a22]">
-                      {rupee(balanceAmount)}
-                    </p>
-                  </div>
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5ebd3] text-[#7a5a22]">
-                    <FiClock className="h-4 w-4" />
-                  </span>
-                </div>
-                <span
-                  className={`mt-2.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                    balanceAmount === 0
-                      ? "bg-[#bceecb] text-[#144229]"
-                      : "bg-[#fff0c6] text-[#775a19]"
-                  }`}
-                >
-                  {balanceAmount === 0 ? "Settled" : "Pending Balance"}
-                </span>
-              </article>
-            </div>
+  {/* Balance card */}
+  <article className="relative overflow-hidden rounded-2xl border border-[#dce4d8] bg-linear-to-br from-white to-[#fcfaf4] p-3.5 shadow-[0_3px_12px_rgba(20,66,41,0.05)]">
+    <div className="flex items-start justify-between gap-2">
+      <div>
+        <p className="m-0 text-xs font-semibold text-[#536350]">Balance Amount</p>
+        <p className="m-0 mt-1 text-xl font-bold tabular-nums text-[#7a5a22]">
+          {totalFee > 0 ? rupee(balanceAmount) : "—"}
+        </p>
+      </div>
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5ebd3] text-[#7a5a22]">
+        <FiClock className="h-4 w-4" />
+      </span>
+    </div>
+    <span className={`mt-2.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+      totalFee === 0
+        ? "bg-[#eef1ec] text-[#536350]"
+        : balanceAmount === 0
+          ? "bg-[#bceecb] text-[#144229]"
+          : "bg-[#fff0c6] text-[#775a19]"
+    }`}>
+      {totalFee === 0 ? "Set total fee" : balanceAmount === 0 ? "Settled" : "Pending Balance"}
+    </span>
+  </article>
+</div>
 
             {/* Action bar */}
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#dce4d8] bg-[#faf9f6] px-3.5 py-2.5">
@@ -720,6 +720,7 @@ export default function ClientPaymentModal({
                         <th className="px-3.5 py-2.5 text-right font-semibold">
                           Paid Amount
                         </th>
+                        {onDeletePayment && <th className="px-3 py-2.5"></th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -745,6 +746,22 @@ export default function ClientPaymentModal({
                           <td className="whitespace-nowrap px-3.5 py-2.5 text-right font-bold tabular-nums text-[#144229]">
                             {rupee(item.amount)}
                           </td>
+                          {onDeletePayment && (
+  <td className="px-3 py-2.5 text-right">
+    <button
+      type="button"
+      className="cursor-pointer rounded-md border border-red-200 bg-white p-1.5 text-red-500 hover:bg-red-50"
+      title="Delete payment"
+      onClick={() => {
+        if (confirm("Delete this payment?")) {
+          onDeletePayment(item.id);
+        }
+      }}
+    >
+      <FiTrash2 className="h-3.5 w-3.5" />
+    </button>
+  </td>
+)}
                         </tr>
                       ))}
                     </tbody>

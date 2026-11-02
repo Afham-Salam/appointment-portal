@@ -1185,3 +1185,49 @@ export async function addStudentAttendance(clientId: string, record: {
 
   return { success: true, id: data.id }
 }
+
+export async function deleteStudentAttendance(attendanceId: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  // Get the attendance record first (to check if it had a payment)
+  const { data: record } = await supabase
+    .from('student_attendance')
+    .select('*')
+    .eq('id', attendanceId)
+    .single()
+
+  if (!record) return { error: 'Record not found' }
+
+  // Delete attendance record
+  const { error } = await supabase
+    .from('student_attendance')
+    .delete()
+    .eq('id', attendanceId)
+
+  if (error) return { error: error.message }
+
+  // If it had a payment, void the matching transaction (don't delete — keeps accounts intact)
+  if (record.paid_amount > 0) {
+    await supabase
+      .from('transactions')
+      .update({ status: 'void', updated_at: new Date().toISOString() })
+      .eq('client_id', record.client_id)
+      .eq('reference', `Attendance #${record.attendance_no}`)
+      .eq('status', 'active')
+  }
+
+  return { success: true }
+}
+
+export async function deletePaymentEntry(transactionId: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  // Void the transaction (don't hard delete — keeps audit trail)
+  const { error } = await supabase
+    .from('transactions')
+    .update({ status: 'void', updated_at: new Date().toISOString() })
+    .eq('id', transactionId)
+
+  if (error) return { error: error.message }
+  return { success: true }
+}

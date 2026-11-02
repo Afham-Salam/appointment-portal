@@ -20,6 +20,7 @@ import {
   FiDollarSign,
   FiHash,
   FiPlus,
+   FiTrash2,
 } from "react-icons/fi";
 import { paymentMethods } from "@/lib/accounts/constants";
 import { toTitleCase } from "../helper/titlecase";
@@ -101,12 +102,14 @@ export default function StudentAttendanceModal({
   records,
   onClose,
   onSaveRecord,
+  onDeleteRecord,
 }: {
   open: boolean;
   student: { id: string; name: string; phone?: string } | null;
   records: StudentAttendanceRecord[];
   onClose: () => void;
   onSaveRecord: (nextRecord: StudentAttendanceRecord) => void;
+  onDeleteRecord?: (id: string) => void;
 }) {
   const [form] = Form.useForm<AttendanceFields>();
   const paidAmountValue = Form.useWatch("paidAmount", form);
@@ -380,6 +383,7 @@ export default function StudentAttendanceModal({
                       </th>
                       <th className="px-3.5 py-2.5 font-semibold">Sign</th>
                       <th className="px-3.5 py-2.5 font-semibold">Remarks</th>
+                      <th className="px-3.5 py-2.5 font-semibold"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -421,6 +425,22 @@ export default function StudentAttendanceModal({
                         <td className="px-3.5 py-2.5 text-[#667362]">
                           {rec.notes || "—"}
                         </td>
+                        <td className="px-3.5 py-2.5">
+  {onDeleteRecord && (
+    <button
+      type="button"
+      className="cursor-pointer rounded-md border border-red-200 bg-white p-1.5 text-red-500 hover:bg-red-50"
+      title="Delete attendance"
+      onClick={() => {
+        if (confirm(`Delete attendance #${rec.attendanceNo}?`)) {
+          onDeleteRecord(rec.id);
+        }
+      }}
+    >
+      <FiTrash2 className="h-3.5 w-3.5" />
+    </button>
+  )}
+</td>
                       </tr>
                     ))}
                   </tbody>

@@ -12,6 +12,8 @@ import {
   addPaymentEntry,
   getStudentAttendance,
   addStudentAttendance,
+   deleteStudentAttendance,
+   deletePaymentEntry,
 } from "@/lib/actions/appointments";
 import { FiCheckSquare, FiCreditCard, FiDownload } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
@@ -27,6 +29,7 @@ import ClientPaymentModal, {
 import StudentAttendanceModal, {
   type StudentAttendanceRecord,
 } from "@/components/students/StudentAttendanceModal";
+import { Select,ConfigProvider } from "antd";
 
 type StudentRow = {
   id: string;
@@ -86,6 +89,17 @@ export default function StudentsPage() {
     Record<string, StudentAttendanceRecord[]>
   >({});
 
+const [selectedDays, setSelectedDays] = useState<string[]>([]);
+
+const DAY_OPTIONS = [
+  { value: "Monday", label: "Mon" },
+  { value: "Tuesday", label: "Tue" },
+  { value: "Wednesday", label: "Wed" },
+  { value: "Thursday", label: "Thu" },
+  { value: "Friday", label: "Fri" },
+  { value: "Saturday", label: "Sat" },
+  { value: "Sunday", label: "Sun" },
+];
   useEffect(() => {
     async function fetchStudents() {
       setLoading(true);
@@ -125,10 +139,14 @@ export default function StudentsPage() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
- const visibleStudents = students.filter((student) => {
+const visibleStudents = students.filter((student) => {
   const count = attendanceRecords[student.id]?.length ?? student.attendanceCount;
   if (attendanceFilter === "marked") return count > 0;
   if (attendanceFilter === "unmarked") return count === 0;
+  if (selectedDays.length > 0) {
+    const studentDays = student.appointmentDays || [];
+    if (!selectedDays.some((d) => studentDays.includes(d))) return false;
+  }
   return true;
 });
 
@@ -356,23 +374,41 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      <FilterHeader
-        searchQuery={searchInput}
-        onSearchChange={setSearchInput}
-        searchPlaceholder="Search student by name or phone"
-        selectedStatus={attendanceFilter}
-        onStatusChange={(val) => {
-          setAttendanceFilter(val);
-          setPage(1);
-        }}
-        statusOptions={ATTENDANCE_FILTER_OPTIONS}
-        dateRange={dateRange}
-        onDateRangeChange={(val) => {
-          setDateRange(val);
-          setPage(1);
-        }}
-      />
-
+<FilterHeader
+  searchQuery={searchInput}
+  onSearchChange={setSearchInput}
+  searchPlaceholder="Search student by name or phone"
+  selectedStatus={attendanceFilter}
+  onStatusChange={(val) => {
+    setAttendanceFilter(val);
+    setPage(1);
+  }}
+  statusOptions={ATTENDANCE_FILTER_OPTIONS}
+  dateRange={dateRange}
+  onDateRangeChange={(val) => {
+    setDateRange(val);
+    setPage(1);
+  }}
+>
+<ConfigProvider theme={{ token: { controlHeight: 40 } }}>
+  <Select
+    mode="multiple"
+    allowClear
+    placeholder="Filter by days"
+    value={selectedDays}
+    onChange={setSelectedDays}
+    maxTagCount="responsive"
+    className="w-full sm:min-w-40 sm:flex-1 lg:w-40 lg:flex-none"
+    options={DAY_OPTIONS}
+    getPopupContainer={() => document.body}
+    classNames={{
+      popup: {
+        root: "[&_.ant-select-item-option-active]:bg-[#e8f7ee]! [&_.ant-select-item-option-selected]:bg-[#bceecb]! [&_.ant-select-item-option-selected]:text-[#144229]! [&_.ant-select-item-option-selected]:font-semibold!",
+      },
+    }}
+  />
+</ConfigProvider>
+</FilterHeader>
       <section className="content-card">
         <DataTable
           columns={columns}
@@ -435,6 +471,24 @@ export default function StudentsPage() {
             }
           }
         }}
+        onDeleteRecord={async (id) => {
+    if (!attendanceStudent) return;
+    const result = await deleteStudentAttendance(id);
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
+    // Remove from local state
+    setAttendanceRecords((prev) => ({
+      ...prev,
+      [attendanceStudent.id]: (prev[attendanceStudent.id] || []).filter((r) => r.id !== id),
+    }));
+    // Refresh payment config since transaction was voided
+    const { config } = await getClientPaymentConfig(attendanceStudent.id);
+    if (config) {
+      setPaymentConfigs((prev) => ({ ...prev, [attendanceStudent.id]: config }));
+    }
+  }}
       />
 
       <ClientPaymentModal
@@ -471,6 +525,18 @@ export default function StudentsPage() {
             setPaymentConfigs((prev) => ({ ...prev, [clientId]: config }));
           }
         }}
+        onDeletePayment={async (paymentId) => {
+    if (!paymentStudent) return;
+    const result = await deletePaymentEntry(paymentId);
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
+    const { config } = await getClientPaymentConfig(paymentStudent.id);
+    if (config) {
+      setPaymentConfigs((prev) => ({ ...prev, [paymentStudent.id]: config }));
+    }
+  }}
       />
 
       <ReportDownloadModal

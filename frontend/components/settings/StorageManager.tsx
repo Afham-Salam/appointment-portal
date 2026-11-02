@@ -241,25 +241,27 @@ const assessmentLabels: Record<string, string> = {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientRows.length ? clientRows : [{}]), "Clients");
 
     // ─── Sheet 2: Appointments ───
-    const appointmentRows = data.appointments.map((a: any) => {
-      const client = data.clients.find((c: any) => c.id === a.client_id);
-      let timeFormatted = "";
-        if (a.scheduled_time) {
+const appointmentRows = data.appointments.map((a: any) => {
+  const client = data.clients.find((c: any) => c.id === a.client_id);
+  let timeFormatted = "";
+  if (a.scheduled_time) {
     const [h, m] = a.scheduled_time.split(":");
     const hour = parseInt(h);
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     timeFormatted = `${hour12}:${m} ${ampm}`;
   }
-      return {
-        ...clientInfo(client),
-        "Status": a.status,
-        "Scheduled Date": a.scheduled_date || "",
-        "Scheduled Time": timeFormatted,
-        "Created At": new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      };
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(appointmentRows.length ? appointmentRows : [{}]), "Appointments");
+  return {
+    ...clientInfo(client),
+    "Status": a.status,
+    "Scheduled Date": a.scheduled_date || "",
+    "Scheduled Time": timeFormatted,
+    "Location": a.location || "",
+    "Days": (a.appointment_days || []).join(", "),
+    "Created At": new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+  };
+});
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(appointmentRows.length ? appointmentRows : [{}]), "Appointments");
 
     // ─── Sheet 3: Application Forms ───
     const formRows = data.applicationForms.map((f: any) => {
@@ -325,7 +327,46 @@ const assessmentLabels: Record<string, string> = {
       };
     });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(remRows.length ? remRows : [{}]), "Remediation Entries");
+    // ─── Sheet 9: Transactions ───
+    const transactionRows = (data.transactions || []).map((t: any) => {
+      const client = t.client_id ? data.clients.find((c: any) => c.id === t.client_id) : null;
+      let timeFormatted = "";
+      if (t.scheduled_time) {
+        const [h, m] = t.scheduled_time.split(":");
+        const hour = parseInt(h);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const hour12 = hour % 12 || 12;
+        timeFormatted = `${hour12}:${m} ${ampm}`;
+      }
+      return {
+        "Date": t.date,
+        "Type": t.type,
+        "Client / Payee": t.payee || "",
+        "Category": t.category || "",
+        "Amount (INR)": Number(t.amount_paise || 0) / 100,
+        "Payment Method": t.payment_method || "",
+        "Reference": t.reference || "",
+        "Notes": t.notes || "",
+        "Status": t.status || "",
+        "Linked Client": client?.name || "",
+      };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(transactionRows.length ? transactionRows : [{}]), "Transactions");
 
+    // ─── Sheet 10: Student Attendance ───
+    const attendanceRows = (data.studentAttendance || []).map((a: any) => {
+      const client = data.clients.find((c: any) => c.id === a.client_id);
+      return {
+        "Name": client?.name || "",
+        "Phone": client ? `${client.country_code || ""} ${client.phone}`.trim() : "",
+        "Attendance No": a.attendance_no,
+        "Date": a.date,
+        "Paid Amount (INR)": Number(a.paid_amount || 0),
+        "Payment Method": a.payment_method || "",
+        "Notes": a.notes || "",
+      };
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(attendanceRows.length ? attendanceRows : [{}]), "Student Attendance");
     // Download
     const today = new Date().toISOString().split("T")[0];
     XLSX.writeFile(wb, `treasure-backup-${today}.xlsx`);
