@@ -79,14 +79,16 @@ export default function AppointmentNotifyModal({
     };
   }, [open, details]);
 
+  const isStudent = details?.clientType?.trim().toLowerCase() === "student";
+
   const handleDownload = () => {
     if (!details || !pdfBlob) return;
-    triggerPdfDownload(pdfBlob, details.name);
+    triggerPdfDownload(pdfBlob, details.name, details.clientType);
   };
 
   const handleWhatsApp = async () => {
     if (!details || !pdfBlob) return;
-    triggerPdfDownload(pdfBlob, details.name);
+    triggerPdfDownload(pdfBlob, details.name, details.clientType);
     await shareOrNotifyConfirmation(details);
   };
 
@@ -95,7 +97,7 @@ export default function AppointmentNotifyModal({
       <Modal
         title={
           <span className="text-lg font-semibold capitalize tracking-wide text-[#144229]">
-            Appointment confirmation
+            {isStudent ? "Class confirmation" : "Appointment confirmation"}
           </span>
         }
         open={open}

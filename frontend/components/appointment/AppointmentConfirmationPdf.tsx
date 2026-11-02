@@ -271,9 +271,11 @@ export function AppointmentConfirmationPdf({
   details: ConfirmationDetails;
   logoSrc?: string | null;
 }) {
+  const isStudent = details.clientType?.trim().toLowerCase() === "student";
+
   const rows = [
     {
-      label: "CLIENT NAME:",
+      label: isStudent ? "STUDENT NAME:" : "CLIENT NAME:",
       value: toTitleCase(details.name),
       type: "client" as const,
     },
@@ -284,7 +286,11 @@ export function AppointmentConfirmationPdf({
 
   return (
     <Document
-      title={`Appointment confirmation — ${details.name}`}
+      title={
+        isStudent
+          ? `Class Confirmation — ${details.name}`
+          : `Appointment Confirmation — ${details.name}`
+      }
       author={CLINIC_NAME}
     >
       <Page size="A4" style={styles.page} wrap={false}>
@@ -300,7 +306,9 @@ export function AppointmentConfirmationPdf({
           </Text>
         </View>
         <Ornament />
-        <Text style={styles.heading}>APPOINTMENT{"\n"}CONFIRMATION</Text>
+        <Text style={styles.heading}>
+          {isStudent ? "CLASS\nCONFIRMATION" : "APPOINTMENT\nCONFIRMATION"}
+        </Text>
         <Ornament />
         <View style={styles.rows}>
           {rows.map((row) => (
@@ -335,8 +343,9 @@ export function AppointmentConfirmationPdf({
           ))}
         </View>
         <Text style={styles.message}>
-          Your appointment has been scheduled.{"\n"}We look forward to seeing
-          you.
+          {isStudent
+            ? "Your class has been scheduled.\nWe look forward to seeing you."
+            : "Your appointment has been scheduled.\nWe look forward to seeing you."}
         </Text>
         <Ornament />
         <View style={styles.footer}>
@@ -433,13 +442,15 @@ export function getWhatsAppNumber(details: AppointmentNotifyDetails) {
   return `${codeDigits}${phoneDigits}`;
 }
 
-export function confirmationFileName(name: string) {
+export function confirmationFileName(name: string, clientType?: string) {
   const safeName =
     name
       .trim()
       .replace(/[^a-zA-Z0-9-_ ]/g, "")
       .replace(/\s+/g, "-") || "client";
-  return `appointment-confirmation-${safeName}.pdf`;
+  const prefix =
+    clientType?.trim().toLowerCase() === "student" ? "class" : "appointment";
+  return `${prefix}-confirmation-${safeName}.pdf`;
 }
 
 export function buildWhatsAppMessage(details: AppointmentNotifyDetails) {
@@ -498,11 +509,11 @@ export async function createConfirmationBlob(details: ConfirmationDetails) {
   ).toBlob();
 }
 
-export function triggerPdfDownload(blob: Blob, name: string) {
+export function triggerPdfDownload(blob: Blob, name: string, clientType?: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = confirmationFileName(name);
+  link.download = confirmationFileName(name, clientType);
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -511,7 +522,7 @@ export function triggerPdfDownload(blob: Blob, name: string) {
 
 export async function downloadConfirmationPdf(details: ConfirmationDetails) {
   const blob = await createConfirmationBlob(details);
-  triggerPdfDownload(blob, details.name);
+  triggerPdfDownload(blob, details.name, details.clientType);
   return blob;
 }
 
