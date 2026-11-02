@@ -48,6 +48,7 @@ type StudentRow = {
   paymentSummary: { totalAmount: number; totalPaid: number } | null;
   attendanceCount: number;
   appointmentDays: string[];
+  location?: string;
 };
 
 const ATTENDANCE_FILTER_OPTIONS = [
@@ -283,27 +284,37 @@ const visibleStudents = students.filter((student) => {
           : "—",
     },
     {
+      title: "View Details",
+      key: "viewDetails",
+      render: (row) => (
+        <button
+          type="button"
+          className="view-button"
+          onClick={() =>
+            router.push(`/client/viewdetails?id=${row.id}&from=students`)
+          }
+        >
+          View Details
+        </button>
+      ),
+    },
+    {
       title: "Actions",
       key: "actions",
       render: (row) => {
         const count = attendanceRecords[row.id]?.length || 0;
         return (
           <div className="table-actions">
-            <button
-              type="button"
-              className="view-button"
-              onClick={() =>
-                router.push(`/client/viewdetails?id=${row.id}&from=students`)
-              }
-            >
-              View Details
-            </button>
 
             <button
               className="border-[#25D366]! bg-[#25D366]! inline-flex items-center justify-center gap-1.5 px-2.5! text-xs! font-bold text-white!"
               title="Notify on WhatsApp"
               aria-label={`Notify ${row.name} on WhatsApp`}
-              onClick={() => setNotifyDetails(toNotifyDetails(row))}
+              onClick={() =>
+                setNotifyDetails(
+                  toNotifyDetails({ ...row, clientType: "Student" }),
+                )
+              }
             >
               <FaWhatsapp />
               Notify
@@ -359,13 +370,14 @@ const visibleStudents = students.filter((student) => {
               <FiDownload aria-hidden="true" /> Report
             </button>
             <button
-  type="button"
-  className="cursor-pointer rounded-md border border-red-200 bg-white p-1.5 text-red-500 hover:bg-red-50"
-  title="Delete student"
-  onClick={() => setDeleteStudent(row)}
->
-  <FiTrash2 className="h-3.5 w-3.5" />
-</button>
+              type="button"
+              className="border-[#c9252d]! bg-[#c9252d]! flex items-center justify-center text-white! w-8.5 px-0!"
+              title="Delete student"
+              aria-label={`Delete student ${row.name}`}
+              onClick={() => setDeleteStudent(row)}
+            >
+              <FiTrash2 />
+            </button>
           </div>
         );
       },

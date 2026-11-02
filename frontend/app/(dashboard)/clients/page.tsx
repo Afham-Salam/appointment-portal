@@ -242,19 +242,25 @@ const [deleteClient, setDeleteClient] = useState<ClientRow | null>(null);
           : "—",
     },
     {
+      title: "View Details",
+      key: "viewDetails",
+      render: (row) => (
+        <button
+          type="button"
+          className="view-button"
+          onClick={() =>
+            router.push(`/client/viewdetails?id=${row.id}&from=clients`)
+          }
+        >
+          View Details
+        </button>
+      ),
+    },
+    {
       title: "Actions",
       key: "actions",
       render: (row) => (
         <div className="table-actions">
-          <button
-            type="button"
-            className="view-button"
-            onClick={() =>
-              router.push(`/client/viewdetails?id=${row.id}&from=clients`)
-            }
-          >
-            View Details
-          </button>
           <button
             className="border-[#25D366]! bg-[#25D366]! inline-flex items-center justify-center gap-1.5 px-2.5! text-xs! font-bold text-white!"
             title="Notify on WhatsApp"
@@ -290,13 +296,14 @@ const [deleteClient, setDeleteClient] = useState<ClientRow | null>(null);
               : "Set Payment"}
           </button>
           <button
-  type="button"
-  className="cursor-pointer rounded-md border border-red-200 bg-white p-1.5 text-red-500 hover:bg-red-50"
-  title="Delete client"
-  onClick={() => setDeleteClient(row)}
->
-  <FiTrash2 className="h-3.5 w-3.5" />
-</button>
+            type="button"
+            className="border-[#c9252d]! bg-[#c9252d]! flex items-center justify-center text-white! w-8.5 px-0!"
+            title="Delete client"
+            aria-label={`Delete client ${row.name}`}
+            onClick={() => setDeleteClient(row)}
+          >
+            <FiTrash2 />
+          </button>
         </div>
       ),
     },
