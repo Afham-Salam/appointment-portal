@@ -143,12 +143,12 @@ export default function AppointmentNotifyModal({
               <p className="m-0 text-sm text-[#7b2027]">{error}</p>
             ) : null}
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 disabled={busy}
                 onClick={handleDownload}
-                className="inline-flex cursor-pointer h-11 w-full items-center justify-center gap-2 rounded-lg border-2 border-[#2d5a3f] bg-white px-4 text-sm font-bold text-[#144229] hover:bg-[#e8f7ee] active:scale-[0.98] transition-all disabled:opacity-60"
+                className="inline-flex cursor-pointer h-11 w-full sm:flex-1 items-center justify-center gap-2 rounded-lg border-2 border-[#2d5a3f] bg-white px-4 text-sm font-bold text-[#144229] hover:bg-[#e8f7ee] active:scale-[0.98] transition-all disabled:opacity-60"
               >
                 <FiDownload aria-hidden="true" className="text-base shrink-0" />
                 Download PDF
@@ -157,7 +157,7 @@ export default function AppointmentNotifyModal({
                 type="button"
                 disabled={busy || !details.phone}
                 onClick={handleWhatsApp}
-                className="cursor-pointer inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white shadow-md hover:bg-[#1ebe5d] active:scale-[0.98] transition-all disabled:opacity-60"
+                className="cursor-pointer inline-flex h-11 w-full sm:flex-1 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white shadow-md hover:bg-[#1ebe5d] active:scale-[0.98] transition-all disabled:opacity-60"
               >
                 <FaWhatsapp aria-hidden="true" className="text-xl shrink-0" />
                 Notify on WhatsApp
