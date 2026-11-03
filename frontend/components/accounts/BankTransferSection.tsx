@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, DatePicker, Form, Input, InputNumber, Modal, Tag } from "antd";
+import {
+  Button,
+  Card,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Tag,
+} from "antd";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import dayjs from "dayjs";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
-
 
 export type BankTransfer = {
   id: string;
@@ -32,12 +40,19 @@ export default function BankTransferSection({
 }: {
   transfers: BankTransfer[];
   loading: boolean;
-  onAdd: (data: { date: string; amount: number; reference: string; notes: string }) => Promise<void>;
+  onAdd: (data: {
+    date: string;
+    amount: number;
+    reference: string;
+    notes: string;
+  }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleteTransfer, setDeleteTransfer] = useState<BankTransfer | null>(null);
+  const [deleteTransfer, setDeleteTransfer] = useState<BankTransfer | null>(
+    null,
+  );
   const [form] = Form.useForm();
 
   const total = transfers.reduce((sum, t) => sum + Number(t.amount), 0);
@@ -51,9 +66,15 @@ export default function BankTransferSection({
     {
       key: "amount",
       title: "Amount",
-      render: (row) => <span className="font-semibold">{rupee(Number(row.amount))}</span>,
+      render: (row) => (
+        <span className="font-semibold">{rupee(Number(row.amount))}</span>
+      ),
     },
-    { key: "reference", title: "Reference", render: (row) => row.reference || "—" },
+    {
+      key: "reference",
+      title: "Reference",
+      render: (row) => row.reference || "—",
+    },
     { key: "notes", title: "Notes", render: (row) => row.notes || "—" },
     {
       key: "actions",
@@ -96,7 +117,6 @@ export default function BankTransferSection({
             <Tag color="blue">{rupee(total)} transferred</Tag>
             <Button
               type="primary"
-              size="small"
               icon={<FiPlus />}
               onClick={() => setShowForm(true)}
             >
@@ -106,7 +126,12 @@ export default function BankTransferSection({
         }
         styles={{ body: { padding: 0 } }}
       >
-        <DataTable columns={columns} data={transfers} loading={loading} pageSize={10} />
+        <DataTable
+          columns={columns}
+          data={transfers}
+          loading={loading}
+          pageSize={10}
+        />
       </Card>
 
       <Modal
@@ -121,7 +146,8 @@ export default function BankTransferSection({
         confirmLoading={saving}
         okText="Save Transfer"
         okButtonProps={{
-          className: "h-11! bg-[#2D5A3F]! font-semibold! text-white! hover:bg-[#16482b]!",
+          className:
+            "h-11! bg-[#2D5A3F]! font-semibold! text-white! hover:bg-[#16482b]!",
         }}
         cancelButtonProps={{
           className: "h-11! border-[#c1c9c0]! text-[#414942]!",
@@ -142,9 +168,21 @@ export default function BankTransferSection({
             <Form.Item
               name="amount"
               label="Amount (₹)"
-              rules={[{ required: true, type: "number", min: 1, message: "Enter amount" }]}
+              rules={[
+                {
+                  required: true,
+                  type: "number",
+                  min: 1,
+                  message: "Enter amount",
+                },
+              ]}
             >
-              <InputNumber min={1} precision={2} placeholder="0.00" className="w-full!" />
+              <InputNumber
+                min={1}
+                precision={2}
+                placeholder="0.00"
+                className="w-full!"
+              />
             </Form.Item>
           </div>
           <Form.Item name="reference" label="UTR / Reference number">

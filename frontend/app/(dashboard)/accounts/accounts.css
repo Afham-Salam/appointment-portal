@@ -1,4 +1,6 @@
-.accounts-page .page-heading .ant-btn {
+.accounts-page .page-heading .ant-btn,
+.accounts-page .ant-card-head .ant-btn,
+.accounts-page .accounts-toolbar .ant-btn {
   border-radius: 6px;
 }
 
