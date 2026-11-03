@@ -37,6 +37,9 @@ import {
   voidTransaction,
   getTransactionAudit,
   getPendingClientPayments,
+   getBankTransfers,
+  addBankTransfer,
+  deleteBankTransfer
 } from "@/lib/actions/finance";
 import { monthlyReport, summarize } from "@/lib/accounts/formatters";
 import { exportFinance } from "@/lib/accounts/export";
@@ -46,6 +49,7 @@ import type {
   TransactionInput,
   TransactionType,
 } from "@/lib/accounts/types";
+import BankTransferSection, { type BankTransfer } from "@/components/accounts/BankTransferSection";
 
 const chartLoading = () => (
   <div className="flex h-75 items-center justify-center">
@@ -132,6 +136,17 @@ function AccountsContent() {
     clients: PendingPaymentClient[];
   } | undefined>(undefined);
   const [pendingPaymentsLoading, setPendingPaymentsLoading] = useState(true);
+  const [bankTransfers, setBankTransfers] = useState<BankTransfer[]>([]);
+const [bankLoading, setBankLoading] = useState(true);
+const [bankTotal, setBankTotal] = useState(0);
+
+const fetchBankTransfers = async () => {
+  setBankLoading(true);
+  const { transfers, total } = await getBankTransfers();
+  setBankTransfers(transfers);
+  setBankTotal(total);
+  setBankLoading(false);
+};
 
   const fetchPendingPayments = async () => {
     setPendingPaymentsLoading(true);
@@ -159,6 +174,7 @@ function AccountsContent() {
  useEffect(() => {
     fetchTransactions();
     fetchPendingPayments();
+    fetchBankTransfers();
   }, [message]);
 
   useEffect(() => {
@@ -316,6 +332,7 @@ function AccountsContent() {
         totals={totals}
         previous={previousRows.length ? summarize(previousRows) : null}
         pendingPayments={pendingPayments}
+        bankTotal={bankTotal}
       />
       <p className="text-xs text-gray-500">
         INR · January–December reporting year · {period.from} to {period.to} ·
@@ -382,6 +399,34 @@ function AccountsContent() {
               </Card>
             ),
           },
+           {
+      key: "bank-transfers",
+      label: "Bank transfers",
+      children: (
+        <BankTransferSection
+          transfers={bankTransfers}
+          loading={bankLoading}
+          onAdd={async (data) => {
+            const result = await addBankTransfer(data);
+            if (result.error) {
+              message.error(result.error);
+              return;
+            }
+            fetchBankTransfers();
+            message.success("Bank transfer recorded.");
+          }}
+          onDelete={async (id) => {
+            const result = await deleteBankTransfer(id);
+            if (result.error) {
+              message.error(result.error);
+              return;
+            }
+            fetchBankTransfers();
+            message.success("Transfer deleted.");
+          }}
+        />
+      ),
+    },
         ]}
       />
       <Card
@@ -475,6 +520,7 @@ function AccountsContent() {
           onVoid={voidRow}
         />
       </Card>
+      
       {form && (
         <TransactionFormModal
           key={form.transaction?.id || form.type}

@@ -169,9 +169,21 @@ export async function searchClientsForDropdown(search: string) {
 
   const { supabase } = await getAuthenticatedUser()
 
+  // Get clients with accepted appointments only
+  const { data: acceptedClientIds } = await supabase
+    .from('appointments')
+    .select('client_id')
+    .eq('status', 'Accepted')
+
+  const acceptedIds = [...new Set((acceptedClientIds || []).map((a) => a.client_id))]
+
+  if (acceptedIds.length === 0) return []
+
   const { data } = await supabase
     .from('clients')
     .select('id, name, phone, country_code')
+    .eq('is_deleted', false)
+    .in('id', acceptedIds)
     .or(`name.ilike.%${search.trim()}%,phone.ilike.%${search.trim()}%`)
     .limit(10)
     .order('name', { ascending: true })
@@ -252,4 +264,55 @@ export async function getPendingClientPayments() {
 
   pendingClients.sort((a, b) => b.pendingPaise - a.pendingPaise || a.name.localeCompare(b.name))
   return { error: null, pending: totalPending, clientCount, clients: pendingClients }
+}
+export async function getBankTransfers() {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { data, error } = await supabase
+    .from('bank_transfers')
+    .select('*')
+    .order('date', { ascending: false })
+
+  if (error) return { error: error.message, transfers: [], total: 0 }
+
+  const transfers = data || []
+  const total = transfers.reduce((sum, t) => sum + Number(t.amount), 0)
+
+  return { transfers, total, error: null }
+}
+
+export async function addBankTransfer(input: {
+  date: string
+  amount: number
+  reference: string
+  notes: string
+}) {
+  const { supabase, user } = await getAuthenticatedUser()
+
+  const { data, error } = await supabase
+    .from('bank_transfers')
+    .insert({
+      date: input.date,
+      amount: input.amount,
+      reference: input.reference,
+      notes: input.notes,
+      created_by: user.id,
+    })
+    .select()
+    .single()
+
+  if (error) return { error: error.message }
+  return { success: true, transfer: data }
+}
+
+export async function deleteBankTransfer(id: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  const { error } = await supabase
+    .from('bank_transfers')
+    .delete()
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  return { success: true }
 }

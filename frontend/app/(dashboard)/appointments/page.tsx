@@ -39,6 +39,10 @@ import {
   updateAppointmentStatus,
   deleteAppointment,
   updateAppointmentDetails,
+    getClientPaymentConfig,
+  saveClientPaymentConfig,
+  addPaymentEntry,
+  deletePaymentEntry,
 } from "@/lib/actions/appointments";
 
 import {
@@ -150,6 +154,14 @@ export function ClientDetails({
         ]
       : ["Mental Status Exam", "Remediation & Improvement"]),
   ]);
+
+useEffect(() => {
+  async function loadPayment() {
+    const { config } = await getClientPaymentConfig(appointment.clientId);
+    if (config) setPaymentConfig(config);
+  }
+  loadPayment();
+}, [appointment.clientId]);
 
   const navigationItems = [
     "Application Form",
@@ -856,17 +868,47 @@ export function ClientDetails({
         open={showReportDownload}
         onClose={() => setShowReportDownload(false)}
       />
-      <ClientPaymentModal
-        open={showPaymentModal}
-        client={{
-          id: appointment.clientId,
-          name: data.name,
-          phone: `${data.countryCode} ${data.phone}`.trim(),
-        }}
-        config={paymentConfig}
-        onClose={() => setShowPaymentModal(false)}
-        onSaveConfig={(next) => setPaymentConfig(next)}
-      />
+    <ClientPaymentModal
+  open={showPaymentModal}
+  client={{
+    id: appointment.clientId,
+    name: data.name,
+    phone: `${data.countryCode} ${data.phone}`.trim(),
+    clientType: data.clientType,
+  }}
+  config={paymentConfig}
+  onClose={() => setShowPaymentModal(false)}
+  onSaveConfig={async (next) => {
+    const clientId = appointment.clientId;
+
+    await saveClientPaymentConfig(clientId, next.totalAmount, next.notes || '');
+
+    for (const payment of next.payments) {
+      if (payment.id.startsWith("pay-")) {
+        await addPaymentEntry(clientId, {
+          date: payment.date,
+          amount: payment.amount,
+          category: payment.category,
+          payment_method: payment.payment_method,
+          reference: payment.reference,
+          notes: payment.notes,
+        });
+      }
+    }
+
+    const { config } = await getClientPaymentConfig(clientId);
+    if (config) setPaymentConfig(config);
+  }}
+  onDeletePayment={async (paymentId) => {
+    const result = await deletePaymentEntry(paymentId);
+    if (result.error) {
+      alert(result.error);
+      return;
+    }
+    const { config } = await getClientPaymentConfig(appointment.clientId);
+    if (config) setPaymentConfig(config);
+  }}
+/>
     </div>
   );
 }
@@ -995,16 +1037,18 @@ export default function AppointmentsPage() {
         return `${date}, ${hour12}:${m} ${ampm}`;
       },
     },
-    {
-      title: "Location",
-      key: "location",
-      render: (row) =>
-        row.location === "Kodinhi Cheruppara, Malappuram"
-          ? "Kodinhi"
-          : row.location === "Zara Complex, Pantharangadi, Malappuram"
-            ? "Zara Complex"
-            : "—",
-    },
+  {
+  title: "Location",
+  key: "location",
+  render: (row) =>
+    row.location === "Kodinhi Cheruppara, Malappuram"
+      ? "Kodinhi"
+      : row.location === "Zara Complex, Pantharangadi, Malappuram"
+        ? "Zara Complex"
+        : row.location === "Online"
+          ? "Online"
+          : row.location || "—",
+},
     {
       title: "Days",
       key: "appointmentDays",

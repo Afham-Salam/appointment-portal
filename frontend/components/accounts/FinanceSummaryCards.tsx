@@ -3,12 +3,13 @@ import { FiArrowDownLeft, FiArrowUpRight, FiBarChart2, FiCalendar, FiClock, FiLa
 import { money, summarize } from "@/lib/accounts/formatters";
 import type { Transaction } from "@/lib/accounts/types";
 
-export default function FinanceSummaryCards({ totals, previous, transactions,pendingPayments }: {
+export default function FinanceSummaryCards({ totals, previous, transactions,pendingPayments, bankTotal  }: {
   totals: ReturnType<typeof summarize>;
   previous: ReturnType<typeof summarize> | null;
   transactions: Transaction[];
   // Add to FinanceSummaryCards props:
 pendingPayments?: { pending: number; clientCount: number };
+ bankTotal?: number;
 }) {
   const now = dayjs();
   const today = summarize(transactions.filter(row => row.date === now.format("YYYY-MM-DD")));
@@ -35,6 +36,8 @@ pendingPayments?: { pending: number; clientCount: number };
   background: "#fcfaf4",
   label: "Outstanding",
 },
+{ title: "Transferred to bank", value: (bankTotal || 0) * 100, note: "Total amount moved to bank", Icon: FiArrowUpRight, color: "#1a5276", tint: "#d6eaf8", dot: "#2e86c1", label: "All time" },
+{ title: "Cash in hand", value: totals.net - (bankTotal || 0) * 100, note: `Net income minus bank transfers`, Icon: FiLayers, color: "#7a5a22", tint: "#f3ead6", dot: "#9b7832", label: "Balance" },
     // { title: "Total refunds", value: 250000, note: "1 transaction · Sample refund", Icon: FiRotateCcw, color: "#65497a", tint: "#ede3f3", dot: "#85649c", label: "Demo balance" },
     { title: "Today's income", value: today.income, note: `Today's expenses: ${money(today.expense)}`, Icon: FiCalendar, color: "#2D5A3F", tint: "#e5eddf", dot: "#2D5A3F", label: now.format("DD MMM YYYY") },
     { title: "This month's income", value: month.income, note: `This month's expenses: ${money(month.expense)}`, Icon: FiBarChart2, color: "#1f5a4c", tint: "#dff0ea", dot: "#2d7a67", label: now.format("MMM YYYY") },

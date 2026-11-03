@@ -51,6 +51,7 @@ type ModalFormValues = Omit<AppointmentFormValues, "scheduledDate"> & {
 const LOCATIONS = [
   { value: "Kodinhi Cheruppara, Malappuram", label: "Kodinhi Cheruppara, Malappuram" },
   { value: "Zara Complex, Pantharangadi, Malappuram", label: "Zara Complex, Pantharangadi, Malappuram" },
+  { value: "Online", label: "Online" },
 ];
 
 const WEEK_DAYS = [

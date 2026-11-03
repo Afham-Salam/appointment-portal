@@ -15,6 +15,7 @@ import {
    deleteStudentAttendance,
    deletePaymentEntry,
    softDeleteClient,
+    getClientDependencies,
 } from "@/lib/actions/appointments";
 import { FiCheckSquare, FiCreditCard, FiDownload,FiTrash2  } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
@@ -94,6 +95,7 @@ export default function StudentsPage() {
 
 const [selectedDays, setSelectedDays] = useState<string[]>([]);
 const [deleteStudent, setDeleteStudent] = useState<StudentRow | null>(null);
+const [deleteDeps, setDeleteDeps] = useState<{ appointments: number; payments: number; attendance: number } | null>(null);
 const DAY_OPTIONS = [
   { value: "Monday", label: "Mon" },
   { value: "Tuesday", label: "Tue" },
@@ -374,7 +376,11 @@ const visibleStudents = students.filter((student) => {
               className="border-[#c9252d]! bg-[#c9252d]! flex items-center justify-center text-white! w-8.5 px-0!"
               title="Delete student"
               aria-label={`Delete student ${row.name}`}
-              onClick={() => setDeleteStudent(row)}
+              onClick={async () => {
+    const deps = await getClientDependencies(row.id);
+    setDeleteDeps(deps);
+    setDeleteStudent(row);
+  }}
             >
               <FiTrash2 />
             </button>
@@ -571,12 +577,16 @@ const visibleStudents = students.filter((student) => {
         open={Boolean(reportStudent)}
         onClose={() => setReportStudent(null)}
       />
-      <DeleteConfirmationModal
+  <DeleteConfirmationModal
   open={!!deleteStudent}
   title="Delete this student?"
   itemName={deleteStudent?.name}
-  actionDescription="Student will be hidden from all lists. Their data is preserved and can be restored."
-  onCancel={() => setDeleteStudent(null)}
+  actionDescription={
+    deleteDeps && (deleteDeps.appointments > 0 || deleteDeps.payments > 0 || deleteDeps.attendance > 0)
+      ? `This student has ${deleteDeps.appointments} appointment${deleteDeps.appointments !== 1 ? "s" : ""}, ${deleteDeps.payments} payment${deleteDeps.payments !== 1 ? "s" : ""}, and ${deleteDeps.attendance} attendance record${deleteDeps.attendance !== 1 ? "s" : ""}. Deleting will hide them from all lists. Data is preserved and can be restored.`
+      : "Student will be hidden from all lists. Their data is preserved and can be restored."
+  }
+  onCancel={() => { setDeleteStudent(null); setDeleteDeps(null); }}
   onConfirm={async () => {
     if (!deleteStudent) return;
     const result = await softDeleteClient(deleteStudent.id);
@@ -587,6 +597,7 @@ const visibleStudents = students.filter((student) => {
       setTotal((prev) => prev - 1);
     }
     setDeleteStudent(null);
+    setDeleteDeps(null);
   }}
 />
     </>

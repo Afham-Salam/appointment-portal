@@ -1257,3 +1257,19 @@ export async function restoreClient(clientId: string) {
   if (error) return { error: error.message }
   return { success: true }
 }
+
+export async function getClientDependencies(clientId: string) {
+  const { supabase } = await getAuthenticatedUser()
+
+  const [appointments, transactions, attendance] = await Promise.all([
+    supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('client_id', clientId),
+    supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('client_id', clientId).eq('status', 'active'),
+    supabase.from('student_attendance').select('*', { count: 'exact', head: true }).eq('client_id', clientId),
+  ])
+
+  return {
+    appointments: appointments.count || 0,
+    payments: transactions.count || 0,
+    attendance: attendance.count || 0,
+  }
+}
