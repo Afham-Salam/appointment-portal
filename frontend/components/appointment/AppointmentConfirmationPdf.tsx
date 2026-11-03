@@ -458,21 +458,13 @@ export function buildWhatsAppMessage(details: AppointmentNotifyDetails) {
 
   if (isStudent) {
     return [
-      `പ്രിയപ്പെട്ട ${toTitleCase(details.name)},`,
-      "",
-      "ട്രഷർ കൗൺസിലിംഗ് സെന്ററിൽ നിന്നുള്ള ആശംസകൾ!",
-      "",
-      "താങ്കളുടെ വിദ്യാർത്ഥി ക്ലാസ് താഴെ പറയുന്ന തീയതിയിലും സമയത്തും സ്ഥലത്തും നിശ്ചയിച്ചിരിക്കുന്നു.",
+      "ക്ലാസ്",
       "",
       `വിദ്യാർത്ഥിയുടെ പേര്: ${toTitleCase(details.name)}`,
       `തീയതി: ${details.date}`,
       `സമയം: ${details.time}`,
       `സ്ഥലം: ${details.location}`,
-      "",
-      "കൂടുതൽ വിവരങ്ങൾക്കായി അറ്റാച്ച് ചെയ്ത PDF ഡൗൺലോഡ് ചെയ്ത് സൂക്ഷിക്കുക.",
-      "",
-      "നന്ദി,",
-      "ട്രഷർ കൗൺസിലിംഗ് സെന്റർ",
+    
     ].join("\n");
   }
 
