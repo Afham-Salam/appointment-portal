@@ -29,7 +29,7 @@ import MonthlyYearlyReport from "@/components/accounts/MonthlyYearlyReport";
 import PendingPaymentsTable, {
   type PendingPaymentClient,
 } from "@/components/accounts/PendingPaymentsTable";
-import { categories, paymentMethods } from "@/lib/accounts/constants";
+import { categories, categoryLabel, paymentMethods } from "@/lib/accounts/constants";
 import {
   getTransactions,
   createTransaction,
@@ -56,6 +56,8 @@ const chartLoading = () => (
     <Spin />
   </div>
 );
+const selectPopupClassName =
+  "[&_.ant-select-item-option-active]:bg-[#e8f7ee]! [&_.ant-select-item-option-selected]:bg-[#bceecb]! [&_.ant-select-item-option-selected]:text-[#144229]! [&_.ant-select-item-option-selected]:font-semibold!";
 const IncomeExpenseChart = dynamic(
   () => import("@/components/accounts/charts/IncomeExpenseChart"),
   { ssr: false, loading: chartLoading },
@@ -217,12 +219,12 @@ const fetchBankTransfers = async () => {
       (category === "all" || row.category === category) &&
       (method === "all" || row.payment_method === method) &&
       (status === "all" || row.status === status) &&
-      `${row.payee} ${row.reference} ${row.notes} ${row.category}`
+      `${row.payee} ${row.reference} ${row.notes} ${categoryLabel(row.category)}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
   const expenseBreakdown = categories.expense.map((category) => ({
-    category,
+    category: categoryLabel(category),
     amount: rows
       .filter(
         (row) =>
@@ -446,6 +448,7 @@ const fetchBankTransfers = async () => {
           />
           <Select
             aria-label="Transaction type"
+            classNames={{ popup: { root: selectPopupClassName } }}
             value={type}
             onChange={(value) => {
               setType(value);
@@ -460,6 +463,7 @@ const fetchBankTransfers = async () => {
           />
           <Select
             aria-label="Category"
+            classNames={{ popup: { root: selectPopupClassName } }}
             value={category}
             onChange={setCategory}
             style={{ width: 180 }}
@@ -468,11 +472,12 @@ const fetchBankTransfers = async () => {
               ...(type === "all"
                 ? [...categories.income, ...categories.expense]
                 : categories[type as TransactionType]
-              ).map((value) => ({ value, label: value })),
+              ).map((value) => ({ value, label: categoryLabel(value) })),
             ]}
           />
           <Select
             aria-label="Payment method"
+            classNames={{ popup: { root: selectPopupClassName } }}
             value={method}
             onChange={setMethod}
             style={{ width: 160 }}
@@ -483,6 +488,7 @@ const fetchBankTransfers = async () => {
           />
           <Select
             aria-label="Status"
+            classNames={{ popup: { root: selectPopupClassName } }}
             value={status}
             onChange={setStatus}
             style={{ width: 130 }}
@@ -554,6 +560,11 @@ export default function AccountsClient() {
         },
         components: {
           Segmented: { itemSelectedBg: "#2D5A3F", itemSelectedColor: "#ffffff", trackBg: "#f3f5f0" },
+          Select: {
+            optionSelectedBg: "#bceecb",
+            optionSelectedColor: "#144229",
+            optionActiveBg: "#e8f7ee",
+          },
         },
       }}
     >

@@ -1,5 +1,6 @@
 import type { Transaction } from "./types";
 import { monthlyReport, summarize } from "./formatters";
+import { categoryLabel } from "./constants";
 
 // export async function exportFinance(rows: Transaction[], reportRows: Transaction[], from: string, to: string, grouping: "Daily" | "Monthly" = "Monthly") {
 //   const XLSX = await import("xlsx");
@@ -31,7 +32,7 @@ export async function exportFinance(rows: Transaction[], reportRows: Transaction
     {},
   ];
   const txRows = rows.map(row => ({
-    Date: row.date, Type: row.type, "Client / payee": row.payee, Category: row.category,
+    Date: row.date, Type: row.type, "Client / payee": row.payee, Category: categoryLabel(row.category),
     Source: row.source, "Amount (INR)": row.amount_paise / 100, Method: row.payment_method,
     Reference: row.reference, Notes: row.notes, Status: row.status,
   }));

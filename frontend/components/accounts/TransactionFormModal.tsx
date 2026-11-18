@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Alert, ConfigProvider, DatePicker, Form, Input, InputNumber, Modal, Select } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { categories, paymentMethods } from "@/lib/accounts/constants";
+import { categories, categoryLabel, paymentMethods } from "@/lib/accounts/constants";
 import { validateTransaction } from "@/lib/accounts/validation";
 import type { Transaction, TransactionInput, TransactionType } from "@/lib/accounts/types";
 import { searchClientsForDropdown } from "@/lib/actions/finance";
@@ -174,7 +174,7 @@ export default function TransactionFormModal({ type, transaction, onClose, onSav
               <Select
                 className="w-full [&_.ant-select-selector]:rounded-md!"
                 classNames={{ popup: { root: selectPopupClassName } }}
-                options={categories[type].map(value => ({ value, label: value }))}
+                options={categories[type].map(value => ({ value, label: categoryLabel(value) }))}
               />
             </Form.Item>
             <Form.Item name="payment_method" label="Payment method" rules={[{ required: true }]}>

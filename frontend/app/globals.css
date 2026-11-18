@@ -10,6 +10,8 @@
   --green: #144229;
   --green-container: #2d5a3f;
   --secondary-gold: #7a5a22;
+  --font-manrope: "Manrope", system-ui, sans-serif;
+  --font-source-serif: Georgia, serif;
 }
 * {
   box-sizing: border-box;

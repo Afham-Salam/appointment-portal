@@ -4,6 +4,7 @@ import { Tag } from "antd";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import { money } from "@/lib/accounts/formatters";
+import { categoryLabel } from "@/lib/accounts/constants";
 import type { Transaction } from "@/lib/accounts/types";
 
 export default function TransactionHistoryTable({ rows, busy, onEdit, onView, onVoid }: {
@@ -15,7 +16,7 @@ export default function TransactionHistoryTable({ rows, busy, onEdit, onView, on
     { key: "date", title: "Payment date" },
     { key: "type", title: "Type", render: row => <Tag color={row.type === "income" ? "green" : "gold"}>{row.type}</Tag> },
     { key: "payee", title: "Client / payee" },
-    { key: "category", title: "Category" },
+    { key: "category", title: "Category", render: row => categoryLabel(row.category) },
     { key: "amount_paise", title: "Amount", render: row => <span className={row.status === "void" ? "line-through text-gray-400" : "font-semibold"}>{money(row.amount_paise)}</span> },
     { key: "payment_method", title: "Method" },
     { key: "reference", title: "Reference" },
